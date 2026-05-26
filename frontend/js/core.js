@@ -6,7 +6,7 @@
 'use strict';
 
 const CONFIG = {
-  API_BASE: 'https://jaasiel-school-project-backend-production.up.railway.app',
+  API_BASE: 'https://jaasiel-school-project-backend-production.up.railway.app/api/v1',
   TOKEN_KEY: 'jrms_token',
   REFRESH_KEY: 'jrms_refresh',
   USER_KEY: 'jrms_user',
