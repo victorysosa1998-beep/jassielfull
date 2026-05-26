@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Report Card — Jaasiel RMS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="css/style.css">
+<style>
+html, body { overflow-x: hidden; }
+.main-content, .page-body { overflow-x: hidden; min-width: 0; }
+
+/* ── Report card shell (screen) ── */
+.rc-shell {
+  max-width: 780px;
+  margin: 0 auto;
+}
+
+/* ── Print action bar ── */
+.print-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+/* ── The printable card itself ── */
+.rc-card {
+  background: #fff;
+  color: #1a1a2e;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-deep);
+}
+.rc-header {
+  background: linear-gradient(135deg, #0B1A35, #1C3564);
+  color: #fff;
+  padding: 28px 32px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.rc-school-logo {
+  width: 64px; height: 64px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #9A6E20, #C9973A);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.8rem; color: #fff; flex-shrink: 0;
+}
+.rc-school-name  { font-family: var(--font-display); font-size: 1.4rem; font-weight: 900; color: #C9973A; }
+.rc-school-sub   { font-size: .78rem; color: rgba(255,255,255,.6); text-transform: uppercase; letter-spacing: .07em; margin-top: 3px; }
+.rc-term-label   { font-size: .75rem; color: rgba(255,255,255,.5); text-transform: uppercase; letter-spacing: .06em; }
+.rc-term-val     { font-size: 1rem; font-weight: 700; color: #fff; margin-top: 2px; }
+
+.rc-student-bar {
+  background: #F9FAFB;
+  padding: 16px 32px;
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid #E5E7EB;
+}
+.rc-student-bar .field { min-width: 120px; }
+.rc-student-bar .field-label { font-size: .68rem; text-transform: uppercase; letter-spacing: .07em; color: #6B7280; margin-bottom: 2px; }
+.rc-student-bar .field-val   { font-size: .88rem; font-weight: 700; color: #1a1a2e; }
+
+.rc-body { padding: 0 32px 28px; }
+
+.rc-scores-table { width: 100%; border-collapse: collapse; font-size: .85rem; margin-top: 20px; }
+.rc-scores-table th {
+  background: #F3F4F6;
+  padding: 10px 14px;
+  text-align: left;
+  font-size: .7rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .07em;
+  color: #6B7280;
+  border-bottom: 2px solid #E5E7EB;
+}
+.rc-scores-table th.num { text-align: center; }
+.rc-scores-table td { padding: 10px 14px; border-bottom: 1px solid #F3F4F6; color: #374151; }
+.rc-scores-table td.num { text-align: center; font-family: var(--font-mono); }
+.rc-scores-table tr:last-child td { border-bottom: none; }
+.rc-scores-table tbody tr:hover { background: #FAFAFA; }
+
+.grade-chip {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; border-radius: 6px;
+  font-weight: 800; font-size: .8rem; border: 1.5px solid;
+}
+
+.rc-summary {
+  display: flex; gap: 16px; flex-wrap: wrap;
+  padding: 18px 32px;
+  background: linear-gradient(135deg, rgba(201,151,58,.06), rgba(28,53,100,.06));
+  border-top: 1px solid #E5E7EB;
+}
+.rc-summary-item { flex: 1; min-width: 90px; text-align: center; }
+.rc-summary-item .sum-val   { font-family: var(--font-display); font-size: 1.6rem; font-weight: 900; color: #0B1A35; }
+.rc-summary-item .sum-label { font-size: .68rem; text-transform: uppercase; letter-spacing: .06em; color: #9CA3AF; margin-top: 2px; }
+
+.rc-footer {
+  padding: 14px 32px;
+  background: #F9FAFB;
+  border-top: 1px solid #E5E7EB;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: .75rem;
+  color: #9CA3AF;
+}
+
+/* ── Print styles ── */
+@media print {
+  .print-bar, .topbar, .sidebar, .sidebar-overlay,
+  .page-loader, .toast-container, .page-bg,
+  #menu-toggle { display: none !important; }
+  .main-content { margin-left: 0 !important; }
+  .page-body { padding: 0 !important; }
+  .rc-shell { max-width: 100%; }
+  .rc-card { box-shadow: none; border-radius: 0; }
+  body, html { background: #fff !important; }
+}
+
+/* ── Mobile tweaks ── */
+@media (max-width: 640px) {
+  .rc-header    { padding: 20px 18px; gap: 14px; }
+  .rc-student-bar { padding: 14px 18px; gap: 12px; }
+  .rc-body      { padding: 0 18px 20px; }
+  .rc-summary   { padding: 14px 18px; gap: 10px; }
+  .rc-footer    { padding: 12px 18px; }
+  .rc-scores-table th, .rc-scores-table td { padding: 8px 8px; }
+  /* Hide 1st Test / 2nd Test columns on tiny screens — CA+Exam+Total enough */
+  .rc-scores-table .col-t1,
+  .rc-scores-table .col-t2 { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="page-bg"></div>
+<div class="page-loader" id="page-loader">
+  <div class="loader-logo"><i class="fas fa-graduation-cap"></i> Jaasiel RMS</div>
+  <div class="loader-ring"></div>
+</div>
+<div class="toast-container" id="toast-container"></div>
+
+<div class="app-layout">
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<aside class="sidebar" id="sidebar"></aside>
+
+<div class="main-content">
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" id="menu-toggle"><i class="fas fa-bars"></i></button>
+      <div>
+        <div class="page-title" id="page-title">Report Card</div>
+        <div class="breadcrumb">
+          <a href="students.html">Students</a>
+          <span class="sep">/</span>
+          <a href="#" id="breadcrumb-results">Results</a>
+          <span class="sep">/</span>
+          <span class="text-gold">Report Card</span>
+        </div>
+      </div>
+    </div>
+    <div class="topbar-right" id="topbar-right"></div>
+  </header>
+
+  <div class="page-body">
+    <div class="rc-shell">
+
+      <!-- Action bar -->
+      <div class="print-bar">
+        <a id="back-btn" href="students.html" class="btn btn-ghost btn-sm">
+          <i class="fas fa-arrow-left"></i> Back
+        </a>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <select class="filter-select" id="term-switcher" onchange="switchTerm()" style="font-size:.82rem;min-width:160px"></select>
+          <button class="btn btn-primary btn-sm" onclick="window.print()">
+            <i class="fas fa-print"></i> Print / Save PDF
+          </button>
+        </div>
+      </div>
+
+      <!-- Card render target -->
+      <div id="rc-container">
+        <div class="rc-card">
+          <div class="skeleton" style="height:120px;border-radius:0"></div>
+          <div style="padding:28px">
+            <div class="skeleton mb-2" style="height:40px;border-radius:8px"></div>
+            <div class="skeleton mb-2" style="height:300px;border-radius:8px"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+</div>
+
+<script src="js/core.js"></script>
+<script src="js/ui.js"></script>
+<script>
+const qp         = new URLSearchParams(window.location.search);
+const STUDENT_ID = qp.get('student_id');
+const SESSION_ID = qp.get('session_id');
+const TERM_ID    = qp.get('term_id');
+
+let _allResults  = [];   // flat list grouped later
+let _student     = null;
+let _sessions    = [];
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await window.__rmsBootstrapReady;
+  const role = AuthState.getRole();
+  initPage(['super_admin', 'admin', 'sub_admin'], 'admin');
+
+  if (!STUDENT_ID) {
+    document.getElementById('rc-container').innerHTML =
+      `<div class="card" style="text-align:center;padding:48px;color:var(--danger)">
+        <i class="fas fa-circle-exclamation" style="font-size:2rem;display:block;margin-bottom:12px"></i>
+        No student specified. <a href="students.html" class="text-gold">Return to Students</a>
+      </div>`;
+    return;
+  }
+
+  // Set back-link to student results page preserving student id
+  const backUrl = `student-results.html?student_id=${STUDENT_ID}`;
+  document.getElementById('back-btn').href = backUrl;
+  document.getElementById('breadcrumb-results').href = backUrl;
+
+  await Promise.all([loadStudent(), loadAllResults()]);
+  buildTermSwitcher();
+  renderCard(TERM_ID || _firstTermId());
+});
+
+/* ── Load student profile ── */
+async function loadStudent() {
+  try {
+    _student = await API.students.get(STUDENT_ID);
+    document.getElementById('page-title').textContent = `${_student.full_name} — Report Card`;
+  } catch(e) { console.warn('student load failed', e); }
+}
+
+/* ── Load all results for this student ── */
+async function loadAllResults() {
+  try {
+    const params = { student_id: STUDENT_ID };
+    if (SESSION_ID) params.session_id = SESSION_ID;
+    const data   = await API.students.results(STUDENT_ID, params);
+    _allResults  = data.results || data.items || data || [];
+    _sessions    = data.sessions || [];
+  } catch(e) {
+    console.error('results load failed', e);
+    _allResults = [];
+  }
+}
+
+/* ── Get the first available term id from results ── */
+function _firstTermId() {
+  if (!_allResults.length) return null;
+  // Prefer current-term results; fall back to first
+  const pref = TERM_ID || (_allResults.find(r => r.is_current_term)?.term_id) || _allResults[0].term_id;
+  return pref || null;
+}
+
+/* ── Build term-switcher dropdown ── */
+function buildTermSwitcher() {
+  const sel = document.getElementById('term-switcher');
+  // Collect unique terms from results
+  const seen = new Map();
+  _allResults.forEach(r => {
+    const key = r.term_id;
+    if (key && !seen.has(key)) {
+      seen.set(key, `${r.term_name || 'Term'} — ${r.session_name || 'Session'}`);
+    }
+  });
+
+  if (!seen.size) { sel.style.display = 'none'; return; }
+
+  sel.innerHTML = '';
+  seen.forEach((label, id) => {
+    const o = document.createElement('option');
+    o.value = id; o.textContent = label;
+    if (String(id) === String(TERM_ID || _firstTermId())) o.selected = true;
+    sel.appendChild(o);
+  });
+}
+
+function switchTerm() {
+  const tid = document.getElementById('term-switcher').value;
+  renderCard(tid);
+}
+
+/* ── Render the printable card ── */
+function renderCard(termId) {
+  const container = document.getElementById('rc-container');
+
+  // Filter results for this term
+  const rows = termId
+    ? _allResults.filter(r => String(r.term_id) === String(termId))
+    : _allResults;
+
+  if (!rows.length) {
+    container.innerHTML = `<div class="card" style="text-align:center;padding:48px;color:var(--text-muted)">
+      <i class="fas fa-inbox" style="font-size:2rem;display:block;margin-bottom:12px"></i>
+      No published results found for this period.</div>`;
+    return;
+  }
+
+  const termName    = rows[0].term_name    || 'Term';
+  const sessionName = rows[0].session_name || 'Session';
+  const s           = _student || {};
+
+  // Compute summary stats
+  const scores    = rows.map(r => r.total_score ?? 0);
+  const total     = scores.reduce((a, b) => a + b, 0);
+  const avg       = scores.length ? total / scores.length : 0;
+  const highest   = Math.max(...scores);
+  const lowest    = Math.min(...scores);
+  const gr        = Fmt.grade(avg);
+  const passed    = scores.filter(sc => sc >= 40).length;
+  const passRate  = scores.length ? Math.round((passed / scores.length) * 100) : 0;
+
+  const photoHtml = s.photo_url
+    ? `<img src="${s.photo_url}" style="width:60px;height:60px;border-radius:50%;object-fit:cover;border:3px solid rgba(255,255,255,.3)">`
+    : `<div style="width:60px;height:60px;border-radius:50%;background:rgba(201,151,58,.3);border:3px solid rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:700;color:#C9973A;flex-shrink:0">${Fmt.initials(s.full_name || '?')}</div>`;
+
+  container.innerHTML = `
+    <div class="rc-card">
+
+      <!-- Header -->
+      <div class="rc-header">
+        <div class="rc-school-logo"><i class="fas fa-graduation-cap"></i></div>
+        <div style="flex:1;min-width:0">
+          <div class="rc-school-name">Jaasiel Education Centre</div>
+          <div class="rc-school-sub">Academic Result Management System</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div class="rc-term-label">Term / Session</div>
+          <div class="rc-term-val">${termName}</div>
+          <div style="font-size:.75rem;color:rgba(255,255,255,.5);margin-top:1px">${sessionName}</div>
+        </div>
+      </div>
+
+      <!-- Student info bar -->
+      <div class="rc-student-bar">
+        <div style="display:flex;align-items:center;gap:12px;flex-shrink:0">${photoHtml}
+          <div>
+            <div style="font-size:1rem;font-weight:800;color:#0B1A35">${Security.sanitize(s.full_name || '—')}</div>
+            <div style="font-size:.78rem;color:#6B7280;margin-top:2px">${s.student_id || '—'}</div>
+          </div>
+        </div>
+        <div class="field"><div class="field-label">Class</div><div class="field-val">${s.class_name || '—'}</div></div>
+        <div class="field"><div class="field-label">Date of Birth</div><div class="field-val">${Fmt.date(s.date_of_birth)}</div></div>
+        <div class="field"><div class="field-label">Gender</div><div class="field-val" style="text-transform:capitalize">${s.gender || '—'}</div></div>
+        <div class="field"><div class="field-label">Subjects</div><div class="field-val">${rows.length}</div></div>
+      </div>
+
+      <!-- Scores table -->
+      <div class="rc-body">
+        <table class="rc-scores-table">
+          <thead>
+            <tr>
+              <th>Subject</th>
+              <th class="num col-t1">1st Test</th>
+              <th class="num col-t2">2nd Test</th>
+              <th class="num">CA</th>
+              <th class="num">Exam</th>
+              <th class="num">Total</th>
+              <th class="num">Grade</th>
+              <th>Remarks</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map(r => {
+              const rgr   = Fmt.grade(r.total_score ?? 0);
+              const color = Fmt.gradeColor(rgr.g);
+              return `<tr>
+                <td style="font-weight:600">${Security.sanitize(r.subject_name || '—')}</td>
+                <td class="num col-t1">${r.first_test  ?? '—'}</td>
+                <td class="num col-t2">${r.second_test ?? '—'}</td>
+                <td class="num">${r.ca_score   ?? '—'}</td>
+                <td class="num">${r.exam_score ?? '—'}</td>
+                <td class="num" style="font-weight:800">${r.total_score ?? '—'}</td>
+                <td class="num">
+                  <span class="grade-chip" style="background:${color}18;color:${color};border-color:${color}44">${rgr.g}</span>
+                </td>
+                <td style="color:#6B7280;font-size:.82rem">${rgr.r}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Summary -->
+      <div class="rc-summary">
+        <div class="rc-summary-item">
+          <div class="sum-val" style="color:${Fmt.gradeColor(gr.g)}">${avg.toFixed(1)}</div>
+          <div class="sum-label">Average Score</div>
+        </div>
+        <div class="rc-summary-item">
+          <div class="sum-val" style="color:${Fmt.gradeColor(gr.g)}">${gr.g}</div>
+          <div class="sum-label">Overall Grade</div>
+        </div>
+        <div class="rc-summary-item">
+          <div class="sum-val">${passRate}%</div>
+          <div class="sum-label">Pass Rate</div>
+        </div>
+        <div class="rc-summary-item">
+          <div class="sum-val" style="color:var(--success)">${highest}</div>
+          <div class="sum-label">Highest Score</div>
+        </div>
+        <div class="rc-summary-item">
+          <div class="sum-val" style="color:var(--danger)">${lowest}</div>
+          <div class="sum-label">Lowest Score</div>
+        </div>
+        <div class="rc-summary-item">
+          <div class="sum-val">${rows.length}</div>
+          <div class="sum-label">Subjects</div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="rc-footer">
+        <span><i class="fas fa-shield-check" style="color:#C9973A;margin-right:4px"></i> Jaasiel Education Centre — Official Result</span>
+        <span>Generated: ${new Date().toLocaleDateString('en-NG', { day:'2-digit', month:'short', year:'numeric' })}</span>
+      </div>
+
+    </div>
+  `;
+}
+</script>
+</body>
+</html>
