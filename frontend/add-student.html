@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Register Student — Jaasiel RMS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="page-bg"></div>
+<div class="page-loader" id="page-loader"><div class="loader-logo"><i class="fas fa-graduation-cap"></i> Jaasiel RMS</div><div class="loader-ring"></div></div>
+<div class="toast-container" id="toast-container"></div>
+<div class="app-layout">
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<aside class="sidebar" id="sidebar"></aside>
+<div class="main-content">
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" id="menu-toggle"><i class="fas fa-bars"></i></button>
+      <a href="students.html" class="btn btn-ghost btn-sm" style="padding:6px 12px"><i class="fas fa-arrow-left"></i></a>
+      <div>
+        <div class="page-title" id="page-heading">Register Student</div>
+        <div class="breadcrumb"><a href="students.html">Students</a><span class="sep">/</span><span class="text-gold" id="breadcrumb-label">New Student</span></div>
+      </div>
+    </div>
+    <div class="topbar-right" id="topbar-right"></div>
+  </header>
+  <div class="page-body">
+    <div style="display:grid;grid-template-columns:1fr 340px;gap:24px;align-items:start">
+      <!-- Main Form -->
+      <div class="card">
+        <form id="student-form" onsubmit="saveStudent(event)">
+          <div style="font-family:var(--font-display);font-size:1.1rem;font-weight:700;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--border-light)">
+            <i class="fas fa-user-graduate" style="color:var(--brand-gold);margin-right:8px"></i>Personal Information
+          </div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="form-label">First Name <span class="required">*</span></label>
+              <input type="text" class="form-control" id="first-name" placeholder="e.g. Eghosa" data-validate="required" oninput="generateCredentials()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Middle Name</label>
+              <input type="text" class="form-control" id="middle-name" placeholder="e.g. Victory" oninput="generateCredentials()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Last Name <span class="required">*</span></label>
+              <input type="text" class="form-control" id="last-name" placeholder="e.g. Aisosa" data-validate="required" oninput="generateCredentials()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Date of Birth <span class="required">*</span></label>
+              <input type="date" class="form-control" id="dob" data-validate="required" onchange="generateCredentials()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Gender <span class="required">*</span></label>
+              <select class="form-control" id="gender" data-validate="required">
+                <option value="">Select gender…</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Class <span class="required">*</span></label>
+              <select class="form-control" id="class-name" data-validate="required"><option value="">Select class…</option></select>
+            </div>
+          </div>
+
+          <div style="font-family:var(--font-display);font-size:1rem;font-weight:700;margin:24px 0 16px;padding-top:16px;border-top:1px solid var(--border-light)">
+            <i class="fas fa-phone" style="color:var(--brand-gold);margin-right:8px"></i>Parent / Guardian
+          </div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="form-label">Parent Phone</label>
+              <div class="input-group"><i class="input-icon fas fa-phone"></i>
+                <input type="tel" class="form-control" id="parent-phone" placeholder="+234 800 000 0000"></div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Parent Email</label>
+              <div class="input-group"><i class="input-icon fas fa-envelope"></i>
+                <input type="email" class="form-control" id="parent-email" placeholder="parent@example.com"></div>
+            </div>
+            <div class="form-group" style="grid-column:1/-1">
+              <label class="form-label">Home Address</label>
+              <textarea class="form-control" id="address" rows="2" placeholder="Student's home address…"></textarea>
+            </div>
+          </div>
+
+          <div style="font-family:var(--font-display);font-size:1rem;font-weight:700;margin:24px 0 16px;padding-top:16px;border-top:1px solid var(--border-light)">
+            <i class="fas fa-image" style="color:var(--brand-gold);margin-right:8px"></i>Passport Photograph
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap">
+            <div id="photo-preview" style="width:100px;height:100px;border-radius:var(--radius-lg);background:var(--bg-input);border:2px dashed var(--border-light);display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:1.8rem;flex-shrink:0;overflow:hidden">
+              <i class="fas fa-user"></i>
+            </div>
+            <div>
+              <input type="file" id="photo-input" accept="image/*" class="hidden" onchange="previewPhoto(this)">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('photo-input').click()"><i class="fas fa-upload"></i> Upload Photo</button>
+              <div class="form-hint">JPG or PNG, max 2MB. Square crop recommended.</div>
+            </div>
+          </div>
+
+          <div class="modal-footer" style="padding-top:24px;margin-top:24px">
+            <a href="students.html" class="btn btn-ghost">Cancel</a>
+            <button type="submit" class="btn btn-primary" id="save-btn"><i class="fas fa-user-plus"></i> <span id="save-btn-label">Register Student</span></button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Credentials Preview -->
+      <div>
+        <div class="card card-gold" style="position:sticky;top:calc(var(--topbar-h) + 16px)">
+          <div style="font-family:var(--font-display);font-size:1rem;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px">
+            <i class="fas fa-key" style="color:var(--brand-gold)"></i> Auto-Generated Login
+          </div>
+          <div style="font-size:.78rem;color:var(--text-muted);margin-bottom:16px">Fill in name and date of birth above to see preview</div>
+          <div class="form-group">
+            <label class="form-label" style="font-size:.72rem">Student Username</label>
+            <div style="background:var(--bg-dark);border:1px solid var(--border-light);border-radius:var(--radius);padding:10px 14px;font-family:var(--font-mono);font-size:.9rem;min-height:40px;word-break:break-all" id="preview-username">—</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" style="font-size:.72rem">Default Password</label>
+            <div style="background:var(--bg-dark);border:1px solid var(--border-light);border-radius:var(--radius);padding:10px 14px;font-family:var(--font-mono);font-size:.9rem;min-height:40px" id="preview-password">—</div>
+          </div>
+          <div class="form-group mb-0">
+            <label class="form-label" style="font-size:.72rem">Student ID</label>
+            <div style="background:var(--bg-dark);border:1px solid var(--border-light);border-radius:var(--radius);padding:10px 14px;font-family:var(--font-mono);font-size:.9rem;color:var(--text-muted)" id="preview-id">Auto-assigned on save</div>
+          </div>
+          <div class="alert alert-warning mt-3 mb-0" style="font-size:.78rem">
+            <i class="fas fa-triangle-exclamation"></i>
+            The student can change their password after first login.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+<script src="js/core.js"></script>
+<script src="js/ui.js"></script>
+<script>
+const editId = new URLSearchParams(window.location.search).get('id');
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await window.__rmsBootstrapReady;
+  initPage(['super_admin','admin','sub_admin'], AuthState.getRole()==='sub_admin'?'subadmin':'admin');
+  populateClassSelect(document.getElementById('class-name'), 'Select class…', false);
+  if (editId) loadForEdit(editId);
+});
+
+function generateCredentials() {
+  const fn = document.getElementById('first-name').value.trim();
+  const mn = document.getElementById('middle-name').value.trim();
+  const ln = document.getElementById('last-name').value.trim();
+  const dob = document.getElementById('dob').value;
+  if (fn && ln && dob) {
+    document.getElementById('preview-username').textContent = Fmt.generateUsername(fn, mn, ln, dob);
+    document.getElementById('preview-password').textContent = Fmt.generatePassword(dob);
+  } else {
+    document.getElementById('preview-username').textContent = '—';
+    document.getElementById('preview-password').textContent = '—';
+  }
+}
+
+function previewPhoto(inp) {
+  const file = inp.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const prev = document.getElementById('photo-preview');
+    prev.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover">`;
+  };
+  reader.readAsDataURL(file);
+}
+
+async function loadForEdit(id) {
+  document.getElementById('page-heading').textContent = 'Edit Student';
+  document.getElementById('breadcrumb-label').textContent = 'Edit';
+  document.getElementById('save-btn-label').textContent = 'Save Changes';
+  try {
+    const s = await API.students.get(id);
+    const parts = (s.full_name||'').split(' ');
+    document.getElementById('first-name').value = parts[0]||'';
+    document.getElementById('middle-name').value = parts.length>2 ? parts.slice(1,-1).join(' ') : '';
+    document.getElementById('last-name').value = parts[parts.length-1]||'';
+    document.getElementById('dob').value = s.date_of_birth ? s.date_of_birth.split('T')[0] : '';
+    document.getElementById('gender').value = s.gender||'';
+    document.getElementById('class-name').value = s.class_name||'';
+    document.getElementById('parent-phone').value = s.parent_phone||'';
+    document.getElementById('parent-email').value = s.parent_email||'';
+    document.getElementById('address').value = s.address||'';
+    generateCredentials();
+  } catch(err) { Toast.error('Failed', err.message); }
+}
+
+async function saveStudent(e) {
+  e.preventDefault();
+  if (!Validator.validate(document.getElementById('student-form'))) return;
+  const btn = document.getElementById('save-btn');
+  setLoading(btn, true, editId?'Saving…':'Registering…');
+  const fn = document.getElementById('first-name').value.trim();
+  const mn = document.getElementById('middle-name').value.trim();
+  const ln = document.getElementById('last-name').value.trim();
+  const dob = document.getElementById('dob').value;
+  const payload = {
+    full_name: [fn, mn, ln].filter(Boolean).join(' '),
+    first_name: fn, middle_name: mn, last_name: ln,
+    date_of_birth: dob,
+    gender: document.getElementById('gender').value,
+    class_name: document.getElementById('class-name').value,
+    parent_phone: document.getElementById('parent-phone').value.trim()||null,
+    parent_email: document.getElementById('parent-email').value.trim()||null,
+    address: document.getElementById('address').value.trim()||null,
+    username: Fmt.generateUsername(fn, mn, ln, dob),
+    default_password: Fmt.generatePassword(dob),
+  };
+  try {
+    if (editId) await API.students.update(editId, payload);
+    else await API.students.create(payload);
+    Toast.success(editId?'Updated!':'Registered!', editId?'Student record updated':'Student registered with auto-generated credentials');
+    setTimeout(() => window.location.href = 'students.html', 1200);
+  } catch(err) { Toast.error('Failed', err.message); setLoading(btn, false); }
+}
+</script>
+</body>
+</html>

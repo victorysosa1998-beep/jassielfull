@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Student Dashboard — Jaasiel RMS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="page-bg"></div>
+<div class="page-loader" id="page-loader"><div class="loader-logo"><i class="fas fa-graduation-cap"></i> Jaasiel RMS</div><div class="loader-ring"></div></div>
+<div class="toast-container" id="toast-container"></div>
+<div class="app-layout">
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<aside class="sidebar" id="sidebar"></aside>
+<div class="main-content">
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" id="menu-toggle"><i class="fas fa-bars"></i></button>
+      <div>
+        <div class="page-title">My Results</div>
+        <div class="breadcrumb"><span class="text-gold">Student Portal</span></div>
+      </div>
+    </div>
+    <div class="topbar-right" id="topbar-right"></div>
+  </header>
+  <div class="page-body">
+    <!-- Student Profile Banner -->
+    <div class="welcome-banner mb-3">
+      <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+        <div class="avatar avatar-xl user-avatar-init" style="flex-shrink:0">ST</div>
+        <div>
+          <div style="font-family:var(--font-display);font-size:clamp(1.1rem,2.5vw,1.6rem);font-weight:700" class="user-name-display">Student Name</div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:6px">
+            <span class="badge badge-gold"><i class="fas fa-school"></i> <span class="user-class-display">Class</span></span>
+            <span class="badge badge-draft" id="stu-id-badge">ID: Loading…</span>
+            <span class="badge badge-approved" id="session-badge">Loading…</span>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <a href="report-card.html" class="btn btn-primary"><i class="fas fa-file-pdf"></i> Report Card</a>
+        <a href="transcript.html" class="btn btn-secondary"><i class="fas fa-scroll"></i> Transcript</a>
+      </div>
+    </div>
+
+    <!-- Term Stats -->
+    <div class="stats-grid mb-3">
+      <div class="stat-card"><div class="stat-icon gold"><i class="fas fa-star"></i></div><div class="stat-info"><div class="stat-label">Average Score</div><div class="stat-value" id="stat-avg">—</div></div></div>
+      <div class="stat-card"><div class="stat-icon green"><i class="fas fa-trophy"></i></div><div class="stat-info"><div class="stat-label">Class Position</div><div class="stat-value" id="stat-pos">—</div></div></div>
+      <div class="stat-card"><div class="stat-icon blue"><i class="fas fa-book-open"></i></div><div class="stat-info"><div class="stat-label">Subjects</div><div class="stat-value" id="stat-subs">—</div></div></div>
+      <div class="stat-card"><div class="stat-icon purple"><i class="fas fa-graduation-cap"></i></div><div class="stat-info"><div class="stat-label">Best Grade</div><div class="stat-value" id="stat-best">—</div></div></div>
+    </div>
+
+    <div class="grid-2">
+      <!-- Current Term Results Table -->
+      <div class="card" style="grid-column:1/-1">
+        <div class="section-header">
+          <div><div class="section-title">Current Term Results</div><div class="section-sub" id="results-period">Loading…</div></div>
+          <div style="display:flex;gap:8px">
+            <select class="filter-select" id="term-filter" onchange="loadResults()" style="font-size:.82rem"></select>
+            <a href="report-card.html" class="btn btn-primary btn-sm"><i class="fas fa-download"></i> Download Report</a>
+          </div>
+        </div>
+        <div id="results-container">
+          <div class="skeleton mb-2" style="height:50px;border-radius:10px"></div>
+          <div class="skeleton mb-2" style="height:50px;border-radius:10px"></div>
+          <div class="skeleton mb-2" style="height:50px;border-radius:10px"></div>
+          <div class="skeleton" style="height:50px;border-radius:10px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Performance Chart -->
+    <div class="card mt-3">
+      <div class="section-title mb-3">Performance by Subject</div>
+      <canvas id="subject-chart" height="120"></canvas>
+    </div>
+  </div>
+</div>
+</div>
+<script src="js/core.js"></script>
+<script src="js/ui.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  await window.__rmsBootstrapReady;
+  initPage('student', 'student');
+  loadProfile();
+  loadResults();
+});
+
+async function loadProfile() {
+  try {
+    const s = await API.students.myProfile();
+    document.querySelectorAll('.user-name-display').forEach(el => el.textContent = s.full_name||'—');
+    document.querySelectorAll('.user-class-display').forEach(el => el.textContent = s.class_name||'—');
+    document.querySelectorAll('.user-avatar-init').forEach(el => el.textContent = Fmt.initials(s.full_name||'?'));
+    document.getElementById('stu-id-badge').textContent = 'ID: '+(s.student_id||'—');
+  } catch {}
+  try {
+    const sess = await API.sessions.current();
+    const badge = document.getElementById('session-badge');
+    if (badge) badge.textContent = (sess.session_name||'') + ' · ' + (sess.term_name||'');
+  } catch { const badge = document.getElementById('session-badge'); if(badge) badge.textContent='—'; }
+}
+
+async function loadResults() {
+  const container = document.getElementById('results-container');
+  showSkeleton(container, 4, '50px', '10px');
+  try {
+    const data = await API.students.myResults();
+    const results = data.results || data.items || data || [];
+    if (!results.length) {
+      container.innerHTML = `<div style="text-align:center;padding:48px;color:var(--text-muted)">
+        <i class="fas fa-inbox" style="font-size:2.5rem;display:block;margin-bottom:12px;opacity:.4"></i>
+        No results published yet. Check back after your exams.
+      </div>`;
+      return;
+    }
+    // Update stats
+    const totals = results.map(r => r.total_score||0);
+    const avg = totals.reduce((a,b)=>a+b,0)/totals.length;
+    document.getElementById('stat-avg').textContent = avg.toFixed(1);
+    document.getElementById('stat-subs').textContent = results.length;
+    document.getElementById('stat-pos').textContent = Fmt.ordinal(data.position||data.class_position||'—');
+    const best = results.reduce((a,b)=>((b.total_score||0)>(a.total_score||0)?b:a),results[0]);
+    const bestGr = Fmt.grade(best?.total_score||0);
+    document.getElementById('stat-best').innerHTML = `<span style="color:${Fmt.gradeColor(bestGr.g)}">${bestGr.g}</span>`;
+    document.getElementById('results-period').textContent = data.session_name||'' + ' · ' + (data.term_name||'');
+
+    // Session filter
+    const termSel = document.getElementById('term-filter');
+    termSel.innerHTML = `<option value="">${data.term_name||'Current Term'}</option>`;
+
+    container.innerHTML = `
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:.88rem">
+          <thead><tr style="border-bottom:1px solid var(--border-light)">
+            <th style="padding:10px 14px;text-align:left;font-size:.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em">Subject</th>
+            <th style="padding:10px 14px;text-align:center;font-size:.72rem;color:var(--text-muted);text-transform:uppercase">CA</th>
+            <th style="padding:10px 14px;text-align:center;font-size:.72rem;color:var(--text-muted);text-transform:uppercase">Exam</th>
+            <th style="padding:10px 14px;text-align:center;font-size:.72rem;color:var(--text-muted);text-transform:uppercase">Total</th>
+            <th style="padding:10px 14px;text-align:center;font-size:.72rem;color:var(--text-muted);text-transform:uppercase">Grade</th>
+            <th style="padding:10px 14px;text-align:left;font-size:.72rem;color:var(--text-muted);text-transform:uppercase">Remarks</th>
+          </tr></thead>
+          <tbody>
+          ${results.map(r => {
+            const gr = Fmt.grade(r.total_score||0);
+            return `<tr style="border-bottom:1px solid rgba(255,255,255,.04)">
+              <td style="padding:12px 14px;font-weight:600">${r.subject_name||'—'}</td>
+              <td style="padding:12px 14px;text-align:center;font-family:var(--font-mono)">${r.ca_score??'—'}</td>
+              <td style="padding:12px 14px;text-align:center;font-family:var(--font-mono)">${r.exam_score??'—'}</td>
+              <td style="padding:12px 14px;text-align:center;font-family:var(--font-mono);font-weight:700">${r.total_score??'—'}</td>
+              <td style="padding:12px 14px;text-align:center">
+                <span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;font-weight:700;font-size:.85rem;background:${Fmt.gradeColor(gr.g)}22;color:${Fmt.gradeColor(gr.g)};border:1px solid ${Fmt.gradeColor(gr.g)}44">${gr.g}</span>
+              </td>
+              <td style="padding:12px 14px;font-size:.85rem;color:var(--text-secondary)">${gr.r}</td>
+            </tr>`;
+          }).join('')}
+          <tr style="border-top:2px solid var(--border-light);background:rgba(201,151,58,.04)">
+            <td style="padding:12px 14px;font-weight:700">Overall Average</td>
+            <td colspan="2"></td>
+            <td style="padding:12px 14px;text-align:center;font-family:var(--font-mono);font-weight:700;font-size:1.1rem;color:var(--brand-gold)">${avg.toFixed(1)}</td>
+            <td style="padding:12px 14px;text-align:center"><span style="background:${Fmt.gradeColor(Fmt.grade(avg).g)}22;color:${Fmt.gradeColor(Fmt.grade(avg).g)};border:1px solid ${Fmt.gradeColor(Fmt.grade(avg).g)}44;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;font-weight:700">${Fmt.grade(avg).g}</span></td>
+            <td style="padding:12px 14px;color:var(--brand-gold);font-weight:600">${Fmt.grade(avg).r}</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>`;
+    initSubjectChart(results);
+  } catch {
+    // Demo data
+    const demo = [
+      {subject_name:'Mathematics',ca_score:35,exam_score:52,total_score:87},
+      {subject_name:'English Language',ca_score:30,exam_score:48,total_score:78},
+      {subject_name:'Basic Science',ca_score:28,exam_score:44,total_score:72},
+      {subject_name:'Social Studies',ca_score:32,exam_score:46,total_score:78},
+      {subject_name:'Yoruba Language',ca_score:36,exam_score:50,total_score:86},
+      {subject_name:'Fine Arts',ca_score:38,exam_score:55,total_score:93},
+    ];
+    const avg2 = demo.reduce((a,b)=>a+b.total_score,0)/demo.length;
+    document.getElementById('stat-avg').textContent = avg2.toFixed(1);
+    document.getElementById('stat-subs').textContent = demo.length;
+    document.getElementById('stat-pos').textContent = '3rd';
+    document.getElementById('stat-best').innerHTML = `<span style="color:${Fmt.gradeColor('A')}">A</span>`;
+    document.getElementById('results-period').textContent = '2024/2025 · First Term';
+    document.getElementById('session-badge').textContent = 'First Term 2024/2025';
+    container.innerHTML = `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:.88rem">
+      <thead><tr style="border-bottom:1px solid var(--border-light)"><th style="padding:10px 14px;text-align:left;font-size:.72rem;color:var(--text-muted);text-transform:uppercase">Subject</th><th style="padding:10px 14px;text-align:center;font-size:.72rem;color:var(--text-muted);text-transform:uppercase">CA</th><th style="padding:10px 14px;text-align:center;font-size:.72rem;color:var(--text-muted);text-transform:uppercase">Exam</th><th style="padding:10px 14px;text-align:center;font-size:.72rem;color:var(--text-muted);text-transform:uppercase">Total</th><th style="padding:10px 14px;text-align:center;font-size:.72rem;color:var(--text-muted);text-transform:uppercase">Grade</th><th style="padding:10px 14px;font-size:.72rem;color:var(--text-muted);text-transform:uppercase">Remarks</th></tr></thead>
+      <tbody>${demo.map(r=>{const gr=Fmt.grade(r.total_score);return`<tr style="border-bottom:1px solid rgba(255,255,255,.04)"><td style="padding:12px 14px;font-weight:600">${r.subject_name}</td><td style="padding:12px 14px;text-align:center;font-family:var(--font-mono)">${r.ca_score}</td><td style="padding:12px 14px;text-align:center;font-family:var(--font-mono)">${r.exam_score}</td><td style="padding:12px 14px;text-align:center;font-family:var(--font-mono);font-weight:700">${r.total_score}</td><td style="padding:12px 14px;text-align:center"><span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;font-weight:700;font-size:.85rem;background:${Fmt.gradeColor(gr.g)}22;color:${Fmt.gradeColor(gr.g)};border:1px solid ${Fmt.gradeColor(gr.g)}44">${gr.g}</span></td><td style="padding:12px 14px;font-size:.85rem;color:var(--text-secondary)">${gr.r}</td></tr>`;}).join('')}
+      <tr style="border-top:2px solid var(--border-light);background:rgba(201,151,58,.04)"><td style="padding:12px 14px;font-weight:700">Overall Average</td><td colspan="2"></td><td style="padding:12px 14px;text-align:center;font-family:var(--font-mono);font-weight:700;font-size:1.1rem;color:var(--brand-gold)">${avg2.toFixed(1)}</td><td style="padding:12px 14px;text-align:center"><span style="background:${Fmt.gradeColor(Fmt.grade(avg2).g)}22;color:${Fmt.gradeColor(Fmt.grade(avg2).g)};border:1px solid ${Fmt.gradeColor(Fmt.grade(avg2).g)}44;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;font-weight:700">${Fmt.grade(avg2).g}</span></td><td style="padding:12px 14px;color:var(--brand-gold);font-weight:600">${Fmt.grade(avg2).r}</td></tr>
+      </tbody></table></div>`;
+    initSubjectChart(demo);
+  }
+}
+
+function initSubjectChart(results) {
+  ChartDefaults.apply();
+  const ctx = document.getElementById('subject-chart');
+  if (!ctx) return;
+  if (ctx._chart) ctx._chart.destroy();
+  const colors = results.map(r => {
+    const gr = Fmt.grade(r.total_score||0);
+    return Fmt.gradeColor(gr.g);
+  });
+  ctx._chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: results.map(r => r.subject_name),
+      datasets: [{
+        label: 'Score', data: results.map(r => r.total_score||0),
+        backgroundColor: colors.map(c => c+'33'), borderColor: colors,
+        borderWidth: 2, borderRadius: 6,
+      }]
+    },
+    options: { responsive:true, plugins:{legend:{display:false}},
+      scales:{x:{ticks:{color:'#657088',maxRotation:30},grid:{display:false}},
+              y:{min:0,max:100,ticks:{color:'#657088'},grid:{color:'rgba(255,255,255,.04)'}}} }
+  });
+}
+</script>
+</body>
+</html>

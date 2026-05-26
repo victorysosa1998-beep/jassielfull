@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Audit Logs — Jaasiel RMS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="page-bg"></div>
+<div class="page-loader" id="page-loader"><div class="loader-logo"><i class="fas fa-graduation-cap"></i> Jaasiel RMS</div><div class="loader-ring"></div></div>
+<div class="toast-container" id="toast-container"></div>
+<div class="app-layout">
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<aside class="sidebar" id="sidebar"></aside>
+<div class="main-content">
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" id="menu-toggle"><i class="fas fa-bars"></i></button>
+      <a href="admin-dashboard.html" class="btn btn-ghost btn-sm" style="padding:6px 12px"><i class="fas fa-arrow-left"></i></a>
+      <div>
+        <div class="page-title">Audit Logs</div>
+        <div class="breadcrumb"><a href="admin-dashboard.html">Dashboard</a><span class="sep">/</span><span class="text-gold">Audit Logs</span></div>
+      </div>
+    </div>
+    <div class="topbar-right" id="topbar-right">
+      <button class="btn btn-ghost btn-sm" onclick="exportLogs()"><i class="fas fa-file-csv"></i> Export</button>
+    </div>
+  </header>
+  <div class="page-body">
+    <div class="tabs mb-3">
+      <div class="tab-btn active" onclick="switchTab('activity',this)">Activity Log</div>
+      <div class="tab-btn" onclick="switchTab('login',this)">Login Sessions</div>
+    </div>
+
+    <div id="activity-panel">
+      <div class="card">
+        <div class="filter-bar mb-3">
+          <div class="search-box"><i class="fas fa-search"></i><input type="text" placeholder="Search logs…" oninput="filterLogs(this.value)"></div>
+          <select class="filter-select" id="action-filter" onchange="loadLogs(1)">
+            <option value="">All Actions</option>
+            <option value="login">Login</option>
+            <option value="logout">Logout</option>
+            <option value="upload">Upload</option>
+            <option value="approve">Approve</option>
+            <option value="reject">Reject</option>
+            <option value="create">Create</option>
+            <option value="delete">Delete</option>
+          </select>
+          <select class="filter-select" id="role-filter" onchange="loadLogs(1)">
+            <option value="">All Roles</option>
+            <option value="super_admin">Super Admin</option>
+            <option value="sub_admin">Sub Admin</option>
+            <option value="student">Student</option>
+          </select>
+          <input type="date" class="form-control" id="date-filter" onchange="loadLogs(1)" style="width:160px;padding:8px 12px;font-size:.85rem">
+        </div>
+        <div class="table-wrapper">
+          <table class="table">
+            <thead><tr><th>Time</th><th>User</th><th>Role</th><th>Action</th><th>Details</th><th>IP Address</th></tr></thead>
+            <tbody id="logs-tbody"><tr><td colspan="6" style="text-align:center;padding:40px"><div class="loader-ring" style="margin:0 auto;width:28px;height:28px;border-width:2px"></div></td></tr></tbody>
+          </table>
+        </div>
+        <div id="logs-pagination" class="pagination"></div>
+      </div>
+    </div>
+
+    <div id="login-panel" class="hidden">
+      <div class="card">
+        <div class="table-wrapper">
+          <table class="table">
+            <thead><tr><th>User</th><th>Role</th><th>Login Time</th><th>Logout Time</th><th>Duration</th><th>IP</th><th>Status</th></tr></thead>
+            <tbody id="login-tbody"><tr><td colspan="7" style="text-align:center;padding:40px"><div class="loader-ring" style="margin:0 auto;width:28px;height:28px;border-width:2px"></div></td></tr></tbody>
+          </table>
+        </div>
+        <div id="login-pagination" class="pagination"></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+<script src="js/core.js"></script>
+<script src="js/ui.js"></script>
+<script>
+let currentTab = 'activity';
+const actionColors = {login:'blue',logout:'blue',upload:'gold',approve:'success',reject:'red',delete:'red',create:'success',correction:'blue'};
+const actionIcons = {login:'fa-right-to-bracket',logout:'fa-right-from-bracket',upload:'fa-upload',approve:'fa-check-circle',reject:'fa-times-circle',delete:'fa-trash',create:'fa-plus-circle',correction:'fa-rotate'};
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await window.__rmsBootstrapReady;
+  initPage(['super_admin','admin'], 'admin');
+  loadLogs(1);
+});
+
+function switchTab(tab, btn) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
+  document.getElementById('activity-panel').classList.toggle('hidden', tab!=='activity');
+  document.getElementById('login-panel').classList.toggle('hidden', tab!=='login');
+  if (tab==='login') loadLoginSessions(1);
+}
+
+async function loadLogs(page=1) {
+  const tbody = document.getElementById('logs-tbody');
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px"><div class="loader-ring" style="margin:0 auto;width:28px;height:28px;border-width:2px"></div></td></tr>';
+  try {
+    const params = { page, per_page:20, action:document.getElementById('action-filter').value||undefined, role:document.getElementById('role-filter').value||undefined, date:document.getElementById('date-filter').value||undefined };
+    const data = await API.audit.list(params);
+    const items = data.items || data || [];
+    renderLogs(items);
+    renderPagination(document.getElementById('logs-pagination'),{page,total:data.total||items.length,perPage:20,onChange:'loadLogs'});
+  } catch {
+    const demo = Array.from({length:12},(_,i)=>({id:i,user:['Admin','Sub Admin Emeka','Sub Admin Funke','Student Eghosa'][i%4],role:['super_admin','sub_admin','sub_admin','student'][i%4],action:['login','upload','approve','create','logout','reject'][i%6],details:['Logged in from Chrome','Uploaded JSS 2A Mathematics results','Approved batch #12','Created 5 students','Logged out','Rejected SS 1B Physics'][i%6],ip:'192.168.'+Math.floor(Math.random()*255)+'.'+Math.floor(Math.random()*255),created_at:new Date(Date.now()-i*3.6e6).toISOString()}));
+    renderLogs(demo);
+  }
+}
+
+function renderLogs(items) {
+  document.getElementById('logs-tbody').innerHTML = items.map(l => {
+    const color = actionColors[l.action]||'blue'; const icon = actionIcons[l.action]||'fa-circle';
+    return `<tr>
+      <td style="white-space:nowrap;font-size:.8rem;color:var(--text-muted)">${Fmt.datetime(l.created_at||l.timestamp)}</td>
+      <td><div style="display:flex;align-items:center;gap:8px"><div class="avatar avatar-xs">${Fmt.initials(l.user||l.user_name||'?')}</div><strong style="font-size:.88rem">${l.user||l.user_name||'—'}</strong></div></td>
+      <td><span class="badge badge-draft" style="font-size:.72rem">${l.role||'—'}</span></td>
+      <td><div style="display:flex;align-items:center;gap:6px"><div class="stat-icon ${color}" style="width:26px;height:26px;font-size:.72rem;border-radius:7px"><i class="fas ${icon}"></i></div><span style="font-size:.85rem;font-weight:600">${l.action}</span></div></td>
+      <td style="font-size:.82rem;color:var(--text-secondary);max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${l.details||l.description||'—'}</td>
+      <td><span class="font-mono" style="font-size:.78rem;color:var(--text-muted)">${l.ip||l.ip_address||'—'}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+async function loadLoginSessions(page=1) {
+  const tbody = document.getElementById('login-tbody');
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px"><div class="loader-ring" style="margin:0 auto;width:28px;height:28px;border-width:2px"></div></td></tr>';
+  try {
+    const data = await API.audit.loginSessions({ page, per_page:20 });
+    const items = data.items || data || [];
+    tbody.innerHTML = items.map(s => `<tr>
+      <td><div style="display:flex;align-items:center;gap:8px"><div class="avatar avatar-xs">${Fmt.initials(s.user||'?')}</div><strong>${s.user||'—'}</strong></div></td>
+      <td><span class="badge badge-draft">${s.role||'—'}</span></td>
+      <td style="font-size:.82rem;white-space:nowrap">${Fmt.datetime(s.login_at)}</td>
+      <td style="font-size:.82rem;color:var(--text-muted);white-space:nowrap">${s.logout_at?Fmt.datetime(s.logout_at):'<span style="color:var(--success)">Active</span>'}</td>
+      <td style="font-size:.82rem;color:var(--text-muted)">${s.duration||'—'}</td>
+      <td class="font-mono" style="font-size:.78rem;color:var(--text-muted)">${s.ip||'—'}</td>
+      <td><span class="badge ${s.logout_at?'badge-draft':'badge-approved'}">${s.logout_at?'Ended':'Active'}</span></td>
+    </tr>`).join('');
+  } catch {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text-muted)">No login sessions found</td></tr>';
+  }
+}
+
+function filterLogs(q) {
+  document.querySelectorAll('#logs-tbody tr').forEach(r => { r.style.display = !q||r.textContent.toLowerCase().includes(q.toLowerCase())?'':'none'; });
+}
+async function exportLogs() {
+  Toast.info('Exporting…','Preparing audit log CSV');
+  try {
+    const data = await API.audit.list({per_page:1000});
+    exportCSV((data.items||data||[]).map(l=>({Time:Fmt.datetime(l.created_at),User:l.user,Role:l.role,Action:l.action,Details:l.details||'',IP:l.ip||''})),'audit-logs.csv');
+  } catch(err) { Toast.error('Export failed',err.message); }
+}
+</script>
+</body>
+</html>

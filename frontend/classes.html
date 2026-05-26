@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Classes & Subjects — Jaasiel RMS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="page-bg"></div>
+<div class="page-loader" id="page-loader"><div class="loader-logo"><i class="fas fa-graduation-cap"></i> Jaasiel RMS</div><div class="loader-ring"></div></div>
+<div class="toast-container" id="toast-container"></div>
+<div class="app-layout">
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<aside class="sidebar" id="sidebar"></aside>
+<div class="main-content">
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" id="menu-toggle"><i class="fas fa-bars"></i></button>
+      <a href="admin-dashboard.html" class="btn btn-ghost btn-sm" style="padding:6px 12px"><i class="fas fa-arrow-left"></i></a>
+      <div><div class="page-title">Classes &amp; Subjects</div><div class="breadcrumb"><a href="admin-dashboard.html">Dashboard</a><span class="sep">/</span><span class="text-gold">Classes</span></div></div>
+    </div>
+    <div class="topbar-right" id="topbar-right"></div>
+  </header>
+  <div class="page-body">
+    <div class="tabs mb-3">
+      <div class="tab-btn active" onclick="switchTab('classes',this)">Classes</div>
+      <div class="tab-btn" onclick="switchTab('subjects',this)">Subjects</div>
+    </div>
+    <div id="classes-panel">
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px" id="classes-grid">
+        <div class="skeleton" style="height:100px;border-radius:16px"></div><div class="skeleton" style="height:100px;border-radius:16px"></div><div class="skeleton" style="height:100px;border-radius:16px"></div><div class="skeleton" style="height:100px;border-radius:16px"></div>
+      </div>
+    </div>
+    <div id="subjects-panel" class="hidden">
+      <div class="card">
+        <div class="section-header"><div class="section-title">All Subjects</div><button class="btn btn-primary btn-sm" onclick="Modal.open('modal-new-subject')"><i class="fas fa-plus"></i> Add Subject</button></div>
+        <div class="table-wrapper"><table class="table"><thead><tr><th>Subject Name</th><th>Classes</th><th>Actions</th></tr></thead><tbody id="subjects-tbody"><tr><td colspan="3" style="text-align:center;padding:32px"><div class="loader-ring" style="margin:0 auto;width:24px;height:24px;border-width:2px"></div></td></tr></tbody></table></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+<div class="modal-overlay" id="modal-new-subject"><div class="modal modal-sm"><div class="modal-header"><div class="modal-title">Add Subject</div><button class="modal-close" onclick="Modal.close('modal-new-subject')"><i class="fas fa-times"></i></button></div><div class="form-group"><label class="form-label">Subject Name <span class="required">*</span></label><input type="text" class="form-control" id="new-sub-name" placeholder="e.g. Mathematics"></div><div class="modal-footer"><button class="btn btn-ghost" onclick="Modal.close('modal-new-subject')">Cancel</button><button class="btn btn-primary" onclick="addSubject()"><i class="fas fa-plus"></i> Add</button></div></div></div>
+<script src="js/core.js"></script>
+<script src="js/ui.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded',async()=>{await window.__rmsBootstrapReady;initPage(['super_admin','admin'],'admin');loadClasses();});
+function switchTab(t,btn){document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');document.getElementById('classes-panel').classList.toggle('hidden',t!=='classes');document.getElementById('subjects-panel').classList.toggle('hidden',t!=='subjects');if(t==='subjects')loadSubjects();}
+async function loadClasses(){
+  try{const data=await API.classes.list();const items=data.items||data||SCHOOL_CLASSES.map((n,i)=>({id:i,name:n,student_count:Math.floor(Math.random()*45)+15}));
+  document.getElementById('classes-grid').innerHTML=items.map(c=>`<div class="card" style="text-align:center;cursor:pointer;hover:border-color:var(--brand-gold)" onclick="window.location.href='students.html?class=${encodeURIComponent(c.name||c)}'"><div style="font-size:1.8rem;margin-bottom:8px">🏫</div><div style="font-weight:700;margin-bottom:4px">${c.name||c}</div><div style="font-size:.78rem;color:var(--text-muted)">${c.student_count||'—'} students</div></div>`).join('');}
+  catch{document.getElementById('classes-grid').innerHTML=SCHOOL_CLASSES.map(n=>`<div class="card" style="text-align:center;cursor:pointer" onclick="window.location.href='students.html?class=${encodeURIComponent(n)}'"><div style="font-size:1.8rem;margin-bottom:8px">🏫</div><div style="font-weight:700;margin-bottom:4px">${n}</div><div style="font-size:.78rem;color:var(--text-muted)">Click to view students</div></div>`).join('');}}
+async function loadSubjects(){
+  try{const data=await API.subjects.list();const items=data.items||data||[];
+  document.getElementById('subjects-tbody').innerHTML=items.length?items.map(s=>`<tr><td><strong>${s.name}</strong></td><td style="color:var(--text-muted);font-size:.85rem">${(s.classes||[]).join(', ')||'All classes'}</td><td><div style="display:flex;gap:6px"><button class="btn btn-icon btn-danger btn-sm" onclick="deleteSubject(${s.id})"><i class="fas fa-trash"></i></button></div></td></tr>`).join(''):'<tr><td colspan="3" style="text-align:center;padding:32px;color:var(--text-muted)">No subjects yet</td></tr>';}
+  catch{document.getElementById('subjects-tbody').innerHTML=['Mathematics','English Language','Basic Science','Social Studies','French','Physical Education','Fine Arts','CRS','Computer Science','Agricultural Science'].map(n=>`<tr><td><strong>${n}</strong></td><td style="color:var(--text-muted)">All classes</td><td></td></tr>`).join('');}}
+async function addSubject(){const name=document.getElementById('new-sub-name').value.trim();if(!name)return;try{await API.subjects.create({name});Toast.success('Added',`${name} added`);Modal.close('modal-new-subject');document.getElementById('new-sub-name').value='';loadSubjects();}catch(err){Toast.error('Failed',err.message);}}
+async function deleteSubject(id){if(!confirm('Delete this subject?'))return;try{await API.subjects.delete(id);Toast.success('Deleted','Subject removed');loadSubjects();}catch(err){Toast.error('Failed',err.message);}}
+</script>
+</body>
+</html>

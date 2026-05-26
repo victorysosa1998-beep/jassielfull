@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Jaasiel Education Centre | Accurate Knowledge is a Virtue</title>
+  <link rel="icon" href="assets/logo.png" type="image/png"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    :root { --font-display:'Syne',sans-serif; --font-body:'DM Sans',sans-serif; --font-serif:'Cormorant Garamond',serif; }
+  </style>
+</head>
+<body>
+
+  <!-- LOADER -->
+  <div class="loader" id="loader">
+    <div class="loader-inner">
+      <img src="assets/logo.png" alt="Logo" class="loader-logo"/>
+      <div class="loader-bar"><div class="loader-fill"></div></div>
+      <p class="loader-text">Loading Excellence…</p>
+         <p class="loader-text" style="font-size: 10px;">Built with immense❤️…</p>
+    </div>
+  </div>
+
+  <!-- NAVBAR -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="nav-brand">
+        <img src="assets/logo.png" alt="Jaasiel Logo" class="nav-logo"/>
+        <div class="nav-brand-text">
+          <span class="nav-name">Jaasiel</span>
+          <span class="nav-sub">Education Centre</span>
+        </div>
+      </a>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="index.html" class="active">Home</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="academics.html">Academics</a></li>
+        <li><a href="admissions.html">Admissions</a></li>
+        <li><a href="../frontend/login.html">Results</a></li>
+        <li><a href="contact.html">Contact</a></li>
+        
+      </ul>
+      <a href="admissions.html" class="btn-nav">Apply Now</a>
+       
+      <button class="hamburger" id="hamburger" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-bg">
+      <div class="hero-photo"></div>
+      <div class="hero-overlay"></div>
+      <div class="hero-grid"></div>
+    </div>
+
+    <!-- Right-side image panel with Nigerian students -->
+    <div class="hero-image-panel">
+      <img src="assets/schooluniform.jpeg" alt="Nigerian Secondary School Students"/>
+    </div>
+
+    <div class="hero-content">
+      <div class="hero-badge">
+        <span class="badge-dot pulse"></span>
+        Now Accepting Applications — 2025/2026 Session
+      </div>
+      <h1 class="hero-title">
+        Where <span class="highlight">Knowledge</span><br/>
+        Meets <span class="highlight-gold">Virtue</span>
+      </h1>
+      <p class="hero-sub">Jaasiel Education Centre — shaping the next generation of Nigerian leaders through academic excellence, character, and purpose in the heart of Benin City.</p>
+      <div class="hero-cta">
+        <a href="admissions.html" class="btn-primary"><i class="fa-solid fa-pen-to-square"></i> Apply for Admission</a>
+        <a href="about.html" class="btn-ghost"><i class="fa-regular fa-compass"></i> Our Story</a>
+      </div>
+      <div class="hero-stats">
+        <div class="stat"><span class="stat-num">1,200+</span><span class="stat-label">Students</span></div>
+        <div class="stat-div"></div>
+        <div class="stat"><span class="stat-num">98%</span><span class="stat-label">Pass Rate</span></div>
+        <div class="stat-div"></div>
+        <div class="stat"><span class="stat-num">15+</span><span class="stat-label">Years of Excellence</span></div>
+      </div>
+    </div>
+
+    <div class="hero-scroll-hint">
+      <span>Scroll Down</span>
+      <div class="scroll-line"></div>
+    </div>
+  </section>
+
+  <!-- TICKER -->
+  <div class="ticker-wrap">
+    <div class="ticker-track">
+      <span><i class="fa-solid fa-graduation-cap"></i></span>&nbsp;<b>WAEC 2024 Results: 98% Pass Rate</b>&nbsp;•&nbsp;
+      <span><i class="fa-solid fa-flask"></i></span>&nbsp;<b>New STEM Lab Now Open</b>&nbsp;•&nbsp;
+      <!-- <span><i class="fa-solid fa-trophy"></i></span>&nbsp;<b>1st Place — Abuja Inter-School Debate Championship</b>&nbsp;•&nbsp; -->
+      <span><i class="fa-solid fa-star"></i></span>&nbsp;<b>Admissions Open for 2025/2026 Session</b>&nbsp;•&nbsp;
+      <span><i class="fa-solid fa-graduation-cap"></i></span>&nbsp;<b>WAEC 2025 Results: 90% Pass Rate</b>&nbsp;•&nbsp;
+      <span><i class="fa-solid fa-flask"></i></span>&nbsp;<b>New STEM Lab Now Open</b>&nbsp;•&nbsp;
+      <!-- <span><i class="fa-solid fa-trophy"></i></span>&nbsp;<b>1st Place — Abuja Inter-School Debate Championship</b>&nbsp;•&nbsp; -->
+      <span><i class="fa-solid fa-star"></i></span>&nbsp;<b>Admissions Open for 2025/2026 Session</b>&nbsp;•&nbsp;
+    </div>
+  </div>
+
+  <!-- ABOUT SNIPPET -->
+  <section class="about-snap section">
+    <div class="container">
+      <div class="about-snap-grid">
+        <div class="about-snap-img-col">
+          <div class="img-stack">
+            <img src="assets/kidsnurs.png" alt="Nigerian students in school uniform" class="img-main"/>
+            <div class="img-badge-card">
+              <span class="badge-num">A+</span>
+              <span class="badge-desc">Academic Excellence</span>
+            </div>
+          </div>
+        </div>
+        <div class="about-snap-text">
+          <p class="section-eyebrow">Who We Are</p>
+          <h2 class="section-title">Raising Leaders.<br/>Shaping Futures.</h2>
+          <p class="body-text">At Jaasiel Education Centre, we believe every student carries the seed of greatness. Our holistic approach to secondary education blends rigorous academics with moral character development in a safe, stimulating environment right here in Benin City.</p>
+          <ul class="check-list">
+            <li><span class="chk"><i class="fa-solid fa-check"></i></span> WAEC &amp; NECO Accredited Secondary School</li>
+            <li><span class="chk"><i class="fa-solid fa-check"></i></span> Experienced, Passionate Educators</li>
+            <li><span class="chk"><i class="fa-solid fa-check"></i></span> State-of-the-Art Facilities</li>
+            <li><span class="chk"><i class="fa-solid fa-check"></i></span> Values-Based, Character-Centred Education</li>
+          </ul>
+          <a href="about.html" class="btn-primary" style="align-self:flex-start"><i class="fa-solid fa-arrow-right"></i> Learn More About Us</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WHY JAASIEL -->
+  <section class="features section alt-bg">
+    <div class="container">
+      <p class="section-eyebrow center">Why Choose Us</p>
+      <h2 class="section-title center">The Jaasiel Difference</h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon"><i class="fa-solid fa-book-open"></i></div>
+          <h3>Academic Excellence</h3>
+          <p>Rigorous curriculum designed to prepare students for WAEC, NECO, JAMB, and beyond with consistently outstanding results.</p>
+        </div>
+        <div class="feature-card feature-card--gold">
+          <div class="feature-icon"><i class="fa-solid fa-flask"></i></div>
+          <h3 style="color: white;">Modern STEM Labs</h3>
+          <p>Fully equipped science, technology, and computer labs driving hands-on discovery for tomorrow's innovators.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon"><i class="fa-solid fa-masks-theater"></i></div>
+          <h3>Arts &amp; Culture</h3>
+          <p>Drama, music, and visual arts programmes that nurture creativity and celebrate Nigeria's rich cultural heritage.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon"><i class="fa-solid fa-futbol"></i></div>
+          <h3>Sports &amp; Athletics</h3>
+          <p>Championship-level sports programmes building teamwork, discipline, and the winning mindset in every student.</p>
+        </div>
+        <div class="feature-card feature-card--gold">
+          <div class="feature-icon"><i class="fa-solid fa-earth-africa"></i></div>
+          <h3 style="color: white;">Global Perspective</h3>
+          <p>International exposure through exchange programmes, inter-school debates, and national competitions.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon"><i class="fa-solid fa-hands-praying"></i></div>
+          <h3>Character &amp; Values</h3>
+          <p>We build not just scholars — but people of integrity, purpose, and service to their community and nation.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ACADEMICS TEASER -->
+  <section class="academics-teaser section">
+    <div class="container">
+      <p class="section-eyebrow center">What We Offer</p>
+      <h2 class="section-title center">Academic Programmes</h2>
+      <div class="programs-grid">
+        <a href="academics.html" class="program-card">
+          <div class="program-num">01</div>
+          <h3>Junior Secondary</h3>
+          <p>JSS 1 – 3: foundational learning with English, Maths, Sciences, Social Studies &amp; more.</p>
+          <span class="program-arrow"><i class="fa-solid fa-arrow-right"></i></span>
+        </a>
+        <a href="academics.html" class="program-card program-card--highlight">
+          <div class="program-num">02</div>
+          <h3 style="color: white;">Senior Secondary</h3>
+          <p>SSS 1 – 3: WAEC &amp; NECO preparation across Science, Arts, and Commercial tracks.</p>
+          <span class="program-arrow"><i class="fa-solid fa-arrow-right"></i></span>
+        </a>
+        <a href="academics.html" class="program-card">
+          <div class="program-num">03</div>
+          <h3>Extracurriculars</h3>
+          <p>Debate, drama, music, sports clubs, and student leadership programmes that develop the whole child.</p>
+          <span class="program-arrow"><i class="fa-solid fa-arrow-right"></i></span>
+        </a>
+        <a href="admissions.html" class="program-card">
+          <div class="program-num">04</div>
+          <h3>Apply Now</h3>
+          <p>Admissions are open. Secure your child's spot in Benin City's most purpose-driven school.</p>
+          <span class="program-arrow"><i class="fa-solid fa-arrow-right"></i></span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- TESTIMONIALS -->
+  <section class="testimonials section alt-bg">
+    <div class="container">
+      <p class="section-eyebrow center">Voices</p>
+      <h2 class="section-title center">What Our Community Says</h2>
+      <div class="testi-grid">
+        <div class="testi-card">
+          <div class="testi-stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
+          <p>"Jaasiel transformed my child completely. The teachers genuinely care about each student's future — not just their grades."</p>
+          <div class="testi-author">
+            <div class="testi-avatar">AO</div>
+            <div><strong>Mrs. Adaeze Okafor</strong><br/><small>Parent — SSS 2</small></div>
+          </div>
+        </div>
+        <div class="testi-card testi-card--gold">
+          <div class="testi-stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
+          <p style="color: white;">"I got straight A's in WAEC and a scholarship to study engineering. Jaasiel gave me the foundation I needed."</p>
+          <div class="testi-author">
+            <div class="testi-avatar">EI</div>
+            <div><strong>Emmanuel Idoko</strong><br/><small>Alumni — Class of 2023</small></div>
+          </div>
+        </div>
+        <div class="testi-card">
+          <div class="testi-stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
+          <p>"The school's mix of discipline and warmth is exceptional. My daughter looks forward to school every single day."</p>
+          <div class="testi-author">
+            <div class="testi-avatar">FK</div>
+            <div><strong>Mr. Femi Kayode</strong><br/><small>Parent — JSS 3</small></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- NEWS / EVENTS -->
+  <section class="news section">
+    <div class="container">
+      <p class="section-eyebrow">Latest</p>
+      <div class="news-header-row">
+        <h2 class="section-title">News &amp; Events</h2>
+        <a href="#" class="btn-ghost-sm">View All <i class="fa-solid fa-arrow-right"></i></a>
+      </div>
+      <div class="news-grid">
+        <article class="news-card news-card--big">
+          <div class="news-img-wrap">
+            <img src="assets/Gemini_Generated_Image_39ip1v39ip1v39ip-removebg-preview.png" alt="Science Competition"/>
+            <span class="news-tag">Achievement</span>
+          </div>
+          <div class="news-body">
+            <time><i class="fa-regular fa-calendar"></i> May 10, 2025</time>
+            <h3>Our Greatest Achievement</h3>
+            <p>“Our greatest achievement has been nurturing young minds and shaping children into confident, responsible, and compassionate future leaders. Through quality education, strong values, discipline, creativity, and character development, we are committed to helping every child discover their potential and grow into individuals who will positively impact their communities and the world around them.”
+</p>
+            <a href="#" class="read-more">Read More <i class="fa-solid fa-arrow-right"></i></a>
+          </div>
+        </article>
+        <div class="news-side">
+          <article class="news-card-sm">
+            <time><i class="fa-regular fa-calendar"></i> April 28, 2025</time>
+            <h4>2025/2026 Admissions Now Open</h4>
+            <a href="admissions.html" class="read-more">Read More <i class="fa-solid fa-arrow-right"></i></a>
+          </article>
+          <article class="news-card-sm">
+            <time><i class="fa-regular fa-calendar"></i> April 15, 2025</time>
+            <h4>Annual Cultural Day Celebration Recap</h4>
+            <a href="#" class="read-more">Read More <i class="fa-solid fa-arrow-right"></i></a>
+          </article>
+          <article class="news-card-sm">
+            <time><i class="fa-regular fa-calendar"></i> March 30, 2025</time>
+            <h4>New Computer Lab Commissioned</h4>
+            <a href="#" class="read-more">Read More <i class="fa-solid fa-arrow-right"></i></a>
+          </article>
+          <article class="news-card-sm">
+            <time><i class="fa-regular fa-calendar"></i> March 10, 2025</time>
+            <h4>Inter-House Sports Results Announced</h4>
+            <a href="#" class="read-more">Read More <i class="fa-solid fa-arrow-right"></i></a>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA BAND -->
+  <section class="cta-band">
+    <div class="container">
+      <div class="cta-inner">
+        <div class="cta-text">
+          <h2>Start Your Journey With Us</h2>
+          <p>Applications are open. Give your child the Jaasiel advantage today.</p>
+        </div>
+        <div class="cta-buttons">
+          <a href="admissions.html" class="btn-primary"><i class="fa-solid fa-pen-to-square"></i> Apply Now</a>
+          <a href="contact.html" class="btn-ghost"><i class="fa-solid fa-phone"></i> Contact Us</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <img src="assets/logo.png" alt="Logo" class="footer-logo"/>
+          <p>Accurate Knowledge is a Virtue.<br/>Nurturing excellence in Benin City since 2009.</p>
+          <div class="social-links">
+            <a href="#" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+            <a href="#" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+            <a href="#" aria-label="Twitter"><i class="fa-brands fa-x-twitter"></i></a>
+            <a href="#" aria-label="WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>
+          </div>
+        </div>
+        <div class="footer-col">
+          <h4>Quick Links</h4>
+          <ul>
+            <li><a href="index.html"><i class="fa-solid fa-house fa-xs"></i> Home</a></li>
+            <li><a href="about.html"><i class="fa-solid fa-info-circle fa-xs"></i> About Us</a></li>
+            <li><a href="academics.html"><i class="fa-solid fa-book fa-xs"></i> Academics</a></li>
+            <li><a href="admissions.html"><i class="fa-solid fa-file-pen fa-xs"></i> Admissions</a></li>
+         <!-- <i class="fa-solid fa-images fa-xs"></i> Gallery</a></li> -->
+            <li><a href="contact.html"><i class="fa-solid fa-phone fa-xs"></i> Contact</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Academics</h4>
+          <ul>
+            <li><a href="academics.html">Junior Secondary</a></li>
+            <li><a href="academics.html">Senior Secondary</a></li>
+            <li><a href="academics.html">Arts &amp; Clubs</a></li>
+            <li><a href="academics.html">Extracurriculars</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Contact</h4>
+          <address>
+            <p><i class="fa-solid fa-location-dot"></i> Oxygen street, off ovieko road, idokpa, Benin city, Edo Nigeria</p>
+            <p><i class="fa-solid fa-phone"></i> +2347036304408 +2347062549375</p>
+            <p><i class="fa-solid fa-envelope"></i> info@jaasielcentre.edu.ng</p>
+          </address>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>© 2025 Jaasiel Education Centre. All Rights Reserved.</p>
+        <p><a href="#">Privacy Policy</a> · <a href="#">Terms of Use</a></p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="assets/main.js"></script>
+</body>
+</html>

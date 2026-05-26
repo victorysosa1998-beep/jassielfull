@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>My Uploads — Jaasiel RMS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="page-bg"></div>
+<div class="page-loader" id="page-loader"><div class="loader-logo"><i class="fas fa-graduation-cap"></i> Jaasiel RMS</div><div class="loader-ring"></div></div>
+<div class="toast-container" id="toast-container"></div>
+<div class="app-layout">
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<aside class="sidebar" id="sidebar"></aside>
+<div class="main-content">
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" id="menu-toggle"><i class="fas fa-bars"></i></button>
+      <a href="subadmin-dashboard.html" class="btn btn-ghost btn-sm" style="padding:6px 12px"><i class="fas fa-arrow-left"></i></a>
+      <div><div class="page-title">My Uploads</div><div class="breadcrumb"><a href="subadmin-dashboard.html">Dashboard</a><span class="sep">/</span><span class="text-gold">Upload History</span></div></div>
+    </div>
+    <div class="topbar-right" id="topbar-right">
+      <a href="ocr-upload.html" class="btn btn-primary btn-sm"><i class="fas fa-robot"></i> New Upload</a>
+    </div>
+  </header>
+  <div class="page-body">
+    <div class="tabs mb-3">
+      <div class="tab-btn active" onclick="filterStatus('',this)">All</div>
+      <div class="tab-btn" onclick="filterStatus('pending',this)">Pending</div>
+      <div class="tab-btn" onclick="filterStatus('approved',this)">Approved</div>
+      <div class="tab-btn" onclick="filterStatus('correction_requested',this)">Corrections</div>
+      <div class="tab-btn" onclick="filterStatus('rejected',this)">Rejected</div>
+    </div>
+    <div id="uploads-list"></div>
+    <div id="uploads-pagination" class="pagination"></div>
+  </div>
+</div>
+</div>
+<script src="js/core.js"></script>
+<script src="js/ui.js"></script>
+<script>
+let currentStatus = '', currentPage = 1;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await window.__rmsBootstrapReady;
+  initPage(['sub_admin','admin','super_admin'], 'subadmin');
+  loadUploads(1);
+});
+
+function filterStatus(status, btn) {
+  currentStatus = status; currentPage = 1;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  loadUploads(1);
+}
+
+async function loadUploads(page=1) {
+  currentPage = page;
+  const container = document.getElementById('uploads-list');
+  showSkeleton(container, 4, '90px', '14px');
+  try {
+    const data = await API.results.myUploads({ page, per_page:30, status: currentStatus||undefined });
+    const items = data.items || [];
+
+    if (!items.length) {
+      container.innerHTML = `<div class="card" style="text-align:center;padding:48px;color:var(--text-muted)">
+        <i class="fas fa-inbox" style="font-size:2rem;display:block;margin-bottom:12px;opacity:.4"></i>
+        No uploads found. <a href="manual-entry.html" style="color:var(--brand-gold)">Upload results</a>
+      </div>`;
+      document.getElementById('uploads-pagination').innerHTML = '';
+      return;
+    }
+
+    // Group by class+term for Submit to Admin button
+    const groups = {};
+    for (const b of items) {
+      const key = `${b.class_id||b.class_name}__${b.term_id||b.term_name}`;
+      if (!groups[key]) groups[key] = {
+        class_name: b.class_name, class_id: b.class_id,
+        term_name:  b.term_name,  term_id:  b.term_id,
+        session_id: b.session_id, batches:  []
+      };
+      groups[key].batches.push(b);
+    }
+
+    const statusMap = {
+      pending:'badge-draft', submitted:'badge-pending', approved:'badge-approved',
+      rejected:'badge-rejected', correction_requested:'badge-correction',
+      locked:'badge-locked', published:'badge-gold'
+    };
+
+    container.innerHTML = Object.values(groups).map(group => {
+      const allPending   = group.batches.every(b => b.status === 'pending');
+      const anyLocked    = group.batches.some(b => ['locked','published'].includes(b.status));
+      const anySubmitted = group.batches.some(b => b.status === 'submitted');
+      const anyCorrReq   = group.batches.some(b => b.status === 'correction_requested');
+      const pendingCount = group.batches.filter(b => b.status === 'pending').length;
+
+      return `<div class="card mb-3">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px">
+          <div>
+            <div style="font-weight:700;font-size:1rem">${group.class_name}</div>
+            <div style="font-size:.78rem;color:var(--text-muted)">${group.term_name} · ${group.batches.length} subject(s)</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            ${anyLocked
+              ? '<span class="badge badge-locked"><i class="fas fa-lock"></i> Locked by Admin — No edits allowed</span>'
+              : anySubmitted && !anyCorrReq
+                ? '<span class="badge badge-pending"><i class="fas fa-paper-plane"></i> Submitted — Awaiting Admin Review</span>'
+                : pendingCount > 0
+                  ? `<button class="btn btn-primary btn-sm" onclick="submitToAdmin(${group.class_id},${group.term_id},${group.session_id},this)">
+                       <i class="fas fa-paper-plane"></i> Submit ${pendingCount} Subject(s) to Admin
+                     </button>`
+                  : ''}
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table class="table" style="font-size:.83rem">
+            <thead><tr>
+              <th>Subject</th><th>Students</th><th>Avg</th><th>Status</th>
+              <th>Uploaded</th><th>Note</th><th>Actions</th>
+            </tr></thead>
+            <tbody>
+              ${group.batches.map(b => `<tr>
+                <td><strong>${b.subject_name}</strong></td>
+                <td>${b.students||0}</td>
+                <td>${b.avg_score||'—'}</td>
+                <td><span class="badge ${statusMap[b.status]||'badge-draft'}">${b.status.replace('_',' ')}</span></td>
+                <td style="color:var(--text-muted);font-size:.78rem">${Fmt.timeAgo(b.uploaded_at)}</td>
+                <td style="font-size:.78rem;color:${b.status==='correction_requested'?'var(--danger)':'var(--text-muted)'}">
+                  ${b.correction_comment||'—'}
+                </td>
+                <td>
+                  ${b.status==='correction_requested'
+                    ? `<a href="manual-entry.html?batch=${b.id}" class="btn btn-sm btn-warning"><i class="fas fa-pen"></i> Fix</a>`
+                    : b.status==='pending'
+                      ? `<a href="manual-entry.html?batch=${b.id}" class="btn btn-sm btn-ghost"><i class="fas fa-pen"></i> Edit</a>`
+                      : '—'}
+                </td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+    }).join('');
+
+    renderPagination(document.getElementById('uploads-pagination'),
+      { page, total: data.total||items.length, perPage:30, onChange:'loadUploads' });
+
+  } catch(err) {
+    document.getElementById('uploads-list').innerHTML =
+      `<div class="alert alert-danger"><i class="fas fa-circle-exclamation"></i> ${err.message||'Failed to load'}</div>`;
+  }
+}
+
+async function submitToAdmin(classId, termId, sessionId, btn) {
+  if (!confirm('Submit ALL draft subjects for this class to admin for approval?\n\nYou will not be able to edit them until admin responds.')) return;
+  setLoading(btn, true, 'Submitting…');
+  try {
+    const data = await API.results.submitClass({ class_id: classId, term_id: termId, session_id: sessionId });
+    Toast.success('Submitted!', data.message);
+    loadUploads(currentPage);
+  } catch(err) { Toast.error('Failed', err.message); setLoading(btn, false); }
+}
+</script>
+</body>

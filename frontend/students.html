@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Students — Jaasiel Education Centre RMS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="css/style.css">
+<style>
+/* Clickable rows */
+#students-tbody tr { cursor:pointer; }
+#students-tbody tr:hover td { background:rgba(201,151,58,.04); }
+
+/* Profile modal layout */
+.profile-header { display:flex; align-items:center; gap:20px; padding:20px 22px;
+  background:linear-gradient(135deg,rgba(201,151,58,.08),rgba(28,53,100,.25));
+  border-radius:var(--radius-lg); margin-bottom:20px; flex-wrap:wrap; }
+.profile-grid  { display:grid; grid-template-columns:1fr 1fr; gap:14px 28px; }
+.pf-label { font-size:.72rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:.06em; margin-bottom:3px; }
+.pf-value { font-size:.92rem; font-weight:600; color:var(--text-primary); word-break:break-word; }
+.cred-box { background:rgba(201,151,58,.06); border:1px solid rgba(201,151,58,.2);
+  border-radius:var(--radius); padding:16px 20px; margin-top:16px; }
+
+/* Edit form inside modal */
+.edit-grid { display:grid; grid-template-columns:1fr 1fr; gap:0 16px; }
+
+@media(max-width:640px){
+  .profile-grid, .edit-grid { grid-template-columns:1fr; }
+  .profile-header { flex-direction:column; text-align:center; }
+}
+</style>
+</head>
+<body>
+<div class="page-bg"></div>
+<div class="page-loader" id="page-loader"><div class="loader-logo"><i class="fas fa-graduation-cap"></i> Jaasiel RMS</div><div class="loader-ring"></div></div>
+<div class="toast-container" id="toast-container"></div>
+
+<div class="app-layout">
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<aside class="sidebar" id="sidebar"></aside>
+
+<div class="main-content">
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" id="menu-toggle"><i class="fas fa-bars"></i></button>
+      <div>
+        <div class="page-title">Students</div>
+        <div class="breadcrumb"><a href="admin-dashboard.html">Dashboard</a><span class="sep">/</span><span class="text-gold">Students</span></div>
+      </div>
+    </div>
+    <div class="topbar-right" id="topbar-right"></div>
+  </header>
+
+  <div class="page-body">
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-icon gold"><i class="fas fa-users"></i></div><div class="stat-info"><div class="stat-label">Total Students</div><div class="stat-value" id="cnt-total">—</div></div></div>
+      <div class="stat-card"><div class="stat-icon blue"><i class="fas fa-mars"></i></div><div class="stat-info"><div class="stat-label">Male</div><div class="stat-value" id="cnt-male">—</div></div></div>
+      <div class="stat-card"><div class="stat-icon purple"><i class="fas fa-venus"></i></div><div class="stat-info"><div class="stat-label">Female</div><div class="stat-value" id="cnt-female">—</div></div></div>
+      <div class="stat-card"><div class="stat-icon green"><i class="fas fa-school"></i></div><div class="stat-info"><div class="stat-label">Active Classes</div><div class="stat-value" id="cnt-classes">—</div></div></div>
+    </div>
+
+    <div class="card">
+      <!-- Actions row -->
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px">
+        <div style="font-family:var(--font-display);font-size:1rem;font-weight:700">Student Records</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <a href="bulk-upload.html" class="btn btn-secondary btn-sm"><i class="fas fa-file-arrow-up"></i> Bulk Upload</a>
+          <button class="btn btn-ghost btn-sm" onclick="exportStudents()"><i class="fas fa-file-csv"></i> Export</button>
+          <button class="btn btn-primary btn-sm" onclick="openAddStudent()"><i class="fas fa-user-plus"></i> Add Student</button>
+        </div>
+      </div>
+
+      <!-- Filter bar -->
+      <div class="filter-bar" style="margin-bottom:16px">
+        <div class="search-box">
+          <i class="fas fa-search"></i>
+          <input type="text" placeholder="Search name, ID or username…" id="search-input" oninput="debouncedLoad()">
+        </div>
+        <select class="filter-select" id="class-filter" onchange="loadStudents(1)"><option value="">All Classes</option></select>
+        <select class="filter-select" id="gender-filter" onchange="loadStudents(1)">
+          <option value="">All Genders</option>
+          <option value="male">Male</option>
+          <option value="female">Female</option>
+        </select>
+        <button class="btn btn-ghost btn-sm" onclick="loadStudents(currentPage)" title="Refresh" style="margin-left:auto"><i class="fas fa-rotate"></i></button>
+      </div>
+
+      <!-- Table -->
+      <div class="table-wrapper">
+        <table class="table" id="students-table">
+          <thead>
+            <tr>
+              <th style="width:36px"><input type="checkbox" id="select-all" onchange="toggleSelectAll(this)" style="accent-color:var(--brand-gold)"></th>
+              <th>Student</th>
+              <th>Student ID</th>
+              <th>Class</th>
+              <th>Gender</th>
+              <th>Username</th>
+              <th>Password</th>
+              <th>Parent Contact</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="students-tbody">
+            <tr><td colspan="10" style="text-align:center;padding:40px;color:var(--text-muted)">
+              <div class="loader-ring" style="margin:0 auto;width:28px;height:28px;border-width:2px"></div>
+            </td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div id="pagination-container" class="pagination"></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     PROFILE / EDIT MODAL  (view + edit in one)
+     ══════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-student">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="modal-student-title">Student Profile</div>
+        <div class="modal-subtitle" id="modal-student-sub"></div>
+      </div>
+      <button class="modal-close" onclick="Modal.close('modal-student')"><i class="fas fa-times"></i></button>
+    </div>
+
+    <!-- VIEW mode -->
+    <div id="mode-view">
+      <div style="max-height:68vh;overflow-y:auto" id="profile-body">
+        <div class="skeleton mb-2" style="height:100px;border-radius:12px"></div>
+        <div class="skeleton" style="height:180px;border-radius:12px"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="Modal.close('modal-student')">Close</button>
+        <button class="btn btn-danger btn-sm" id="view-delete-btn" onclick="openDeleteFromProfile()"><i class="fas fa-trash"></i> Delete</button>
+        <button class="btn btn-secondary" onclick="switchToEdit()"><i class="fas fa-pen"></i> Edit Student</button>
+        <a href="#" class="btn btn-primary" id="view-results-btn"><i class="fas fa-list-check"></i> View Results</a>
+      </div>
+    </div>
+
+    <!-- EDIT mode -->
+    <div id="mode-edit" style="display:none">
+      <div style="max-height:68vh;overflow-y:auto;padding-right:4px">
+        <form id="edit-form" onsubmit="saveEdit(event)">
+          <input type="hidden" id="edit-id">
+          <div style="font-size:.8rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px">
+            <i class="fas fa-user" style="color:var(--brand-gold);margin-right:6px"></i>Personal Information
+          </div>
+          <div class="edit-grid">
+            <div class="form-group">
+              <label class="form-label">First Name <span class="required">*</span></label>
+              <input type="text" class="form-control" id="edit-first-name" data-validate="required">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Middle Name</label>
+              <input type="text" class="form-control" id="edit-middle-name">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Last Name <span class="required">*</span></label>
+              <input type="text" class="form-control" id="edit-last-name" data-validate="required">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Date of Birth</label>
+              <input type="date" class="form-control" id="edit-dob">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Gender</label>
+              <select class="form-control" id="edit-gender">
+                <option value="">—</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Class</label>
+              <select class="form-control" id="edit-class"></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Parent Phone</label>
+              <input type="tel" class="form-control" id="edit-phone" placeholder="+234 800 000 0000">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Parent Email</label>
+              <input type="email" class="form-control" id="edit-email">
+            </div>
+            <div class="form-group" style="grid-column:1/-1">
+              <label class="form-label">Address</label>
+              <textarea class="form-control" id="edit-address" rows="2"></textarea>
+            </div>
+          </div>
+
+          <div style="font-size:.8rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.06em;margin:20px 0 14px">
+            <i class="fas fa-key" style="color:var(--brand-gold);margin-right:6px"></i>Reset Password (leave blank to keep current)
+          </div>
+          <div class="edit-grid">
+            <div class="form-group mb-0">
+              <label class="form-label">New Password</label>
+              <div class="input-group">
+                <i class="input-icon fas fa-lock"></i>
+                <input type="password" class="form-control" id="edit-password" placeholder="Min 6 characters" autocomplete="new-password">
+                <span class="input-addon-right" onclick="togglePwd('edit-password',this)"><i class="fas fa-eye"></i></span>
+              </div>
+              <div class="form-hint">Leave blank to keep existing password</div>
+            </div>
+            <div class="form-group mb-0">
+              <label class="form-label">Confirm Password</label>
+              <div class="input-group">
+                <i class="input-icon fas fa-lock"></i>
+                <input type="password" class="form-control" id="edit-password2" placeholder="Repeat password" autocomplete="new-password">
+                <span class="input-addon-right" onclick="togglePwd('edit-password2',this)"><i class="fas fa-eye"></i></span>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="switchToView()"><i class="fas fa-arrow-left"></i> Back</button>
+        <button class="btn btn-primary" id="save-btn" onclick="saveEdit(event)"><i class="fas fa-save"></i> Save Changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD STUDENT MODAL -->
+<div class="modal-overlay" id="modal-add">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div><div class="modal-title">Register New Student</div><div class="modal-subtitle">Credentials are auto-generated from name + date of birth</div></div>
+      <button class="modal-close" onclick="Modal.close('modal-add')"><i class="fas fa-times"></i></button>
+    </div>
+    <div style="max-height:70vh;overflow-y:auto;padding-right:4px">
+      <form id="add-form" onsubmit="submitAdd(event)">
+        <div class="edit-grid">
+          <div class="form-group">
+            <label class="form-label">First Name <span class="required">*</span></label>
+            <input type="text" class="form-control" id="add-first" data-validate="required" oninput="previewCredentials()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Middle Name</label>
+            <input type="text" class="form-control" id="add-middle" oninput="previewCredentials()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Last Name <span class="required">*</span></label>
+            <input type="text" class="form-control" id="add-last" data-validate="required" oninput="previewCredentials()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Date of Birth <span class="required">*</span></label>
+            <input type="date" class="form-control" id="add-dob" data-validate="required" onchange="previewCredentials()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Gender <span class="required">*</span></label>
+            <select class="form-control" id="add-gender" data-validate="required">
+              <option value="">Select…</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Class <span class="required">*</span></label>
+            <select class="form-control" id="add-class" data-validate="required"><option value="">Select class…</option></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Parent Phone</label>
+            <input type="tel" class="form-control" id="add-phone" placeholder="+234 800 000 0000">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Parent Email</label>
+            <input type="email" class="form-control" id="add-email">
+          </div>
+          <div class="form-group" style="grid-column:1/-1">
+            <label class="form-label">Address</label>
+            <textarea class="form-control" id="add-address" rows="2"></textarea>
+          </div>
+        </div>
+        <!-- Credential preview -->
+        <div class="cred-box" id="cred-preview" style="display:none">
+          <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.06em">
+            <i class="fas fa-key" style="color:var(--brand-gold);margin-right:6px"></i>Auto-Generated Credentials
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div><div class="pf-label">Username</div><div class="font-mono pf-value" id="prev-username">—</div></div>
+            <div><div class="pf-label">Password</div><div class="font-mono pf-value" id="prev-password">—</div></div>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="Modal.close('modal-add')">Cancel</button>
+      <button class="btn btn-primary" id="add-btn" onclick="submitAdd(event)"><i class="fas fa-user-plus"></i> Register Student</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE CONFIRM MODAL -->
+<div class="modal-overlay" id="modal-delete">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <div class="modal-title text-danger"><i class="fas fa-trash"></i> Delete Student</div>
+      <button class="modal-close" onclick="Modal.close('modal-delete')"><i class="fas fa-times"></i></button>
+    </div>
+    <p style="color:var(--text-secondary);margin-bottom:20px">Delete <strong id="delete-name"></strong>? This cannot be undone and will remove all their results.</p>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="Modal.close('modal-delete')">Cancel</button>
+      <button class="btn btn-danger" id="confirm-delete-btn" onclick="confirmDelete()"><i class="fas fa-trash"></i> Delete</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/core.js"></script>
+<script src="js/ui.js"></script>
+<script>
+let currentPage = 1, currentStudentId = null, deleteId = null;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await window.__rmsBootstrapReady;
+  const role = AuthState.getRole();
+  initPage(['super_admin','admin','sub_admin'], role==='sub_admin'?'subadmin':'admin');
+  populateClassSelect(document.getElementById('class-filter'));
+  populateClassSelect(document.getElementById('add-class'), 'Select class…', false);
+  populateClassSelect(document.getElementById('edit-class'), 'No change', true);
+  await Promise.all([loadStudents(1), loadStats()]);
+});
+
+/* ── Stats ── */
+async function loadStats() {
+  try {
+    const d = await API.students.list({ per_page:1 });
+    document.getElementById('cnt-total').textContent   = Fmt.number(d.total||0);
+    document.getElementById('cnt-male').textContent    = Fmt.number(d.male_count||0);
+    document.getElementById('cnt-female').textContent  = Fmt.number(d.female_count||0);
+    document.getElementById('cnt-classes').textContent = Fmt.number(d.class_count||0);
+  } catch {}
+}
+
+const debouncedLoad = (() => { let t; return () => { clearTimeout(t); t=setTimeout(()=>loadStudents(1),400); }; })();
+
+/* ── Load students ── */
+async function loadStudents(page=1) {
+  currentPage = page;
+  const tbody = document.getElementById('students-tbody');
+  tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:40px">
+    <div class="loader-ring" style="margin:0 auto;width:28px;height:28px;border-width:2px"></div>
+  </td></tr>`;
+
+  try {
+    const params = {
+      page, per_page: 20,
+      search:     document.getElementById('search-input').value.trim()||undefined,
+      class_name: document.getElementById('class-filter').value||undefined,
+      gender:     document.getElementById('gender-filter').value||undefined,
+    };
+    const data  = await API.students.list(params);
+    const items = data.items || data.students || [];
+    const total = data.total || items.length;
+
+    if (!items.length) {
+      tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:48px;color:var(--text-muted)">
+        <i class="fas fa-user-slash" style="font-size:2rem;display:block;margin-bottom:12px;opacity:.4"></i>
+        No students found.
+      </td></tr>`;
+      document.getElementById('pagination-container').innerHTML = '';
+      return;
+    }
+
+    tbody.innerHTML = items.map(s => {
+      const defPwd = Fmt.generatePassword(s.date_of_birth) || '—';
+      return `<tr onclick="openProfile('${s.id}')">
+        <td onclick="event.stopPropagation()">
+          <input type="checkbox" class="row-check" value="${s.id}" style="accent-color:var(--brand-gold)">
+        </td>
+        <td>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="avatar avatar-sm">${Fmt.initials(s.full_name)}</div>
+            <div>
+              <strong>${Security.sanitize(s.full_name)}</strong>
+              <div style="font-size:.75rem;color:var(--text-muted)">${Fmt.date(s.date_of_birth)||''}</div>
+            </div>
+          </div>
+        </td>
+        <td><span class="font-mono" style="font-size:.82rem">${s.student_id||'—'}</span></td>
+        <td><span class="badge badge-draft">${s.class_name||'—'}</span></td>
+        <td style="text-transform:capitalize">${s.gender||'—'}</td>
+        <td><span class="font-mono" style="font-size:.82rem">${s.username||'—'}</span></td>
+        <td><span class="font-mono" style="font-size:.82rem;color:var(--text-muted)">${defPwd}</span></td>
+        <td style="color:var(--text-muted);font-size:.85rem">${s.parent_phone||s.parent_email||'—'}</td>
+        <td><span class="badge ${s.is_active?'badge-approved':'badge-draft'}">${s.is_active?'Active':'Inactive'}</span></td>
+        <td onclick="event.stopPropagation()">
+          <div style="display:flex;gap:5px">
+            <button class="btn btn-icon btn-ghost" title="View profile" onclick="openProfile('${s.id}')"><i class="fas fa-eye"></i></button>
+            <button class="btn btn-icon btn-ghost" title="Edit" onclick="openEdit('${s.id}')"><i class="fas fa-pen"></i></button>
+            <button class="btn btn-icon btn-danger" title="Delete" onclick="openDelete('${s.id}','${Security.sanitize(s.full_name)}')"><i class="fas fa-trash"></i></button>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+
+    renderPagination(document.getElementById('pagination-container'),
+      { page, total, perPage:20, onChange:'loadStudents' });
+
+  } catch(err) {
+    tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--danger)">
+      <i class="fas fa-circle-exclamation" style="font-size:1.5rem;display:block;margin-bottom:8px"></i>
+      ${err.message||'Failed to load'}
+    </td></tr>`;
+  }
+}
+
+/* ── Open full profile (view mode) ── */
+async function openProfile(id) {
+  currentStudentId = id;
+  document.getElementById('mode-view').style.display = '';
+  document.getElementById('mode-edit').style.display = 'none';
+  Modal.open('modal-student');
+  const body = document.getElementById('profile-body');
+  body.innerHTML = `<div class="skeleton mb-2" style="height:100px;border-radius:12px"></div>
+    <div class="skeleton mb-2" style="height:40px;border-radius:8px"></div>
+    <div class="skeleton" style="height:120px;border-radius:12px"></div>`;
+
+  try {
+    const s = await API.students.get(id);
+    currentStudentId = s.id;
+    document.getElementById('modal-student-title').textContent  = s.full_name;
+    document.getElementById('modal-student-sub').textContent    = `${s.student_id||''} · ${s.class_name||''}`;
+    document.getElementById('view-results-btn').href            = `my-results.html?student_id=${s.id}`;
+    document.getElementById('view-delete-btn').dataset.id      = s.id;
+    document.getElementById('view-delete-btn').dataset.name    = s.full_name;
+
+    const defPwd = s.default_password || Fmt.generatePassword(s.date_of_birth) || '—';
+
+    body.innerHTML = `
+      <div class="profile-header">
+        <div class="avatar avatar-xl">${Fmt.initials(s.full_name)}</div>
+        <div>
+          <div style="font-family:var(--font-display);font-size:1.25rem;font-weight:700">${Security.sanitize(s.full_name)}</div>
+          <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+            <span class="badge badge-gold"><i class="fas fa-school"></i> ${s.class_name||'No class'}</span>
+            <span class="badge badge-draft">${s.student_id||'—'}</span>
+            <span class="badge ${s.is_active?'badge-approved':'badge-rejected'}">${s.is_active?'Active':'Inactive'}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="profile-grid" style="margin-bottom:16px">
+        ${[
+          ['Full Name',     s.full_name],
+          ['Date of Birth', Fmt.date(s.date_of_birth)],
+          ['Gender',        s.gender ? s.gender.charAt(0).toUpperCase()+s.gender.slice(1) : '—'],
+          ['Class',         s.class_name||'—'],
+          ['Student ID',    s.student_id||'—'],
+          ['Enrolled',      Fmt.date(s.enrolled_at)||'—'],
+          ['Parent Phone',  s.parent_phone||'—'],
+          ['Parent Email',  s.parent_email||'—'],
+          ['Address',       s.address||'—'],
+        ].map(([l,v])=>`
+          <div class="profile-field">
+            <div class="pf-label">${l}</div>
+            <div class="pf-value">${Security.sanitize(String(v))}</div>
+          </div>`).join('')}
+      </div>
+
+      <div class="cred-box">
+        <div style="font-size:.75rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">
+          <i class="fas fa-key" style="color:var(--brand-gold);margin-right:6px"></i>Login Credentials
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;flex-wrap:wrap">
+          <div>
+            <div class="pf-label">Username</div>
+            <div class="font-mono pf-value">${s.username||'—'}</div>
+          </div>
+          <div>
+            <div class="pf-label">Default Password</div>
+            <div class="font-mono pf-value">${defPwd}</div>
+          </div>
+        </div>
+        <div style="font-size:.75rem;color:var(--text-muted);margin-top:10px">
+          Password is DDMMYY from date of birth. Student can change it after first login.
+        </div>
+      </div>`;
+
+  } catch(err) {
+    body.innerHTML = `<div class="alert alert-danger"><i class="fas fa-circle-exclamation"></i> ${err.message||'Failed to load profile'}</div>`;
+  }
+}
+
+/* ── Switch profile → edit mode ── */
+async function switchToEdit() {
+  if (!currentStudentId) return;
+  document.getElementById('mode-view').style.display = 'none';
+  document.getElementById('mode-edit').style.display = '';
+  try {
+    const s = await API.students.get(currentStudentId);
+    document.getElementById('modal-student-title').textContent = `Edit: ${s.full_name}`;
+    document.getElementById('edit-id').value          = s.id;
+    document.getElementById('edit-first-name').value  = s.first_name||s.full_name.split(' ')[0]||'';
+    document.getElementById('edit-middle-name').value = s.middle_name||'';
+    document.getElementById('edit-last-name').value   = s.last_name||s.full_name.split(' ').slice(-1)[0]||'';
+    document.getElementById('edit-dob').value         = s.date_of_birth ? s.date_of_birth.split('T')[0] : '';
+    document.getElementById('edit-gender').value      = s.gender||'';
+    document.getElementById('edit-class').value       = s.class_name||'';
+    document.getElementById('edit-phone').value       = s.parent_phone||'';
+    document.getElementById('edit-email').value       = s.parent_email||'';
+    document.getElementById('edit-address').value     = s.address||'';
+    document.getElementById('edit-password').value    = '';
+    document.getElementById('edit-password2').value   = '';
+  } catch(err) { Toast.error('Failed', err.message); }
+}
+
+function switchToView() {
+  document.getElementById('mode-edit').style.display = 'none';
+  document.getElementById('mode-view').style.display = '';
+  if (currentStudentId) openProfile(currentStudentId);
+}
+
+/* ── Open edit directly from action button ── */
+async function openEdit(id) {
+  currentStudentId = id;
+  document.getElementById('modal-student-title').textContent = 'Edit Student';
+  document.getElementById('modal-student-sub').textContent   = '';
+  document.getElementById('mode-view').style.display = 'none';
+  document.getElementById('mode-edit').style.display = '';
+  Modal.open('modal-student');
+  try {
+    const s = await API.students.get(id);
+    document.getElementById('modal-student-title').textContent = `Edit: ${s.full_name}`;
+    document.getElementById('edit-id').value          = s.id;
+    document.getElementById('edit-first-name').value  = s.first_name||s.full_name.split(' ')[0]||'';
+    document.getElementById('edit-middle-name').value = s.middle_name||'';
+    document.getElementById('edit-last-name').value   = s.last_name||s.full_name.split(' ').slice(-1)[0]||'';
+    document.getElementById('edit-dob').value         = s.date_of_birth ? s.date_of_birth.split('T')[0] : '';
+    document.getElementById('edit-gender').value      = s.gender||'';
+    document.getElementById('edit-class').value       = s.class_name||'';
+    document.getElementById('edit-phone').value       = s.parent_phone||'';
+    document.getElementById('edit-email').value       = s.parent_email||'';
+    document.getElementById('edit-address').value     = s.address||'';
+    document.getElementById('edit-password').value    = '';
+    document.getElementById('edit-password2').value   = '';
+  } catch(err) { Toast.error('Failed', err.message); Modal.close('modal-student'); }
+}
+
+/* ── Save edit ── */
+async function saveEdit(e) {
+  e.preventDefault();
+  const pwd  = document.getElementById('edit-password').value;
+  const pwd2 = document.getElementById('edit-password2').value;
+  if (pwd && pwd !== pwd2) { Toast.warning('Mismatch', 'Passwords do not match'); return; }
+  if (pwd && pwd.length < 6) { Toast.warning('Too short', 'Password must be at least 6 characters'); return; }
+  if (!Validator.validate(document.getElementById('edit-form'))) return;
+
+  const btn = document.getElementById('save-btn');
+  setLoading(btn, true, 'Saving…');
+  const sid = document.getElementById('edit-id').value;
+  const fn  = document.getElementById('edit-first-name').value.trim();
+  const mn  = document.getElementById('edit-middle-name').value.trim();
+  const ln  = document.getElementById('edit-last-name').value.trim();
+  const payload = {
+    full_name:    [fn,mn,ln].filter(Boolean).join(' '),
+    first_name:   fn, middle_name: mn, last_name: ln,
+    date_of_birth:document.getElementById('edit-dob').value||null,
+    gender:       document.getElementById('edit-gender').value||null,
+    class_name:   document.getElementById('edit-class').value||null,
+    parent_phone: document.getElementById('edit-phone').value.trim()||null,
+    parent_email: document.getElementById('edit-email').value.trim()||null,
+    address:      document.getElementById('edit-address').value.trim()||null,
+  };
+  if (pwd) payload.new_password = pwd;
+
+  try {
+    await API.students.update(sid, payload);
+    Toast.success('Saved!', 'Student details updated');
+    loadStudents(currentPage);
+    loadStats();
+    switchToView();
+  } catch(err) {
+    Toast.error('Failed', err.message);
+    setLoading(btn, false);
+  }
+}
+
+/* ── Add student modal ── */
+function openAddStudent() {
+  document.getElementById('add-form').reset();
+  document.getElementById('cred-preview').style.display = 'none';
+  Modal.open('modal-add');
+}
+
+function previewCredentials() {
+  const fn  = document.getElementById('add-first').value.trim();
+  const mn  = document.getElementById('add-middle').value.trim();
+  const ln  = document.getElementById('add-last').value.trim();
+  const dob = document.getElementById('add-dob').value;
+  if (fn && ln && dob) {
+    document.getElementById('prev-username').textContent = Fmt.generateUsername(fn,mn,ln,dob);
+    document.getElementById('prev-password').textContent = Fmt.generatePassword(dob);
+    document.getElementById('cred-preview').style.display = '';
+  }
+}
+
+async function submitAdd(e) {
+  e.preventDefault();
+  if (!Validator.validate(document.getElementById('add-form'))) return;
+  const btn = document.getElementById('add-btn');
+  setLoading(btn, true, 'Registering…');
+  const fn  = document.getElementById('add-first').value.trim();
+  const mn  = document.getElementById('add-middle').value.trim();
+  const ln  = document.getElementById('add-last').value.trim();
+  const dob = document.getElementById('add-dob').value;
+  try {
+    await API.students.create({
+      first_name:   fn, middle_name: mn, last_name: ln,
+      full_name:    [fn,mn,ln].filter(Boolean).join(' '),
+      date_of_birth:dob,
+      gender:       document.getElementById('add-gender').value,
+      class_name:   document.getElementById('add-class').value,
+      parent_phone: document.getElementById('add-phone').value.trim()||null,
+      parent_email: document.getElementById('add-email').value.trim()||null,
+      address:      document.getElementById('add-address').value.trim()||null,
+      username:     Fmt.generateUsername(fn,mn,ln,dob),
+      default_password: Fmt.generatePassword(dob),
+    });
+    Toast.success('Registered!', 'Student added successfully');
+    Modal.close('modal-add');
+    loadStudents(1);
+    loadStats();
+  } catch(err) {
+    Toast.error('Failed', err.message);
+    setLoading(btn, false);
+  }
+}
+
+/* ── Delete ── */
+function openDeleteFromProfile() {
+  const btn = document.getElementById('view-delete-btn');
+  openDelete(btn.dataset.id, btn.dataset.name);
+}
+function openDelete(id, name) {
+  deleteId = id;
+  document.getElementById('delete-name').textContent = name;
+  Modal.open('modal-delete');
+}
+async function confirmDelete() {
+  if (!deleteId) return;
+  const btn = document.getElementById('confirm-delete-btn');
+  setLoading(btn, true);
+  try {
+    await API.students.delete(deleteId);
+    Toast.success('Deleted', 'Student removed');
+    Modal.close('modal-delete');
+    Modal.close('modal-student');
+    loadStudents(currentPage);
+    loadStats();
+  } catch(err) { Toast.error('Failed', err.message); setLoading(btn, false); }
+}
+
+function toggleSelectAll(chk) {
+  document.querySelectorAll('.row-check').forEach(c => c.checked = chk.checked);
+}
+
+async function exportStudents() {
+  Toast.info('Exporting…', 'Preparing CSV');
+  try {
+    const data = await API.students.list({ per_page:1000, class_name:document.getElementById('class-filter').value||undefined });
+    exportCSV((data.items||[]).map(s => ({
+      'Full Name': s.full_name, 'Student ID': s.student_id,
+      'Class': s.class_name, 'Gender': s.gender,
+      'Username': s.username,
+      'Default Password': Fmt.generatePassword(s.date_of_birth)||'',
+      'Parent Phone': s.parent_phone||'', 'Parent Email': s.parent_email||'',
+      'Status': s.is_active?'Active':'Inactive',
+    })), 'students.csv');
+  } catch(err) { Toast.error('Export failed', err.message); }
+}
+</script>
+</body>
+</html>

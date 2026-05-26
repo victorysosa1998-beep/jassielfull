@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Analytics — Jaasiel RMS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="page-bg"></div>
+<div class="page-loader" id="page-loader"><div class="loader-logo"><i class="fas fa-graduation-cap"></i> Jaasiel RMS</div><div class="loader-ring"></div></div>
+<div class="toast-container" id="toast-container"></div>
+<div class="app-layout">
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<aside class="sidebar" id="sidebar"></aside>
+<div class="main-content">
+
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" id="menu-toggle"><i class="fas fa-bars"></i></button>
+      <a href="admin-dashboard.html" class="btn btn-ghost btn-sm" style="padding:6px 12px"><i class="fas fa-arrow-left"></i></a>
+      <div>
+        <div class="page-title">School Analytics</div>
+        <div class="breadcrumb"><a href="admin-dashboard.html">Dashboard</a><span class="sep">/</span><span class="text-gold">Analytics</span></div>
+      </div>
+    </div>
+    <!-- topbar-right is injected by initPage — do NOT put content here -->
+    <div class="topbar-right" id="topbar-right"></div>
+  </header>
+
+  <div class="page-body">
+
+    <!-- ── Filters — placed in body so initPage() never wipes them ── -->
+    <div class="card mb-3" style="padding:12px 18px">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <i class="fas fa-filter" style="color:var(--brand-gold)"></i>
+        <select class="filter-select" id="sess-filter" onchange="onFilterChange()" style="min-width:150px">
+          <option value="">All Sessions</option>
+        </select>
+        <select class="filter-select" id="term-filter" onchange="onFilterChange()" style="min-width:140px">
+          <option value="">All Terms</option>
+        </select>
+        <select class="filter-select" id="class-filter" onchange="onFilterChange()" style="min-width:130px">
+          <option value="">All Classes</option>
+        </select>
+        <button class="btn btn-ghost btn-sm" onclick="loadAll()"><i class="fas fa-rotate"></i> Refresh</button>
+        <button class="btn btn-primary btn-sm" onclick="exportReport()" style="margin-left:auto"><i class="fas fa-file-csv"></i> Export</button>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-icon gold"><i class="fas fa-star"></i></div><div class="stat-info"><div class="stat-label">School Average</div><div class="stat-value" id="an-avg">—</div></div></div>
+      <div class="stat-card"><div class="stat-icon green"><i class="fas fa-check-circle"></i></div><div class="stat-info"><div class="stat-label">Pass Rate</div><div class="stat-value" id="an-pass">—</div></div></div>
+      <div class="stat-card"><div class="stat-icon blue"><i class="fas fa-graduation-cap"></i></div><div class="stat-info"><div class="stat-label">Students Assessed</div><div class="stat-value" id="an-students">—</div></div></div>
+      <div class="stat-card"><div class="stat-icon purple"><i class="fas fa-robot"></i></div><div class="stat-info"><div class="stat-label">OCR Accuracy</div><div class="stat-value" id="an-ocr">—</div></div></div>
+    </div>
+
+    <!-- Grade dist + Trend -->
+    <div class="grid-2 mb-3">
+      <div class="card">
+        <div class="section-title mb-3">Grade Distribution</div>
+        <div id="grade-loading" style="height:240px;display:flex;align-items:center;justify-content:center"><div class="loader-ring" style="width:28px;height:28px;border-width:2px"></div></div>
+        <canvas id="grade-dist-chart" height="240" style="display:none"></canvas>
+      </div>
+      <div class="card">
+        <div class="section-title mb-3">Session Performance by Term</div>
+        <div id="trend-loading" style="height:240px;display:flex;align-items:center;justify-content:center"><div class="loader-ring" style="width:28px;height:28px;border-width:2px"></div></div>
+        <canvas id="trend-chart" height="240" style="display:none"></canvas>
+      </div>
+    </div>
+
+    <!-- Class comparison -->
+    <div class="card mb-3">
+      <div class="section-header">
+        <div class="section-title">Class Performance Comparison</div>
+        <div style="font-size:.78rem;color:var(--text-muted)" id="class-chart-subtitle">Average score per class</div>
+      </div>
+      <div id="class-loading" style="height:160px;display:flex;align-items:center;justify-content:center"><div class="loader-ring" style="width:28px;height:28px;border-width:2px"></div></div>
+      <canvas id="class-chart" height="140" style="display:none"></canvas>
+    </div>
+
+    <!-- Subjects + OCR -->
+    <div class="grid-2 mb-3">
+      <div class="card">
+        <div class="section-title mb-3">Subject Performance</div>
+        <div id="subject-loading" style="text-align:center;padding:32px"><div class="loader-ring" style="margin:0 auto;width:24px;height:24px;border-width:2px"></div></div>
+        <div id="subject-list"></div>
+      </div>
+      <div class="card">
+        <div class="section-title mb-3">AI OCR Analytics</div>
+        <canvas id="ocr-chart" height="180"></canvas>
+        <div id="ocr-stats" class="mt-3"></div>
+      </div>
+    </div>
+
+    <!-- Top Performers -->
+    <div class="card">
+      <div class="section-header">
+        <div class="section-title">Top Performers</div>
+        <div style="font-size:.78rem;color:var(--text-muted)">By average score across all approved results</div>
+      </div>
+      <div class="table-wrapper">
+        <table class="table">
+          <thead>
+            <tr>
+              <th style="width:60px">Rank</th>
+              <th>Student</th>
+              <th>Class</th>
+              <th>Avg Score</th>
+              <th>Grade</th>
+              <th>Subjects</th>
+            </tr>
+          </thead>
+          <tbody id="top-tbody">
+            <tr><td colspan="6" style="text-align:center;padding:32px">
+              <div class="loader-ring" style="margin:0 auto;width:24px;height:24px;border-width:2px"></div>
+            </td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<script src="js/core.js"></script>
+<script src="js/ui.js"></script>
+<script>
+/* ── State ── */
+let currentSessionId = null, currentTermId = null;
+let sessions = [], allResults = [], allBatches = [];
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await window.__rmsBootstrapReady;
+  initPage(['super_admin','admin'], 'admin');
+  ChartDefaults.apply();
+  await loadFilters();
+  loadAll();
+});
+
+/* ── Load sessions/terms/classes into filters ── */
+async function loadFilters() {
+  try {
+    // Sessions
+    const data = await API.sessions.list();
+    sessions = data.items || [];
+    const sessSel = document.getElementById('sess-filter');
+    sessions.forEach(s => {
+      const o = document.createElement('option'); o.value = s.id; o.textContent = s.session_name; sessSel.appendChild(o);
+    });
+
+    // Default to current session
+    const cur = await API.sessions.current();
+    if (cur.session_id) {
+      sessSel.value = cur.session_id;
+      currentSessionId = cur.session_id;
+      await loadTermOptions(cur.session_id, cur.term_id);
+    }
+
+    // Classes
+    const clsData = await API.classes.list();
+    const clsSel = document.getElementById('class-filter');
+    (clsData.items || []).forEach(c => {
+      const o = document.createElement('option'); o.value = c.name; o.textContent = c.name; clsSel.appendChild(o);
+    });
+  } catch(err) {
+    console.error('Filter load failed:', err);
+  }
+}
+
+async function loadTermOptions(sessionId, defaultTermId) {
+  const sel = document.getElementById('term-filter');
+  sel.innerHTML = '<option value="">All Terms</option>';
+  try {
+    const data = await API.sessions.terms(sessionId);
+    const terms = data.items || data || [];
+    terms.forEach(t => {
+      const o = document.createElement('option'); o.value = t.id; o.textContent = t.term_name; sel.appendChild(o);
+    });
+    if (defaultTermId) sel.value = defaultTermId;
+  } catch {}
+}
+
+async function onFilterChange() {
+  const newSess = parseInt(document.getElementById('sess-filter').value) || null;
+  if (newSess !== currentSessionId) {
+    currentSessionId = newSess;
+    await loadTermOptions(newSess, null);
+  }
+  loadAll();
+}
+
+/* ── Load everything ── */
+async function loadAll() {
+  await Promise.allSettled([
+    loadOverview(),
+    loadResultsData().then(() => {
+      buildGradeChart();
+      buildTrendChart();
+      buildClassChart();
+      buildSubjectList();
+      buildTopPerformers();
+    }),
+    loadOcrStats(),
+  ]);
+}
+
+/* ── Fetch real result data from backend ── */
+async function loadResultsData() {
+  try {
+    const params = {};
+    const sid = document.getElementById('sess-filter').value;
+    const tid = document.getElementById('term-filter').value;
+    const cls = document.getElementById('class-filter').value;
+    if (sid) params.session_id = sid;
+    if (tid) params.term_id = tid;
+    if (cls) params.class_name = cls;
+
+    // Fetch all approved results (paginated — get up to 500)
+    const data = await API.results.list({ ...params, per_page: 500 });
+    allResults = (data.items || []).filter(r =>
+      ['approved','published','locked'].includes(r.status)
+    );
+    return allResults;
+  } catch(err) {
+    console.warn('Results data failed, using empty set:', err.message);
+    allResults = [];
+    return [];
+  }
+}
+
+/* ── Overview stats from API ── */
+async function loadOverview() {
+  try {
+    const params = {};
+    const sid = document.getElementById('sess-filter').value;
+    if (sid) params.session_id = sid;
+    const data = await API.analytics.school(params);
+    document.getElementById('an-avg').textContent     = data.school_average ? data.school_average.toFixed(1) : '—';
+    document.getElementById('an-pass').textContent    = data.pass_rate      ? Fmt.percent(data.pass_rate)     : '—';
+    document.getElementById('an-students').textContent= Fmt.number(data.students_assessed || 0);
+    document.getElementById('an-ocr').textContent     = data.ocr_accuracy   ? Fmt.percent(data.ocr_accuracy)  : '—';
+  } catch {
+    // Fall back to calculating from allResults if available
+    if (allResults.length) {
+      const totals = allResults.map(r => r.total_score || 0).filter(t => t > 0);
+      const avg = totals.length ? totals.reduce((a,b)=>a+b,0)/totals.length : 0;
+      const passRate = totals.length ? (totals.filter(t=>t>=40).length/totals.length*100) : 0;
+      const uniqueStudents = new Set(allResults.map(r=>r.student_id)).size;
+      document.getElementById('an-avg').textContent      = avg.toFixed(1);
+      document.getElementById('an-pass').textContent     = Fmt.percent(passRate);
+      document.getElementById('an-students').textContent = Fmt.number(uniqueStudents);
+      document.getElementById('an-ocr').textContent      = '—';
+    }
+  }
+}
+
+/* ── Chart helper ── */
+function makeChart(id, config, loadingId) {
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  if (loadingId) {
+    const lg = document.getElementById(loadingId);
+    if (lg) lg.style.display = 'none';
+    ctx.style.display = '';
+  }
+  if (ctx._chart) { ctx._chart.destroy(); ctx._chart = null; }
+  ctx._chart = new Chart(ctx, config);
+}
+
+/* ── Grade Distribution — from real data ── */
+function buildGradeChart() {
+  const counts = {A:0,B:0,C:0,D:0,E:0,F:0};
+  if (allResults.length) {
+    allResults.forEach(r => {
+      const g = r.grade || Fmt.grade(r.total_score||0).g;
+      if (counts[g] !== undefined) counts[g]++;
+    });
+  }
+  const total = Object.values(counts).reduce((a,b)=>a+b,0);
+  const pcts  = Object.values(counts).map(v => total ? Math.round(v/total*100) : 0);
+
+  makeChart('grade-dist-chart', {
+    type: 'doughnut',
+    data: {
+      labels: ['A — Excellent','B — Very Good','C — Good','D — Fair','E — Poor','F — Fail'],
+      datasets: [{
+        data: pcts,
+        backgroundColor: [
+          'rgba(34,197,94,.85)','rgba(59,130,246,.85)','rgba(245,158,11,.85)',
+          'rgba(249,115,22,.8)','rgba(239,68,68,.7)','rgba(100,116,139,.6)'
+        ],
+        borderColor: 'rgba(255,255,255,.06)', borderWidth: 2,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      plugins: {
+        legend: { position:'right', labels:{ color:'#A8B2C8', font:{size:11}, padding:14, generateLabels(chart) {
+          return chart.data.labels.map((l,i) => ({
+            text: `${l} (${chart.data.datasets[0].data[i]}%)`,
+            fillStyle: chart.data.datasets[0].backgroundColor[i],
+            strokeStyle: 'transparent', hidden: false, index: i
+          }));
+        }}},
+        tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw}%` }}
+      }
+    }
+  }, 'grade-loading');
+}
+
+/* ── Trend — by term from real batches ── */
+function buildTrendChart() {
+  // Group results by term
+  const termMap = {};
+  allResults.forEach(r => {
+    const key = `${r.session_name||'?'} ${r.term_name||'?'}`.replace('undefined','?');
+    if (!termMap[key]) termMap[key] = [];
+    if (r.total_score) termMap[key].push(r.total_score);
+  });
+  const labels = Object.keys(termMap);
+  const data   = labels.map(k => {
+    const arr = termMap[k];
+    return arr.length ? Math.round(arr.reduce((a,b)=>a+b,0)/arr.length * 10)/10 : 0;
+  });
+
+  makeChart('trend-chart', {
+    type: 'line',
+    data: {
+      labels: labels.length ? labels : ['No data'],
+      datasets: [{
+        label: 'Avg Score',
+        data:  data.length  ? data  : [0],
+        borderColor: '#C9973A',
+        backgroundColor: 'rgba(201,151,58,.12)',
+        borderWidth: 2.5, pointBackgroundColor: '#C9973A',
+        pointRadius: 5, tension: .4, fill: true,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      plugins: { legend:{ display:false } },
+      scales: {
+        x: { ticks:{ color:'#657088', maxRotation:30 }, grid:{ color:'rgba(255,255,255,.04)' } },
+        y: { min:0, max:100, ticks:{ color:'#657088', callback:v=>v+'%' }, grid:{ color:'rgba(255,255,255,.04)' } }
+      }
+    }
+  }, 'trend-loading');
+}
+
+/* ── Class comparison — from real data ── */
+function buildClassChart() {
+  const classMap = {};
+  allResults.forEach(r => {
+    if (!r.class_name) return;
+    if (!classMap[r.class_name]) classMap[r.class_name] = [];
+    if (r.total_score) classMap[r.class_name].push(r.total_score);
+  });
+
+  const labels = Object.keys(classMap).sort();
+  const avgs   = labels.map(k => {
+    const arr = classMap[k];
+    return arr.length ? Math.round(arr.reduce((a,b)=>a+b,0)/arr.length * 10)/10 : 0;
+  });
+
+  if (!labels.length) {
+    document.getElementById('class-loading').innerHTML =
+      '<div style="color:var(--text-muted);font-size:.85rem">No class data available for selected filters.</div>';
+    document.getElementById('class-chart').style.display = 'none';
+    return;
+  }
+
+  document.getElementById('class-chart-subtitle').textContent =
+    `Showing ${labels.length} class(es)`;
+
+  makeChart('class-chart', {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Average Score',
+        data: avgs,
+        backgroundColor: avgs.map(v => v>=70?'rgba(34,197,94,.7)':v>=50?'rgba(245,158,11,.7)':'rgba(239,68,68,.65)'),
+        borderColor:      avgs.map(v => v>=70?'#22C55E':v>=50?'#F59E0B':'#EF4444'),
+        borderWidth: 2, borderRadius: 6,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      plugins: { legend:{ display:false },
+        tooltip:{ callbacks:{ label:ctx=>`Avg: ${ctx.raw}%` } }
+      },
+      scales: {
+        x: { ticks:{ color:'#657088' }, grid:{ display:false } },
+        y: { min:0, max:100, ticks:{ color:'#657088', callback:v=>v+'%' }, grid:{ color:'rgba(255,255,255,.04)' } }
+      }
+    }
+  }, 'class-loading');
+}
+
+/* ── Subject performance — from real data ── */
+function buildSubjectList() {
+  const subMap = {};
+  allResults.forEach(r => {
+    if (!r.subject_name) return;
+    if (!subMap[r.subject_name]) subMap[r.subject_name] = { scores:[], pass:0, total:0 };
+    if (r.total_score) { subMap[r.subject_name].scores.push(r.total_score); subMap[r.subject_name].total++; }
+    if ((r.total_score||0) >= 40) subMap[r.subject_name].pass++;
+  });
+
+  document.getElementById('subject-loading').style.display = 'none';
+
+  if (!Object.keys(subMap).length) {
+    document.getElementById('subject-list').innerHTML =
+      '<div style="color:var(--text-muted);font-size:.85rem;padding:20px 0">No subject data for selected filters.</div>';
+    return;
+  }
+
+  const sorted = Object.entries(subMap)
+    .map(([name, d]) => ({
+      name,
+      avg: d.scores.length ? Math.round(d.scores.reduce((a,b)=>a+b,0)/d.scores.length*10)/10 : 0,
+      pass: d.total ? Math.round(d.pass/d.total*100) : 0,
+    }))
+    .sort((a,b) => b.avg - a.avg);
+
+  document.getElementById('subject-list').innerHTML = sorted.map(s => {
+    const barColor = s.avg>=70 ? '#22C55E' : s.avg>=50 ? '#F59E0B' : '#EF4444';
+    return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05)">
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;font-size:.87rem;margin-bottom:5px">${Security.sanitize(s.name)}</div>
+        <div style="background:rgba(255,255,255,.06);border-radius:6px;height:6px;overflow:hidden">
+          <div style="width:${Math.min(s.avg,100)}%;height:100%;background:${barColor};border-radius:6px;transition:width .6s"></div>
+        </div>
+      </div>
+      <div style="text-align:right;flex-shrink:0;min-width:60px">
+        <div style="font-family:var(--font-mono);font-weight:700;color:${barColor}">${s.avg}%</div>
+        <div style="font-size:.7rem;color:var(--text-muted)">${s.pass}% pass</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ── OCR stats ── */
+async function loadOcrStats() {
+  try {
+    const data = await API.ocr.analytics();
+    const total     = data.total_jobs || 0;
+    const accuracy  = data.accuracy || data.ocr_accuracy || 0;
+    const avgTime   = data.avg_time || 0;
+    const autoMatch = data.auto_matched || 0;
+
+    makeChart('ocr-chart', {
+      type: 'doughnut',
+      data: {
+        labels: ['Full Match','Fuzzy Match','No Match'],
+        datasets: [{
+          data: [autoMatch, Math.max(0, 96-autoMatch), Math.max(0, 100-96)],
+          backgroundColor: ['rgba(34,197,94,.8)','rgba(245,158,11,.7)','rgba(239,68,68,.7)'],
+          borderColor: 'rgba(255,255,255,.06)', borderWidth: 2,
+        }]
+      },
+      options: {
+        responsive:true, maintainAspectRatio:true,
+        plugins:{ legend:{ position:'bottom', labels:{ color:'#A8B2C8', font:{size:11}, padding:10 }}}
+      }
+    });
+
+    document.getElementById('ocr-stats').innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px">
+        <div style="text-align:center;padding:10px;background:rgba(255,255,255,.03);border-radius:10px">
+          <div style="font-family:var(--font-display);font-size:1.3rem;font-weight:900;color:var(--success)">${total}</div>
+          <div style="font-size:.7rem;color:var(--text-muted)">Jobs Total</div>
+        </div>
+        <div style="text-align:center;padding:10px;background:rgba(255,255,255,.03);border-radius:10px">
+          <div style="font-family:var(--font-display);font-size:1.3rem;font-weight:900;color:var(--brand-gold)">${accuracy.toFixed(0)}%</div>
+          <div style="font-size:.7rem;color:var(--text-muted)">Accuracy</div>
+        </div>
+        <div style="text-align:center;padding:10px;background:rgba(255,255,255,.03);border-radius:10px">
+          <div style="font-family:var(--font-display);font-size:1.3rem;font-weight:900;color:var(--info)">${avgTime}s</div>
+          <div style="font-size:.7rem;color:var(--text-muted)">Avg Time</div>
+        </div>
+      </div>`;
+  } catch {
+    document.getElementById('ocr-stats').innerHTML =
+      '<div style="color:var(--text-muted);font-size:.83rem;padding:12px 0">OCR stats unavailable.</div>';
+  }
+}
+
+/* ── Top Performers — from real result data ── */
+function buildTopPerformers() {
+  const studentMap = {};
+  allResults.forEach(r => {
+    const id = r.student_id;
+    if (!id) return;
+    if (!studentMap[id]) studentMap[id] = {
+      name:       r.student_name || '—',
+      class_name: r.class_name   || '—',
+      scores: [], subjects: new Set(),
+    };
+    if (r.total_score) {
+      studentMap[id].scores.push(r.total_score);
+      studentMap[id].subjects.add(r.subject_name);
+    }
+  });
+
+  const ranked = Object.entries(studentMap)
+    .map(([id, d]) => ({
+      id, name: d.name, class_name: d.class_name,
+      avg: d.scores.length ? Math.round(d.scores.reduce((a,b)=>a+b,0)/d.scores.length * 10)/10 : 0,
+      subjects: d.subjects.size,
+    }))
+    .filter(s => s.avg > 0)
+    .sort((a,b) => b.avg - a.avg)
+    .slice(0, 10);
+
+  if (!ranked.length) {
+    document.getElementById('top-tbody').innerHTML =
+      `<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text-muted)">
+        <i class="fas fa-inbox" style="font-size:1.5rem;display:block;margin-bottom:8px;opacity:.4"></i>
+        No approved results for selected filters
+      </td></tr>`;
+    return;
+  }
+
+  document.getElementById('top-tbody').innerHTML = ranked.map((s, i) => {
+    const rank = i + 1;
+    const gr   = Fmt.grade(s.avg);
+    const rankColor = rank===1?'var(--brand-gold)':rank===2?'#C0C0C0':rank===3?'#CD7F32':'var(--text-muted)';
+    return `<tr>
+      <td>
+        <span style="font-family:var(--font-display);font-size:1.05rem;font-weight:900;color:${rankColor}">
+          ${rank <= 3 ? ['🥇','🥈','🥉'][rank-1] : Fmt.ordinal(rank)}
+        </span>
+      </td>
+      <td>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="avatar avatar-sm">${Fmt.initials(s.name)}</div>
+          <strong>${Security.sanitize(s.name)}</strong>
+        </div>
+      </td>
+      <td><span class="badge badge-draft">${Security.sanitize(s.class_name)}</span></td>
+      <td><span class="font-mono" style="font-weight:700;font-size:1rem;color:${Fmt.gradeColor(gr.g)}">${s.avg.toFixed(1)}</span></td>
+      <td><span class="badge ${gr.bg}">${gr.g}</span></td>
+      <td style="color:var(--text-muted)">${s.subjects}</td>
+    </tr>`;
+  }).join('');
+}
+
+/* ── Export ── */
+function exportReport() {
+  if (!allResults.length) { Toast.warning('No data', 'No results loaded to export.'); return; }
+  const rows = allResults.map(r => ({
+    'Student':      r.student_name || '—',
+    'Class':        r.class_name   || '—',
+    'Subject':      r.subject_name || '—',
+    'CA Score':     r.ca_score     ?? '',
+    'Exam Score':   r.exam_score   ?? '',
+    'Total':        r.total_score  ?? '',
+    'Grade':        r.grade        || '',
+    'Remark':       r.remark       || '',
+    'Status':       r.status       || '',
+  }));
+  exportCSV(rows, `analytics_${new Date().toISOString().split('T')[0]}.csv`);
+  Toast.success('Exported', `${rows.length} results downloaded`);
+}
+</script>
+</body>
+</html>

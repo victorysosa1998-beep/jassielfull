@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Settings — Jaasiel RMS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="page-bg"></div>
+<div class="page-loader" id="page-loader"><div class="loader-logo"><i class="fas fa-graduation-cap"></i> Jaasiel RMS</div><div class="loader-ring"></div></div>
+<div class="toast-container" id="toast-container"></div>
+<div class="app-layout">
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<aside class="sidebar" id="sidebar"></aside>
+<div class="main-content">
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" id="menu-toggle"><i class="fas fa-bars"></i></button>
+      <div>
+        <div class="page-title">Settings</div>
+        <div class="breadcrumb"><a href="admin-dashboard.html">Dashboard</a><span class="sep">/</span><span class="text-gold">Settings</span></div>
+      </div>
+    </div>
+    <div class="topbar-right" id="topbar-right"></div>
+  </header>
+  <div class="page-body">
+    <div class="tabs mb-3" id="settings-tabs">
+      <div class="tab-btn active" onclick="switchTab('school',this)"><i class="fas fa-school"></i> School Info</div>
+      <div class="tab-btn" onclick="switchTab('grading',this)"><i class="fas fa-star"></i> Grading System</div>
+      <div class="tab-btn" onclick="switchTab('subadmins',this)" id="subadmins-tab"><i class="fas fa-users"></i> Sub Admins</div>
+      <div class="tab-btn" onclick="switchTab('security',this)"><i class="fas fa-shield-check"></i> Security</div>
+    </div>
+
+    <!-- School Info -->
+    <div id="panel-school">
+      <div class="card">
+        <div style="font-family:var(--font-display);font-size:1.1rem;font-weight:700;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border-light)">
+          <i class="fas fa-school" style="color:var(--brand-gold);margin-right:8px"></i>School Information
+        </div>
+        <form id="school-form" onsubmit="saveSchool(event)">
+          <div class="grid-2">
+            <div class="form-group"><label class="form-label">School Name <span class="required">*</span></label><input type="text" class="form-control" id="school-name" value="Jaasiel Education Centre" data-validate="required"></div>
+            <div class="form-group"><label class="form-label">School Email</label><div class="input-group"><i class="input-icon fas fa-envelope"></i><input type="email" class="form-control" id="school-email" placeholder="school@example.com"></div></div>
+            <div class="form-group"><label class="form-label">Phone Number</label><div class="input-group"><i class="input-icon fas fa-phone"></i><input type="tel" class="form-control" id="school-phone" placeholder="+234 000 000 0000"></div></div>
+            <div class="form-group"><label class="form-label">Website</label><div class="input-group"><i class="input-icon fas fa-globe"></i><input type="url" class="form-control" id="school-website" placeholder="https://jaasiel.edu.ng"></div></div>
+            <div class="form-group" style="grid-column:1/-1"><label class="form-label">School Address</label><textarea class="form-control" id="school-address" rows="2"></textarea></div>
+            <div class="form-group"><label class="form-label">Principal Name</label><input type="text" class="form-control" id="principal-name"></div>
+            <div class="form-group"><label class="form-label">School Motto</label><input type="text" class="form-control" id="school-motto" placeholder="Excellence in Education"></div>
+          </div>
+          <button type="submit" class="btn btn-primary" id="save-school-btn"><i class="fas fa-save"></i> Save School Info</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Grading System -->
+    <div id="panel-grading" class="hidden">
+      <div class="card">
+        <div style="font-family:var(--font-display);font-size:1.1rem;font-weight:700;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border-light)">
+          <i class="fas fa-star" style="color:var(--brand-gold);margin-right:8px"></i>Nigerian Grading System
+        </div>
+        <div class="alert alert-info mb-3"><i class="fas fa-info-circle"></i> The standard Nigerian grading scale is pre-configured. You can adjust the thresholds if needed.</div>
+        <div class="table-wrapper">
+          <table class="table" id="grading-table">
+            <thead><tr><th>Grade</th><th>Min Score</th><th>Max Score</th><th>Remarks</th></tr></thead>
+            <tbody id="grading-tbody"></tbody>
+          </table>
+        </div>
+        <button class="btn btn-primary mt-3" onclick="saveGrading()"><i class="fas fa-save"></i> Save Grading System</button>
+      </div>
+    </div>
+
+    <!-- Sub Admins -->
+    <div id="panel-subadmins" class="hidden">
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border-light)">
+          <div style="font-family:var(--font-display);font-size:1.1rem;font-weight:700"><i class="fas fa-users" style="color:var(--brand-gold);margin-right:8px"></i>Sub Admin Accounts</div>
+          <button class="btn btn-primary btn-sm" onclick="Modal.open('modal-new-subadmin')"><i class="fas fa-plus"></i> Add Sub Admin</button>
+        </div>
+        <div id="subadmins-list"><div class="skeleton" style="height:70px;border-radius:12px"></div></div>
+      </div>
+    </div>
+
+    <!-- Security -->
+    <div id="panel-security" class="hidden">
+      <div class="card mb-3">
+        <div style="font-family:var(--font-display);font-size:1.1rem;font-weight:700;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border-light)">
+          <i class="fas fa-key" style="color:var(--brand-gold);margin-right:8px"></i>Change Password
+        </div>
+        <form id="pwd-form" onsubmit="changePassword(event)" style="max-width:440px">
+          <div class="form-group"><label class="form-label">Current Password</label>
+            <div class="input-group"><i class="input-icon fas fa-lock"></i><input type="password" class="form-control" id="pwd-current" data-validate="required"><span class="input-addon-right" onclick="togglePwd('pwd-current',this)"><i class="fas fa-eye"></i></span></div></div>
+          <div class="form-group"><label class="form-label">New Password</label>
+            <div class="input-group"><i class="input-icon fas fa-lock"></i><input type="password" class="form-control" id="pwd-new" data-validate="required|minLen:6"><span class="input-addon-right" onclick="togglePwd('pwd-new',this)"><i class="fas fa-eye"></i></span></div></div>
+          <div class="form-group"><label class="form-label">Confirm New Password</label>
+            <div class="input-group"><i class="input-icon fas fa-lock"></i><input type="password" class="form-control" id="pwd-confirm" data-validate="required|match:pwd-new"><span class="input-addon-right" onclick="togglePwd('pwd-confirm',this)"><i class="fas fa-eye"></i></span></div></div>
+          <button type="submit" class="btn btn-primary" id="change-pwd-btn"><i class="fas fa-key"></i> Change Password</button>
+        </form>
+      </div>
+      <div class="card">
+        <div style="font-family:var(--font-display);font-size:1.1rem;font-weight:700;margin-bottom:16px"><i class="fas fa-shield-check" style="color:var(--brand-gold);margin-right:8px"></i>Security Actions</div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <button class="btn btn-danger btn-sm" onclick="signOutAll()"><i class="fas fa-right-from-bracket"></i> Sign Out All Devices</button>
+          <a href="audit-logs.html" class="btn btn-ghost btn-sm"><i class="fas fa-history"></i> View Login History</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- New Sub Admin Modal -->
+<div class="modal-overlay" id="modal-new-subadmin">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Add Sub Admin</div><button class="modal-close" onclick="Modal.close('modal-new-subadmin')"><i class="fas fa-times"></i></button></div>
+    <form id="subadmin-form" onsubmit="createSubAdmin(event)">
+      <div class="form-group"><label class="form-label">Full Name <span class="required">*</span></label><input type="text" class="form-control" id="sa-name" data-validate="required"></div>
+      <div class="form-group"><label class="form-label">Username <span class="required">*</span></label><input type="text" class="form-control" id="sa-username" data-validate="required" placeholder="e.g. emeka.admin"></div>
+      <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-control" id="sa-email"></div>
+      <div class="form-group"><label class="form-label">Password <span class="required">*</span></label>
+        <div class="input-group"><i class="input-icon fas fa-lock"></i><input type="password" class="form-control" id="sa-password" data-validate="required|minLen:6"><span class="input-addon-right" onclick="togglePwd('sa-password',this)"><i class="fas fa-eye"></i></span></div></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" onclick="Modal.close('modal-new-subadmin')">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="create-sa-btn"><i class="fas fa-user-plus"></i> Create Sub Admin</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="js/core.js"></script>
+<script src="js/ui.js"></script>
+<script>
+const GRADING = [{g:'A',min:70,max:100,r:'Excellent'},{g:'B',min:60,max:69,r:'Very Good'},{g:'C',min:50,max:59,r:'Good'},{g:'D',min:45,max:49,r:'Fair'},{g:'E',min:40,max:44,r:'Poor'},{g:'F',min:0,max:39,r:'Fail'}];
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await window.__rmsBootstrapReady;
+  const role = AuthState.getRole();
+  initPage(['super_admin','admin','sub_admin'], role==='sub_admin'?'subadmin':'admin');
+  if (role==='sub_admin' || role==='admin') { const tab=document.getElementById('subadmins-tab'); if(tab) tab.style.display='none'; }
+  loadSchool();
+  renderGrading();
+});
+
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
+  ['school','grading','subadmins','security'].forEach(t=>document.getElementById('panel-'+t).classList.toggle('hidden',t!==tab));
+  if (tab==='subadmins') loadSubAdmins();
+}
+
+async function loadSchool() {
+  try {
+    const d = await API.settings.getSchool();
+    if (d.name) document.getElementById('school-name').value=d.name;
+    if (d.email) document.getElementById('school-email').value=d.email;
+    if (d.phone) document.getElementById('school-phone').value=d.phone;
+    if (d.address) document.getElementById('school-address').value=d.address;
+    if (d.principal) document.getElementById('principal-name').value=d.principal;
+    if (d.motto) document.getElementById('school-motto').value=d.motto;
+    if (d.website) document.getElementById('school-website').value=d.website;
+  } catch {}
+}
+
+async function saveSchool(e) {
+  e.preventDefault(); if (!Validator.validate(document.getElementById('school-form'))) return;
+  const btn=document.getElementById('save-school-btn'); setLoading(btn,true);
+  try {
+    await API.settings.updateSchool({name:document.getElementById('school-name').value,email:document.getElementById('school-email').value,phone:document.getElementById('school-phone').value,address:document.getElementById('school-address').value,principal:document.getElementById('principal-name').value,motto:document.getElementById('school-motto').value,website:document.getElementById('school-website').value});
+    Toast.success('Saved!','School information updated');
+  } catch(err){Toast.error('Failed',err.message);}
+  setLoading(btn,false);
+}
+
+function renderGrading() {
+  document.getElementById('grading-tbody').innerHTML = GRADING.map(g=>`<tr>
+    <td><span class="badge badge-${g.g==='A'||g.g==='B'?'approved':g.g==='C'?'gold':g.g==='F'?'rejected':'pending'}">${g.g}</span></td>
+    <td><input type="number" class="score-input" value="${g.min}" min="0" max="100" id="gmin-${g.g}"></td>
+    <td><input type="number" class="score-input" value="${g.max}" min="0" max="100" id="gmax-${g.g}"></td>
+    <td style="color:var(--text-secondary)">${g.r}</td>
+  </tr>`).join('');
+}
+
+async function saveGrading() {
+  const updated = GRADING.map(g=>({...g,min:parseInt(document.getElementById('gmin-'+g.g).value),max:parseInt(document.getElementById('gmax-'+g.g).value)}));
+  try { await API.settings.updateGrading({grades:updated}); Toast.success('Saved!','Grading system updated'); }
+  catch(err) { Toast.error('Failed',err.message); }
+}
+
+async function loadSubAdmins() {
+  const container=document.getElementById('subadmins-list');
+  showSkeleton(container,3,'70px','12px');
+  try {
+    const data=await API.settings.getSubAdmins();
+    const items=data.items||data||[];
+    if (!items.length){container.innerHTML='<div style="text-align:center;padding:32px;color:var(--text-muted)">No Sub Admins yet</div>';return;}
+    container.innerHTML=items.map(sa=>`<div style="display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid rgba(255,255,255,.04)">
+      <div class="avatar avatar-sm">${Fmt.initials(sa.full_name||sa.username)}</div>
+      <div style="flex:1"><div style="font-weight:600">${sa.full_name||sa.username}</div><div style="font-size:.78rem;color:var(--text-muted)">${sa.username} · ${sa.email||'No email'}</div></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost btn-sm" onclick="resetSubAdminPwd(${sa.id},'${sa.full_name||sa.username}')"><i class="fas fa-key"></i> Reset Pwd</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteSubAdmin(${sa.id})"><i class="fas fa-trash"></i></button>
+      </div>
+    </div>`).join('');
+  } catch{container.innerHTML='<div style="text-align:center;padding:24px;color:var(--text-muted)">Failed to load sub admins</div>';}
+}
+
+async function createSubAdmin(e) {
+  if (!AuthState.isAdmin()) { Toast.error('No access','Only Super Admin can create Sub Admins'); return; }
+  e.preventDefault(); if (!Validator.validate(document.getElementById('subadmin-form'))) return;
+  const btn=document.getElementById('create-sa-btn'); setLoading(btn,true);
+  try {
+    await API.settings.createSubAdmin({full_name:document.getElementById('sa-name').value,username:document.getElementById('sa-username').value,email:document.getElementById('sa-email').value,password:document.getElementById('sa-password').value});
+    Toast.success('Created!','Sub Admin account created'); Modal.close('modal-new-subadmin'); loadSubAdmins();
+  } catch(err){Toast.error('Failed',err.message);setLoading(btn,false);}
+}
+
+async function resetSubAdminPwd(id,name) {
+  const pwd=prompt(`Enter new password for ${name}:`); if (!pwd) return;
+  try { await API.settings.resetSubAdminPwd(id,{password:pwd}); Toast.success('Done',`Password reset for ${name}`); }
+  catch(err) { Toast.error('Failed',err.message); }
+}
+async function deleteSubAdmin(id) {
+  if (!confirm('Delete this Sub Admin account?')) return;
+  try { await API.delete(`/admin/sub-admins/${id}`); Toast.success('Deleted','Sub Admin removed'); loadSubAdmins(); }
+  catch(err) { Toast.error('Failed',err.message); }
+}
+
+async function changePassword(e) {
+  e.preventDefault(); if (!Validator.validate(document.getElementById('pwd-form'))) return;
+  const btn=document.getElementById('change-pwd-btn'); setLoading(btn,true);
+  try {
+    await API.auth.changePassword({current_password:document.getElementById('pwd-current').value,new_password:document.getElementById('pwd-new').value});
+    Toast.success('Changed!','Your password has been updated'); document.getElementById('pwd-form').reset();
+  } catch(err){Toast.error('Failed',err.message);}
+  setLoading(btn,false);
+}
+
+async function signOutAll() {
+  if (!confirm('This will sign out all active sessions. Continue?')) return;
+  try { await API.settings.signOutAll(); Toast.success('Done','All sessions terminated'); AuthState.clear(); window.location.href='login.html'; }
+  catch(err){Toast.error('Failed',err.message);}
+}
+</script>
+</body>
+</html>

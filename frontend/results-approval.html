@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Result Approvals — Jaasiel RMS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="css/style.css">
+<style>
+.publish-card{background:var(--bg-card);border:1px solid var(--border-light);border-radius:var(--radius-lg);padding:16px 20px;margin-bottom:12px;transition:var(--transition)}
+.publish-card.ready{border-color:rgba(34,197,94,.3);background:rgba(34,197,94,.03)}
+.publish-card.published{border-color:rgba(201,151,58,.3);background:rgba(201,151,58,.03)}
+.sp{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:.71rem;font-weight:600;margin:2px}
+.sp-pending{background:rgba(107,114,128,.12);color:#9ca3af}
+.sp-submitted{background:rgba(59,130,246,.12);color:#60a5fa}
+.sp-approved{background:rgba(34,197,94,.12);color:#4ade80}
+.sp-published{background:rgba(201,151,58,.12);color:#c9973a}
+.sp-rejected{background:rgba(239,68,68,.12);color:#f87171}
+.sp-correction{background:rgba(168,85,247,.12);color:#c084fc}
+.sp-locked{background:rgba(100,116,139,.15);color:#94a3b8}
+</style>
+</head>
+<body>
+<div class="page-bg"></div>
+<div class="page-loader" id="page-loader"><div class="loader-logo"><i class="fas fa-graduation-cap"></i> Jaasiel RMS</div><div class="loader-ring"></div></div>
+<div class="toast-container" id="toast-container"></div>
+<div class="app-layout">
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<aside class="sidebar" id="sidebar"></aside>
+<div class="main-content">
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" id="menu-toggle"><i class="fas fa-bars"></i></button>
+      <div>
+        <div class="page-title">Result Approvals</div>
+        <div class="breadcrumb"><a href="admin-dashboard.html">Dashboard</a><span class="sep">/</span><span class="text-gold">Approvals</span></div>
+      </div>
+    </div>
+    <div class="topbar-right" id="topbar-right"></div>
+  </header>
+  <div class="page-body">
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-icon red"><i class="fas fa-clock"></i></div><div class="stat-info"><div class="stat-label">Awaiting Review</div><div class="stat-value" id="cnt-pending">—</div></div></div>
+      <div class="stat-card"><div class="stat-icon green"><i class="fas fa-check-circle"></i></div><div class="stat-info"><div class="stat-label">Approved</div><div class="stat-value" id="cnt-approved">—</div></div></div>
+      <div class="stat-card"><div class="stat-icon gold"><i class="fas fa-bullhorn"></i></div><div class="stat-info"><div class="stat-label">Published</div><div class="stat-value" id="cnt-published">—</div></div></div>
+      <div class="stat-card"><div class="stat-icon purple"><i class="fas fa-lock"></i></div><div class="stat-info"><div class="stat-label">Locked</div><div class="stat-value" id="cnt-locked">—</div></div></div>
+    </div>
+
+    <!-- Session/Term filter -->
+    <div class="card mb-3" style="padding:14px 20px">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <i class="fas fa-filter" style="color:var(--brand-gold)"></i>
+        <select class="filter-select" id="sel-session" onchange="onSessionChange()" style="flex:1;min-width:140px"></select>
+        <select class="filter-select" id="sel-term"    onchange="loadOverview()"    style="flex:1;min-width:130px"><option value="">Select Term</option></select>
+        <button class="btn btn-ghost btn-sm" onclick="loadOverview()"><i class="fas fa-rotate"></i></button>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px">
+      <div class="tabs" id="main-tabs" style="flex-wrap:wrap;gap:4px">
+        <div class="tab-btn active" onclick="switchTab('overview',this)"><i class="fas fa-chart-bar"></i> Publish Overview</div>
+        <div class="tab-btn" onclick="switchTab('submitted',this)">Submitted <span class="nav-badge gold" id="tab-pending-cnt" style="display:inline;position:static;margin-left:4px">0</span></div>
+        <div class="tab-btn" onclick="switchTab('approved',this)">Approved</div>
+        <div class="tab-btn" onclick="switchTab('published',this)">Published</div>
+        <div class="tab-btn" onclick="switchTab('locked',this)">Locked</div>
+        <div class="tab-btn" onclick="switchTab('rejected',this)">Rejected</div>
+        <div class="tab-btn" onclick="switchTab('correction_requested',this)">Corrections</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-success btn-sm" id="bulk-approve-btn" style="display:none" onclick="bulkApprove()"><i class="fas fa-check-double"></i> Approve All Selected</button>
+        <div class="search-box"><i class="fas fa-search"></i><input type="text" placeholder="Search…" oninput="filterBatches(this.value)" style="width:160px"></div>
+      </div>
+    </div>
+
+    <!-- OVERVIEW TAB -->
+    <div id="tab-overview"><div id="overview-container"></div></div>
+
+    <!-- BATCHES TAB -->
+    <div id="tab-batches" style="display:none">
+      <div id="batches-container"></div>
+      <div id="pagination-batches" class="pagination"></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- Batch Detail Modal -->
+<div class="modal-overlay" id="modal-batch">
+  <div class="modal modal-xl">
+    <div class="modal-header">
+      <div><div class="modal-title" id="modal-batch-title">Batch Detail</div><div class="modal-subtitle" id="modal-batch-sub"></div></div>
+      <button class="modal-close" onclick="Modal.close('modal-batch')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body" id="modal-batch-body" style="max-height:65vh;overflow-y:auto"></div>
+    <div class="modal-footer" id="modal-batch-footer"></div>
+  </div>
+</div>
+
+<!-- Reason Modal -->
+<div class="modal-overlay" id="modal-reason">
+  <div class="modal modal-sm">
+    <div class="modal-header"><div class="modal-title" id="reason-title">Enter Reason</div><button class="modal-close" onclick="Modal.close('modal-reason')"><i class="fas fa-times"></i></button></div>
+    <div class="form-group"><label class="form-label">Reason <span class="required">*</span></label>
+      <textarea class="form-control" id="reason-text" rows="4" placeholder="Describe the issue…"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="Modal.close('modal-reason')">Cancel</button>
+      <button class="btn btn-primary" id="reason-confirm-btn" onclick="submitReason()">Submit</button>
+    </div>
+  </div>
+</div>
+
+<!-- Publish Confirm -->
+<div class="modal-overlay" id="modal-publish">
+  <div class="modal modal-sm">
+    <div class="modal-header"><div class="modal-title"><i class="fas fa-bullhorn" style="color:var(--brand-gold);margin-right:8px"></i>Publish Results</div><button class="modal-close" onclick="Modal.close('modal-publish')"><i class="fas fa-times"></i></button></div>
+    <p id="publish-confirm-text" style="color:var(--text-secondary);margin-bottom:16px"></p>
+    <div class="alert alert-warning mb-3" style="font-size:.83rem"><i class="fas fa-triangle-exclamation"></i> Once published, students can immediately view their results.</div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="Modal.close('modal-publish')">Cancel</button>
+      <button class="btn btn-primary" id="publish-confirm-btn"><i class="fas fa-bullhorn"></i> Publish Now</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/core.js"></script>
+<script src="js/ui.js"></script>
+<script>
+let currentTab='overview', currentPage=1, currentBatchId=null, reasonAction=null, publishPayload=null;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await window.__rmsBootstrapReady;
+  initPage(['super_admin','admin'], 'admin');
+  await loadSessions();
+  await loadCounts();
+  loadOverview();
+});
+
+async function loadSessions() {
+  try {
+    const data = await API.sessions.list();
+    const items = data.items||[];
+    const sel = document.getElementById('sel-session');
+    sel.innerHTML = items.length
+      ? items.map(s=>`<option value="${s.id}">${s.session_name}</option>`).join('')
+      : '<option value="">No sessions</option>';
+    const cur = await API.sessions.current();
+    if (cur.session_id) sel.value = cur.session_id;
+    await loadTerms(parseInt(sel.value), cur.term_id);
+  } catch {}
+}
+
+async function loadTerms(sessionId, defaultTermId) {
+  try {
+    const data = await API.sessions.terms(sessionId);
+    const terms = data.items||data||[];
+    const sel = document.getElementById('sel-term');
+    sel.innerHTML = terms.map(t=>`<option value="${t.id}">${t.term_name}</option>`).join('');
+    if (defaultTermId) sel.value = defaultTermId;
+    else {
+      const cur = terms.find(t=>t.is_current);
+      if (cur) sel.value = cur.id;
+    }
+  } catch {}
+}
+
+function onSessionChange() {
+  const sid = parseInt(document.getElementById('sel-session').value);
+  loadTerms(sid, null).then(() => loadOverview());
+}
+
+async function loadCounts() {
+  try {
+    const d = await API.dashboard.admin();
+    document.getElementById('cnt-pending').textContent   = d.pending_approvals||0;
+    document.getElementById('cnt-approved').textContent  = d.approved_today||0;
+    document.getElementById('cnt-published').textContent = d.published_results||0;
+    document.getElementById('cnt-locked').textContent    = d.locked_results||0;
+    document.getElementById('tab-pending-cnt').textContent = d.pending_approvals||0;
+  } catch {}
+}
+
+function switchTab(tab, btn) {
+  currentTab = tab;
+  document.querySelectorAll('#main-tabs .tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-overview').style.display = tab==='overview' ? '' : 'none';
+  document.getElementById('tab-batches').style.display  = tab!=='overview' ? '' : 'none';
+  document.getElementById('bulk-approve-btn').style.display = 'none';
+  if (tab !== 'overview') loadBatches(tab, 1);
+}
+
+/* ─── OVERVIEW ─── */
+async function loadOverview() {
+  const termId    = parseInt(document.getElementById('sel-term').value);
+  const sessionId = parseInt(document.getElementById('sel-session').value);
+  if (!termId || !sessionId) return;
+  const container = document.getElementById('overview-container');
+  showSkeleton(container, 4, '100px', '14px');
+  try {
+    const data = await API.results.publishOverview({ term_id: termId, session_id: sessionId });
+    const classes = data.classes||[];
+    if (!classes.length) {
+      container.innerHTML = `<div class="card" style="text-align:center;padding:48px;color:var(--text-muted)">
+        <i class="fas fa-inbox" style="font-size:2rem;display:block;margin-bottom:12px;opacity:.4"></i>
+        No results uploaded for this term yet.
+      </div>`; return;
+    }
+
+    const readyCount = classes.filter(c=>c.ready_to_publish).length;
+    container.innerHTML = `
+      <div class="card mb-3" style="padding:16px 20px">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+          <div>
+            <div style="font-weight:700">${readyCount} class(es) ready to publish</div>
+            <div style="font-size:.8rem;color:var(--text-muted);margin-top:3px">All approved subjects can be published to students at once</div>
+          </div>
+          <button class="btn btn-primary" ${readyCount?'':'disabled title="No classes ready"'} onclick="openPublish(null,'all')">
+            <i class="fas fa-bullhorn"></i> Publish All Ready Classes
+          </button>
+        </div>
+      </div>
+      ${classes.map(cls => {
+        const pills = [
+          cls.pending    > 0 ? `<span class="sp sp-pending"><i class="fas fa-clock"></i> ${cls.pending} Draft</span>` : '',
+          cls.submitted  > 0 ? `<span class="sp sp-submitted"><i class="fas fa-paper-plane"></i> ${cls.submitted} Submitted</span>` : '',
+          cls.approved   > 0 ? `<span class="sp sp-approved"><i class="fas fa-check"></i> ${cls.approved} Approved</span>` : '',
+          cls.published  > 0 ? `<span class="sp sp-published"><i class="fas fa-bullhorn"></i> ${cls.published} Published</span>` : '',
+          cls.rejected   > 0 ? `<span class="sp sp-rejected"><i class="fas fa-times"></i> ${cls.rejected} Rejected</span>` : '',
+          cls.correction > 0 ? `<span class="sp sp-correction"><i class="fas fa-rotate"></i> ${cls.correction} Correction</span>` : '',
+          cls.locked     > 0 ? `<span class="sp sp-locked"><i class="fas fa-lock"></i> ${cls.locked} Locked</span>` : '',
+        ].filter(Boolean).join('');
+        return `<div class="publish-card ${cls.all_published?'published':cls.ready_to_publish?'ready':''}">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:10px">
+            <div style="display:flex;align-items:center;gap:12px">
+              <div class="stat-icon ${cls.all_published?'gold':cls.ready_to_publish?'green':'blue'}" style="width:38px;height:38px;flex-shrink:0">
+                <i class="fas ${cls.all_published?'fa-check-double':cls.ready_to_publish?'fa-check':'fa-hourglass-half'}"></i>
+              </div>
+              <div>
+                <div style="font-weight:700">${cls.class_name}</div>
+                <div style="font-size:.75rem;color:var(--text-muted)">${cls.total_batches} subject(s) uploaded</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              ${cls.all_published
+                ? '<span class="badge badge-gold"><i class="fas fa-star"></i> Published</span>'
+                : cls.ready_to_publish
+                  ? `<span class="badge badge-approved"><i class="fas fa-check"></i> Ready</span>
+                     <button class="btn btn-primary btn-sm" onclick="openPublish(${cls.class_id},'single')">
+                       <i class="fas fa-bullhorn"></i> Publish
+                     </button>`
+                  : '<span class="badge badge-draft">Not Ready</span>'}
+              <button class="btn btn-ghost btn-sm" onclick="switchTab('submitted',document.querySelectorAll('#main-tabs .tab-btn')[1])">
+                <i class="fas fa-eye"></i> Batches
+              </button>
+            </div>
+          </div>
+          <div>${pills||'<span style="font-size:.78rem;color:var(--text-muted)">No results yet</span>'}</div>
+        </div>`;
+      }).join('')}`;
+  } catch(err) {
+    container.innerHTML = `<div class="alert alert-danger"><i class="fas fa-circle-exclamation"></i> ${err.message}</div>`;
+  }
+}
+
+function openPublish(classId, mode) {
+  const termId    = parseInt(document.getElementById('sel-term').value);
+  const sessionId = parseInt(document.getElementById('sel-session').value);
+  const sesName   = document.getElementById('sel-session').selectedOptions[0]?.text||'';
+  const termName  = document.getElementById('sel-term').selectedOptions[0]?.text||'';
+  if (mode==='all') {
+    publishPayload = {all:true, term_id:termId, session_id:sessionId};
+    document.getElementById('publish-confirm-text').innerHTML = `Publish results for <strong>ALL ready classes</strong> — ${sesName} · ${termName}?`;
+  } else {
+    publishPayload = {class_id:classId, term_id:termId, session_id:sessionId};
+    document.getElementById('publish-confirm-text').innerHTML = `Publish approved results for this class — ${sesName} · ${termName}?`;
+  }
+  document.getElementById('publish-confirm-btn').onclick = doPublish;
+  Modal.open('modal-publish');
+}
+
+async function doPublish() {
+  const btn = document.getElementById('publish-confirm-btn');
+  setLoading(btn, true, 'Publishing…');
+  try {
+    const data = await API.results.publish(publishPayload);
+    Toast.success('Published!', data.message);
+    Modal.close('modal-publish');
+    loadOverview(); loadCounts();
+  } catch(err) { Toast.error('Failed', err.message); setLoading(btn, false); }
+}
+
+/* ─── BATCHES ─── */
+async function loadBatches(status, page=1) {
+  currentPage = page;
+  const container = document.getElementById('batches-container');
+  container.innerHTML = '<div class="skeleton mb-2" style="height:100px;border-radius:14px"></div>'.repeat(3);
+  try {
+    const data  = await API.results.batches({ status, page, per_page:10 });
+    const items = data.items||[];
+    if (!items.length) {
+      container.innerHTML = `<div class="card" style="text-align:center;padding:40px;color:var(--text-muted)">
+        <i class="fas fa-inbox" style="font-size:2rem;display:block;margin-bottom:12px;opacity:.4"></i>
+        No ${status.replace('_',' ')} batches
+      </div>`;
+      document.getElementById('pagination-batches').innerHTML=''; return;
+    }
+    container.innerHTML = items.map(b=>renderBatchCard(b)).join('');
+    renderPagination(document.getElementById('pagination-batches'),
+      {page, total:data.total||items.length, perPage:10, onChange:`(p)=>loadBatches('${status}',p)`});
+  } catch(err) {
+    container.innerHTML = `<div class="alert alert-danger"><i class="fas fa-circle-exclamation"></i> ${err.message}</div>`;
+  }
+}
+
+function renderBatchCard(b) {
+  const sm={pending:'badge-draft',submitted:'badge-pending',approved:'badge-approved',
+            rejected:'badge-rejected',correction_requested:'badge-correction',
+            locked:'badge-locked',published:'badge-gold'};
+  return `<div class="batch-card" id="batch-${b.id}">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap">
+      <input type="checkbox" class="batch-check" value="${b.id}" onchange="updateBulkBtn()" style="accent-color:var(--brand-gold)">
+      <div class="batch-icon" style="background:${b.has_issues?'var(--danger-bg)':'var(--success-bg)'}">
+        <i class="fas ${b.has_issues?'fa-triangle-exclamation':'fa-check-circle'}" style="color:${b.has_issues?'var(--danger)':'var(--success)'}"></i>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700">${b.class_name} — ${b.subject_name}</div>
+        <div style="font-size:.75rem;color:var(--text-muted)">${b.session_name} · ${b.term_name} · ${b.uploader} · ${Fmt.timeAgo(b.uploaded_at)}</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        ${b.source==='ocr'?'<span class="ai-badge" style="font-size:.7rem;padding:2px 8px"><i class="fas fa-robot"></i> AI OCR</span>':'<span class="badge badge-draft" style="font-size:.72rem">Manual</span>'}
+        <span class="badge ${sm[b.status]||'badge-draft'}">${b.status.replace('_',' ')}</span>
+      </div>
+    </div>
+    <div class="batch-stats">
+      <div class="bs-item"><strong>${b.students||0}</strong> Students</div>
+      <div class="bs-item"><strong>${b.avg_score||'—'}</strong> Avg</div>
+      <div class="bs-item"><strong>${b.pass_count||'—'}</strong> Passed</div>
+      ${b.has_issues
+        ? '<div class="bs-item"><span style="color:var(--danger)"><i class="fas fa-triangle-exclamation"></i> Issues</span></div>'
+        : '<div class="bs-item"><span style="color:var(--success)"><i class="fas fa-shield-check"></i> Validated</span></div>'}
+    </div>
+    ${b.admin_note ? `<div style="margin-top:10px;padding:8px 12px;background:rgba(239,68,68,.08);border-radius:8px;font-size:.8rem;color:var(--danger)"><i class="fas fa-comment"></i> ${Security.sanitize(b.admin_note)}</div>` : ''}
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+      <button class="btn btn-secondary btn-sm" onclick="viewDetail(${b.id})"><i class="fas fa-eye"></i> View Scores</button>
+      ${b.status==='submitted' ? `
+        <button class="btn btn-success btn-sm" onclick="approveBatch(${b.id},this)"><i class="fas fa-check"></i> Approve</button>
+        <button class="btn btn-warning btn-sm" onclick="openReason(${b.id},'correction')"><i class="fas fa-rotate"></i> Correction</button>
+        <button class="btn btn-danger btn-sm" onclick="openReason(${b.id},'reject')"><i class="fas fa-times"></i> Reject</button>
+      ` : ''}
+      ${b.status==='approved' ? `<button class="btn btn-ghost btn-sm" onclick="lockBatch(${b.id},this)"><i class="fas fa-lock"></i> Lock</button>` : ''}
+      ${b.status==='locked' ? `<button class="btn btn-ghost btn-sm" onclick="unlockBatch(${b.id},this)"><i class="fas fa-lock-open"></i> Unlock</button>` : ''}
+    </div>
+  </div>`;
+}
+
+async function viewDetail(id) {
+  Modal.open('modal-batch');
+  document.getElementById('modal-batch-body').innerHTML = '<div class="skeleton" style="height:300px;border-radius:12px"></div>';
+  document.getElementById('modal-batch-footer').innerHTML = '';
+  try {
+    const data = await API.results.batchDetail(id);
+    currentBatchId = id;
+    document.getElementById('modal-batch-title').textContent = `${data.class_name} — ${data.subject_name}`;
+    document.getElementById('modal-batch-sub').textContent   = `${data.session_name} · ${data.term_name} · ${data.students||0} students · ${data.status}`;
+    const scores = data.scores||[];
+    document.getElementById('modal-batch-body').innerHTML = `
+      <div class="table-wrapper" style="max-height:55vh;overflow-y:auto">
+        <table class="table">
+          <thead><tr><th>#</th><th>Student</th><th>ID</th><th>CA</th><th>Exam</th><th>Total</th><th>Grade</th><th>Remark</th></tr></thead>
+          <tbody>${scores.map((s,i)=>{const gr=Fmt.grade(s.total_score??0);return`<tr>
+            <td style="color:var(--text-muted)">${i+1}</td>
+            <td><strong>${Security.sanitize(s.full_name||'—')}</strong></td>
+            <td class="font-mono" style="font-size:.78rem">${s.student_id_no||'—'}</td>
+            <td class="font-mono">${s.ca_score??'—'}</td>
+            <td class="font-mono">${s.exam_score??'—'}</td>
+            <td class="font-mono" style="font-weight:700">${s.total_score??'—'}</td>
+            <td><span class="badge ${gr.bg}">${gr.g}</span></td>
+            <td style="font-size:.8rem;color:var(--text-secondary)">${gr.r}</td>
+          </tr>`;}).join('')}</tbody>
+        </table>
+      </div>`;
+    let footer = `<button class="btn btn-ghost" onclick="Modal.close('modal-batch')">Close</button>`;
+    if (data.status==='submitted') {
+      footer += `
+        <button class="btn btn-warning btn-sm" onclick="Modal.close('modal-batch');openReason(${id},'correction')"><i class="fas fa-rotate"></i> Correction</button>
+        <button class="btn btn-danger btn-sm" onclick="Modal.close('modal-batch');openReason(${id},'reject')"><i class="fas fa-times"></i> Reject</button>
+        <button class="btn btn-success" onclick="Modal.close('modal-batch');approveBatch(${id})"><i class="fas fa-check"></i> Approve</button>`;
+    }
+    document.getElementById('modal-batch-footer').innerHTML = footer;
+  } catch(err) {
+    document.getElementById('modal-batch-body').innerHTML = `<div class="alert alert-danger"><i class="fas fa-circle-exclamation"></i> ${err.message}</div>`;
+  }
+}
+
+async function approveBatch(id, btn) {
+  if (btn) setLoading(btn, true);
+  try {
+    await API.results.approveBatch(id, {});
+    Toast.success('Approved!', 'Use Publish to make visible to students.');
+    loadBatches(currentTab, currentPage); loadCounts(); loadOverview();
+  } catch(err) { Toast.error('Failed', err.message); if (btn) setLoading(btn, false); }
+}
+
+function openReason(id, action) {
+  currentBatchId=id; reasonAction=action;
+  document.getElementById('reason-title').textContent = action==='reject' ? 'Reject Results' : 'Request Correction';
+  document.getElementById('reason-confirm-btn').className = action==='reject' ? 'btn btn-danger' : 'btn btn-warning';
+  document.getElementById('reason-confirm-btn').innerHTML = action==='reject' ? '<i class="fas fa-times"></i> Reject' : '<i class="fas fa-rotate"></i> Send for Correction';
+  document.getElementById('reason-text').value = '';
+  Modal.open('modal-reason');
+}
+
+async function submitReason() {
+  const reason = document.getElementById('reason-text').value.trim();
+  if (!reason) { Toast.warning('Required','Please enter a reason.'); return; }
+  const btn = document.getElementById('reason-confirm-btn');
+  setLoading(btn, true);
+  try {
+    if (reasonAction==='reject') await API.results.rejectBatch(currentBatchId, {reason});
+    else await API.results.correctionBatch(currentBatchId, {comment: reason});
+    Toast.success('Done', reasonAction==='reject' ? 'Rejected' : 'Correction sent');
+    Modal.close('modal-reason');
+    loadBatches(currentTab, currentPage); loadCounts(); loadOverview();
+  } catch(err) { Toast.error('Failed', err.message); setLoading(btn, false); }
+}
+
+async function lockBatch(id, btn) {
+  setLoading(btn, true);
+  try { await API.results.lock(id); Toast.success('Locked','Sub admins cannot edit.'); loadBatches(currentTab,currentPage); loadCounts(); }
+  catch(err) { Toast.error('Failed',err.message); setLoading(btn,false); }
+}
+async function unlockBatch(id, btn) {
+  setLoading(btn, true);
+  try { await API.results.unlock(id); Toast.success('Unlocked'); loadBatches(currentTab,currentPage); loadCounts(); }
+  catch(err) { Toast.error('Failed',err.message); setLoading(btn,false); }
+}
+
+function updateBulkBtn() {
+  const n = document.querySelectorAll('.batch-check:checked').length;
+  const b = document.getElementById('bulk-approve-btn');
+  b.style.display = n>0 ? '' : 'none';
+  b.innerHTML = `<i class="fas fa-check-double"></i> Approve ${n} Selected`;
+}
+async function bulkApprove() {
+  const ids = [...document.querySelectorAll('.batch-check:checked')].map(c=>c.value);
+  if (!ids.length) return;
+  const btn = document.getElementById('bulk-approve-btn');
+  setLoading(btn, true, 'Approving…');
+  try {
+    await Promise.all(ids.map(id => API.results.approveBatch(id, {})));
+    Toast.success('Done', `${ids.length} batches approved`);
+    loadBatches(currentTab,currentPage); loadCounts(); loadOverview();
+    btn.style.display='none';
+  } catch(err) { Toast.error('Failed',err.message); setLoading(btn,false); }
+}
+function filterBatches(q) {
+  document.querySelectorAll('.batch-card').forEach(card=>{
+    card.style.display = !q||card.textContent.toLowerCase().includes(q.toLowerCase()) ? '' : 'none';
+  });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sub Admin Dashboard — Jaasiel RMS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="page-bg"></div>
+<div class="page-loader" id="page-loader"><div class="loader-logo"><i class="fas fa-graduation-cap"></i> Jaasiel RMS</div><div class="loader-ring"></div></div>
+<div class="toast-container" id="toast-container"></div>
+<div class="app-layout">
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<aside class="sidebar" id="sidebar"></aside>
+<div class="main-content">
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" id="menu-toggle"><i class="fas fa-bars"></i></button>
+      <div>
+        <div class="page-title">Sub Admin Dashboard</div>
+        <div class="breadcrumb"><span class="text-gold">Sub Admin</span><span class="sep">/</span><span>Overview</span></div>
+      </div>
+    </div>
+    <div class="topbar-right" id="topbar-right"></div>
+  </header>
+  <div class="page-body">
+    <div class="welcome-banner">
+      <div>
+        <div style="font-family:var(--font-display);font-size:clamp(1.1rem,2.5vw,1.4rem);font-weight:700" id="welcome-msg">Good morning 👋</div>
+        <div style="font-size:.84rem;color:var(--text-secondary);margin-top:4px">Upload result sheets, register students, and track submissions.</div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <a href="ocr-upload.html" class="btn btn-primary"><i class="fas fa-robot"></i> AI OCR Upload</a>
+        <a href="manual-entry.html" class="btn btn-secondary"><i class="fas fa-keyboard"></i> Manual Entry</a>
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-icon gold"><i class="fas fa-upload"></i></div><div class="stat-info"><div class="stat-label">My Uploads</div><div class="stat-value" id="s-uploads">—</div></div></div>
+      <div class="stat-card"><div class="stat-icon red"><i class="fas fa-clock"></i></div><div class="stat-info"><div class="stat-label">Pending Review</div><div class="stat-value" id="s-pending">—</div></div></div>
+      <div class="stat-card"><div class="stat-icon green"><i class="fas fa-check-circle"></i></div><div class="stat-info"><div class="stat-label">Approved</div><div class="stat-value" id="s-approved">—</div></div></div>
+      <div class="stat-card"><div class="stat-icon blue"><i class="fas fa-rotate"></i></div><div class="stat-info"><div class="stat-label">Corrections</div><div class="stat-value" id="s-correction">—</div></div></div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:24px">
+      <a href="ocr-upload.html" class="quick-action-btn">
+        <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,rgba(168,85,247,.15),rgba(59,130,246,.15));border:1px solid rgba(168,85,247,.3);display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:#C084FC"><i class="fas fa-robot"></i></div>
+        <div style="font-size:.82rem;font-weight:600">AI OCR Upload</div>
+        <div style="font-size:.72rem;color:var(--text-muted)">Scan result sheets</div>
+      </a>
+      <a href="manual-entry.html" class="quick-action-btn">
+        <div style="width:44px;height:44px;border-radius:12px;background:rgba(201,151,58,.1);display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:var(--brand-gold)"><i class="fas fa-keyboard"></i></div>
+        <div style="font-size:.82rem;font-weight:600">Manual Entry</div>
+        <div style="font-size:.72rem;color:var(--text-muted)">Type scores</div>
+      </a>
+      <a href="add-student.html" class="quick-action-btn">
+        <div style="width:44px;height:44px;border-radius:12px;background:rgba(34,197,94,.1);display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:var(--success)"><i class="fas fa-user-plus"></i></div>
+        <div style="font-size:.82rem;font-weight:600">Register Student</div>
+        <div style="font-size:.72rem;color:var(--text-muted)">New student</div>
+      </a>
+      <a href="bulk-upload.html" class="quick-action-btn">
+        <div style="width:44px;height:44px;border-radius:12px;background:rgba(59,130,246,.1);display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:#60A5FA"><i class="fas fa-file-arrow-up"></i></div>
+        <div style="font-size:.82rem;font-weight:600">Bulk Upload</div>
+        <div style="font-size:.72rem;color:var(--text-muted)">Excel/CSV list</div>
+      </a>
+    </div>
+
+    <div class="grid-2">
+      <!-- Recent Uploads -->
+      <div class="card">
+        <div class="section-header"><div class="section-title">My Recent Uploads</div><a href="upload-history.html" class="btn btn-ghost btn-sm">View All</a></div>
+        <div id="my-uploads-list"><div class="skeleton mb-2" style="height:60px;border-radius:10px"></div><div class="skeleton mb-2" style="height:60px;border-radius:10px"></div><div class="skeleton" style="height:60px;border-radius:10px"></div></div>
+      </div>
+
+      <!-- Correction Notices -->
+      <div class="card">
+        <div class="section-header"><div class="section-title">Correction Requests</div></div>
+        <div id="corrections-list"><div class="skeleton mb-2" style="height:60px;border-radius:10px"></div><div class="skeleton" style="height:60px;border-radius:10px"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+<script src="js/core.js"></script>
+<script src="js/ui.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  await window.__rmsBootstrapReady;
+  initPage('sub_admin', 'subadmin');
+  setGreeting();
+  loadDashboard();
+});
+
+function setGreeting() {
+  const h=new Date().getHours(); const g=h<12?'Good morning':h<17?'Good afternoon':'Good evening';
+  const user=AuthState.getUser(); const name=user?.full_name?.split(' ')[0]||'Sub Admin';
+  document.getElementById('welcome-msg').textContent=`${g}, ${name} 👋`;
+}
+
+async function loadDashboard() {
+  try {
+    const data=await API.dashboard.subadmin();
+    document.getElementById('s-uploads').textContent=data.total_uploads||0;
+    document.getElementById('s-pending').textContent=data.pending||0;
+    document.getElementById('s-approved').textContent=data.approved||0;
+    document.getElementById('s-correction').textContent=data.corrections||0;
+    renderUploads(data.recent_uploads||[]);
+    renderCorrections(data.corrections_list||[]);
+  } catch {
+    document.getElementById('s-uploads').textContent='12';
+    document.getElementById('s-pending').textContent='3';
+    document.getElementById('s-approved').textContent='8';
+    document.getElementById('s-correction').textContent='1';
+    renderUploads([{id:1,class_name:'JSS 2A',subject_name:'Mathematics',status:'pending',uploaded_at:new Date().toISOString()},{id:2,class_name:'SS 1A',subject_name:'English',status:'approved',uploaded_at:new Date(Date.now()-3.6e6).toISOString()},{id:3,class_name:'JSS 1B',subject_name:'Science',status:'correction_requested',uploaded_at:new Date(Date.now()-7.2e6).toISOString()}]);
+    renderCorrections([{id:3,class_name:'JSS 1B',subject_name:'Science',comment:'Missing 3 student scores. Please re-upload.',created_at:new Date(Date.now()-1.8e6).toISOString()}]);
+  }
+}
+
+function renderUploads(items) {
+  const el=document.getElementById('my-uploads-list');
+  if (!items.length){el.innerHTML='<div style="text-align:center;padding:32px;color:var(--text-muted)"><i class="fas fa-upload" style="font-size:1.5rem;display:block;margin-bottom:8px;opacity:.4"></i>No uploads yet</div>';return;}
+  const statusMap={pending:'badge-pending',approved:'badge-approved',rejected:'badge-rejected',correction_requested:'badge-correction'};
+  el.innerHTML=items.map(u=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.04);flex-wrap:wrap;gap:8px">
+    <div><div style="font-weight:600;font-size:.88rem">${u.class_name} — ${u.subject_name}</div><div style="font-size:.75rem;color:var(--text-muted)">${Fmt.timeAgo(u.uploaded_at)}</div></div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span class="badge ${statusMap[u.status]||'badge-draft'}" style="font-size:.72rem">${u.status?.replace('_',' ')}</span>
+      ${u.status==='correction_requested'?`<a href="manual-entry.html?batch=${u.id}" class="btn btn-sm btn-warning"><i class="fas fa-pen"></i> Fix</a>`:''}
+    </div>
+  </div>`).join('');
+}
+
+function renderCorrections(items) {
+  const el=document.getElementById('corrections-list');
+  if (!items.length){el.innerHTML='<div style="text-align:center;padding:32px;color:var(--success)"><i class="fas fa-check-circle" style="font-size:1.5rem;display:block;margin-bottom:8px"></i>No pending corrections</div>';return;}
+  el.innerHTML=items.map(c=>`<div class="validation-item warning"><i class="fas fa-triangle-exclamation"></i><div><strong>${c.class_name} — ${c.subject_name}</strong><div style="font-size:.82rem;margin-top:4px">${c.comment||c.reason}</div><div style="font-size:.72rem;color:var(--text-muted);margin-top:4px">${Fmt.timeAgo(c.created_at)}</div><a href="manual-entry.html?batch=${c.id}" class="btn btn-sm btn-warning mt-1"><i class="fas fa-pen"></i> Fix Now</a></div></div>`).join('');
+}
+</script>
+</body>
+</html>

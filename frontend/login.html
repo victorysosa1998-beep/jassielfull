@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign In — Jaasiel Education Centre RMS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="css/style.css">
+<style>
+.ll-stats{display:flex;gap:24px;flex-wrap:wrap}
+.ll-stat{text-align:center;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:14px 20px;flex:1;min-width:90px}
+.ll-stat-val{font-family:var(--font-display);font-size:1.4rem;font-weight:900;color:var(--brand-gold)}
+.ll-stat-label{font-size:.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-top:3px}
+.ll-feature{display:flex;align-items:center;gap:10px;font-size:.85rem;color:var(--text-secondary);margin-bottom:12px}
+.ll-feat-icon{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.78rem;flex-shrink:0}
+</style>
+</head>
+<body>
+<div class="page-bg"></div>
+<div class="toast-container" id="toast-container"></div>
+
+<div class="login-shell">
+  <!-- LEFT PANEL -->
+  <div class="login-left">
+    <div class="ll-grid"></div>
+    <div class="ll-orb ll-orb-1"></div>
+    <div class="ll-orb ll-orb-2"></div>
+
+    <div class="ll-brand" style="position:relative;z-index:1">
+      <div class="ll-brand-icon"><i class="fas fa-book-open-reader"></i></div>
+      <div>
+        <div class="ll-brand-name">Jaasiel Education Centre</div>
+        <div class="ll-brand-sub">AI Result Management System</div>
+      </div>
+    </div>
+
+    <div class="ll-body">
+      <h1 class="ll-title">Manage Results<br>with <span class="gold">Excellence.</span></h1>
+      <p class="ll-sub">AI-powered OCR extraction, automated grading, multi-level approval workflows, and professional report card generation — built for Nigerian schools.</p>
+
+      <div class="ll-stats mb-3">
+        <div class="ll-stat"><div class="ll-stat-val">97%</div><div class="ll-stat-label">AI Accuracy</div></div>
+        <div class="ll-stat"><div class="ll-stat-val">3</div><div class="ll-stat-label">User Roles</div></div>
+        <div class="ll-stat"><div class="ll-stat-val">∞</div><div class="ll-stat-label">Scalable</div></div>
+      </div>
+
+      <div>
+        <div class="ll-feature"><div class="ll-feat-icon" style="background:rgba(34,197,94,.15);color:var(--success)"><i class="fas fa-robot"></i></div><span>AI OCR processes handwritten sheets in seconds</span></div>
+        <div class="ll-feature"><div class="ll-feat-icon" style="background:rgba(201,151,58,.15);color:var(--brand-gold)"><i class="fas fa-shield-check"></i></div><span>Multi-level approval before students see results</span></div>
+        <div class="ll-feature"><div class="ll-feat-icon" style="background:rgba(59,130,246,.15);color:#60A5FA"><i class="fas fa-file-pdf"></i></div><span>Auto-generated professional report cards</span></div>
+        <div class="ll-feature"><div class="ll-feat-icon" style="background:rgba(168,85,247,.15);color:#C084FC"><i class="fas fa-calculator"></i></div><span>Automatic grades, positions &amp; remarks</span></div>
+      </div>
+    </div>
+
+    <div style="position:relative;z-index:1;font-size:.75rem;color:var(--text-muted)">
+      © 2025 Jaasiel Education Centre · AI RMS v3.0 · Nigerian School Standard
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="login-right">
+    <div class="login-box">
+      <div class="login-title">Welcome Back</div>
+      <div class="login-sub">Sign in to your Jaasiel RMS account</div>
+
+      <div class="role-selector" id="role-selector">
+        <button class="role-pill active" id="pill-superadmin" onclick="selectRole('super_admin',this)"><i class="fas fa-user-shield"></i> Super Admin</button>
+        <button class="role-pill" id="pill-subadmin" onclick="selectRole('sub_admin',this)"><i class="fas fa-user-tie"></i> Sub Admin</button>
+        <button class="role-pill" id="pill-student" onclick="selectRole('student',this)"><i class="fas fa-graduation-cap"></i> Student</button>
+      </div>
+
+      <div id="role-hint" style="padding:10px 14px;background:rgba(201,151,58,.06);border:1px solid rgba(201,151,58,.15);border-radius:var(--radius);font-size:.82rem;color:var(--text-secondary);margin-bottom:20px">
+        <i class="fas fa-shield-halved" style="color:var(--brand-gold);margin-right:6px"></i>
+        <span id="role-hint-text">Full platform access — approve results, manage users, view analytics</span>
+      </div>
+
+      <form id="login-form" onsubmit="doLogin(event)">
+        <div class="form-group">
+          <label class="form-label" id="username-label">Admin Username</label>
+          <div class="input-group">
+            <i class="input-icon fas fa-user"></i>
+            <input type="text" class="form-control" id="login-username" placeholder="Enter username" data-validate="required" autocomplete="username">
+          </div>
+          <div id="username-hint" class="form-hint">Username format: firstmiddlelast + last 2 digits of birth year</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <div class="input-group">
+            <i class="input-icon fas fa-lock"></i>
+            <input type="password" class="form-control" id="login-password" placeholder="Enter password" data-validate="required" autocomplete="current-password">
+            <span class="input-addon-right" onclick="togglePwd('login-password',this)"><i class="fas fa-eye"></i></span>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg" id="login-btn" style="width:100%;justify-content:center;margin-bottom:16px">
+          <i class="fas fa-right-to-bracket"></i> Sign In
+        </button>
+      </form>
+
+      <div style="background:rgba(255,255,255,.03);border:1px solid var(--border-light);border-radius:var(--radius);padding:12px 16px;font-size:.8rem;color:var(--text-muted)">
+        <strong style="color:var(--text-secondary)"><i class="fas fa-info-circle" style="color:var(--brand-gold)"></i> First time?</strong><br>
+        Students — your username and password were auto-generated on registration and sent to your parent. Change it after first login.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/core.js"></script>
+<script>
+const ROLE_HINTS = {
+  super_admin: 'Full platform access — approve results, manage users, view analytics',
+  sub_admin: 'Upload result sheets, register students, submit for approval',
+  student: 'View your approved results and download report cards',
+};
+const USERNAME_HINTS = {
+  super_admin: '',
+  sub_admin: '',
+  student: 'Username format: firstmiddlelast + last 2 digits of birth year (e.g. eghosavictory99)',
+};
+const LABEL_MAP = { super_admin:'Admin Username', sub_admin:'Sub Admin Username', student:'Student Username' };
+let currentRole = 'super_admin';
+
+function selectRole(role, btn) {
+  currentRole = role;
+  document.querySelectorAll('.role-pill').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('username-label').textContent = LABEL_MAP[role];
+  document.getElementById('role-hint-text').textContent = ROLE_HINTS[role];
+  document.getElementById('username-hint').textContent = USERNAME_HINTS[role];
+  document.getElementById('username-hint').style.display = USERNAME_HINTS[role] ? '' : 'none';
+}
+
+async function doLogin(e) {
+  e.preventDefault();
+  const form = document.getElementById('login-form');
+  if (!Validator.validate(form)) return;
+  const btn = document.getElementById('login-btn');
+  setLoading(btn, true, 'Signing in…');
+  try {
+    const data = await API.auth.login({
+      username: document.getElementById('login-username').value.trim(),
+      password: document.getElementById('login-password').value,
+      role: currentRole,
+    });
+    AuthState.save(data.user, data.access_token, data.refresh_token);
+    Toast.success('Welcome back', `Signed in as ${data.user.full_name || data.user.username}`);
+    setTimeout(() => Router.afterLogin(), 800);
+  } catch(err) {
+    Toast.error('Login failed', err.message || 'Invalid credentials. Please try again.');
+    setLoading(btn, false);
+  }
+}
+
+// Redirect if already logged in
+document.addEventListener('DOMContentLoaded', async () => {
+  await window.__rmsBootstrapReady;
+  if (AuthState.isLoggedIn()) Router.afterLogin();
+  PageLoader.hide();
+  togglePwd; // expose
+  document.getElementById('username-hint').style.display = 'none';
+});
+</script>
+</body>
+</html>

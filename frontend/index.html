@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Jaasiel Education Centre — Result Management System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:#080E1A;color:#fff;font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden}
+.bg{position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse 80% 60% at 50% -10%,rgba(28,53,100,.6) 0%,transparent 70%)}
+.particles{position:fixed;inset:0;z-index:0;overflow:hidden}
+.particle{position:absolute;border-radius:50%;opacity:.15;animation:float linear infinite}
+@keyframes float{0%{transform:translateY(100vh) translateX(0) scale(0)}20%{opacity:.15}80%{opacity:.08}100%{transform:translateY(-100px) translateX(80px) scale(1.5);opacity:0}}
+.page{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column}
+
+/* NAV */
+nav{padding:20px 40px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.nav-brand{display:flex;align-items:center;gap:14px}
+.nav-brand img{width:52px;height:52px;border-radius:50%;object-fit:contain;background:#0B1A35}
+.nav-brand-text .name{font-family:'Playfair Display',serif;font-size:1.15rem;font-weight:700;color:#C9973A}
+.nav-brand-text .sub{font-size:.73rem;color:rgba(255,255,255,.5);letter-spacing:.05em}
+.nav-links{display:flex;gap:8px;flex-wrap:wrap}
+.nav-btn{padding:9px 20px;border-radius:30px;font-size:.85rem;font-weight:600;text-decoration:none;transition:all .2s;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:7px}
+.nav-btn-ghost{background:rgba(255,255,255,.07);color:rgba(255,255,255,.8);border:1px solid rgba(255,255,255,.12)}
+.nav-btn-ghost:hover{background:rgba(255,255,255,.12)}
+.nav-btn-primary{background:linear-gradient(135deg,#9A6E20,#C9973A,#E8BA6A);color:#0B1A35;font-weight:700}
+.nav-btn-primary:hover{filter:brightness(1.1);transform:translateY(-1px)}
+
+/* HERO */
+.hero{flex:1;display:flex;align-items:center;justify-content:center;text-align:center;padding:40px 24px 60px;flex-direction:column}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;padding:7px 18px;background:rgba(201,151,58,.1);border:1px solid rgba(201,151,58,.25);border-radius:30px;font-size:.78rem;color:#C9973A;font-weight:600;margin-bottom:28px;letter-spacing:.04em}
+.hero h1{font-family:'Playfair Display',serif;font-size:clamp(2rem,6vw,3.8rem);font-weight:900;line-height:1.1;max-width:800px;margin-bottom:22px}
+.hero h1 span{background:linear-gradient(135deg,#9A6E20,#C9973A,#E8BA6A);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero p{font-size:clamp(.9rem,2vw,1.1rem);color:rgba(255,255,255,.6);max-width:560px;line-height:1.7;margin-bottom:40px}
+.hero-btns{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-bottom:60px}
+.hero-btn{padding:14px 32px;border-radius:40px;font-size:.95rem;font-weight:700;text-decoration:none;transition:all .25s;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:9px}
+.hero-btn-primary{background:linear-gradient(135deg,#9A6E20,#C9973A,#E8BA6A);color:#0B1A35;box-shadow:0 8px 32px rgba(201,151,58,.35)}
+.hero-btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 40px rgba(201,151,58,.5)}
+.hero-btn-ghost{background:rgba(255,255,255,.07);color:#fff;border:1px solid rgba(255,255,255,.15)}
+.hero-btn-ghost:hover{background:rgba(255,255,255,.12);transform:translateY(-2px)}
+
+/* ROLE CARDS */
+.role-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;max-width:900px;width:100%;margin:0 auto}
+.role-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:28px;text-align:center;cursor:pointer;transition:all .25s;text-decoration:none;color:#fff}
+.role-card:hover{background:rgba(201,151,58,.08);border-color:rgba(201,151,58,.3);transform:translateY(-4px)}
+.role-icon{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:1.6rem}
+.role-icon.gold{background:rgba(201,151,58,.15);color:#C9973A}
+.role-icon.blue{background:rgba(59,130,246,.15);color:#60A5FA}
+.role-icon.green{background:rgba(34,197,94,.15);color:#4ADE80}
+.role-card h3{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;margin-bottom:8px}
+.role-card p{font-size:.82rem;color:rgba(255,255,255,.5);line-height:1.5}
+
+/* FEATURES */
+.features{padding:60px 24px;background:rgba(255,255,255,.015);border-top:1px solid rgba(255,255,255,.06)}
+.features-inner{max-width:1100px;margin:0 auto}
+.features h2{font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:700;text-align:center;margin-bottom:8px}
+.features-sub{text-align:center;color:rgba(255,255,255,.5);font-size:.88rem;margin-bottom:40px}
+.feat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+.feat-item{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:20px;display:flex;gap:14px;align-items:flex-start}
+.feat-icon{width:40px;height:40px;border-radius:10px;background:rgba(201,151,58,.1);color:#C9973A;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.95rem}
+.feat-text h4{font-size:.88rem;font-weight:700;margin-bottom:4px}
+.feat-text p{font-size:.77rem;color:rgba(255,255,255,.45);line-height:1.5}
+
+/* FOOTER */
+footer{padding:24px 40px;border-top:1px solid rgba(255,255,255,.06);text-align:center;font-size:.78rem;color:rgba(255,255,255,.3)}
+footer strong{color:rgba(255,255,255,.5)}
+
+@media(max-width:640px){
+  nav{padding:16px 20px}
+  .hero{padding:30px 16px 40px}
+  .hero-btns{flex-direction:column;align-items:center}
+  .hero-btn{width:100%;max-width:320px;justify-content:center}
+}
+</style>
+</head>
+<body>
+<div class="bg"></div>
+<div class="particles" id="particles"></div>
+<div class="page">
+  <!-- NAV -->
+  <nav>
+    <div class="nav-brand">
+      <img src="images/logo.png" alt="Jaasiel Logo" onerror="this.style.display='none'">
+      <div class="nav-brand-text">
+        <div class="name">Jaasiel Education Centre</div>
+        <div class="sub">ACCURATE KNOWLEDGE IS A VIRTUE</div>
+      </div>
+    </div>
+    <div class="nav-links">
+      <a href="login.html" class="nav-btn nav-btn-ghost"><i class="fas fa-right-to-bracket"></i> Sign In</a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-badge"><i class="fas fa-robot"></i> AI-Powered Result Management</div>
+    <h1>Smart Results for a<br><span>Smarter School</span></h1>
+    <p>Automate student results — from OCR upload to approval to student viewing — with full audit trail and transcript generation.</p>
+    <div class="hero-btns">
+      <a href="login.html" class="hero-btn hero-btn-primary"><i class="fas fa-right-to-bracket"></i> Sign In to Portal</a>
+      <a href="#roles" class="hero-btn hero-btn-ghost"><i class="fas fa-users"></i> Who Uses This?</a>
+    </div>
+
+    <!-- ROLE CARDS -->
+    <div class="role-grid" id="roles">
+      <a href="login.html?role=admin" class="role-card">
+        <div class="role-icon gold"><i class="fas fa-user-shield"></i></div>
+        <h3>Super Admin</h3>
+        <p>Approve & publish results, manage sessions, view audit logs, generate reports and transcripts.</p>
+      </a>
+      <a href="login.html?role=subadmin" class="role-card">
+        <div class="role-icon blue"><i class="fas fa-chalkboard-user"></i></div>
+        <h3>Sub Admin</h3>
+        <p>Upload student scores via AI OCR or manual entry, register students, submit for approval.</p>
+      </a>
+      <a href="login.html?role=student" class="role-card">
+        <div class="role-icon green"><i class="fas fa-graduation-cap"></i></div>
+        <h3>Student</h3>
+        <p>View published results, download report cards, request transcripts for any term or full school history.</p>
+      </a>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="features">
+    <div class="features-inner">
+      <h2>Everything Your School Needs</h2>
+      <p class="features-sub">Built specifically for Nigerian primary and secondary schools</p>
+      <div class="feat-grid">
+        <div class="feat-item"><div class="feat-icon"><i class="fas fa-robot"></i></div><div class="feat-text"><h4>AI OCR Upload</h4><p>Scan handwritten result sheets — AI extracts scores automatically with 97%+ accuracy</p></div></div>
+        <div class="feat-item"><div class="feat-icon"><i class="fas fa-clipboard-check"></i></div><div class="feat-text"><h4>Approval Workflow</h4><p>Sub admin uploads → submits to admin → admin approves → publishes per class</p></div></div>
+        <div class="feat-item"><div class="feat-icon"><i class="fas fa-lock"></i></div><div class="feat-text"><h4>Lock Protection</h4><p>Admin can lock approved results permanently. Sub admins are blocked from any edits.</p></div></div>
+        <div class="feat-item"><div class="feat-icon"><i class="fas fa-scroll"></i></div><div class="feat-text"><h4>Transcript Generation</h4><p>Students request transcripts for any term range or their entire school history</p></div></div>
+        <div class="feat-item"><div class="feat-icon"><i class="fas fa-chart-mixed"></i></div><div class="feat-text"><h4>Analytics</h4><p>Class averages, pass rates, grade distributions and performance trends over time</p></div></div>
+        <div class="feat-item"><div class="feat-icon"><i class="fas fa-mobile-screen"></i></div><div class="feat-text"><h4>Mobile Ready</h4><p>Works perfectly on phones, tablets and desktops — no app download needed</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    &copy; 2025 <strong>Jaasiel Education Centre</strong> · Oxygen Street, Benin City, Edo State · Powered by AI RMS
+  </footer>
+</div>
+
+<script>
+// Redirect if already logged in
+(async () => {
+  const token = sessionStorage.getItem('jrms_token') || localStorage.getItem('jrms_token');
+  const user  = JSON.parse(localStorage.getItem('jrms_user') || 'null');
+  if (token && user) {
+    const routes = {super_admin:'admin-dashboard.html',admin:'admin-dashboard.html',
+                    sub_admin:'subadmin-dashboard.html',student:'student-dashboard.html'};
+    window.location.href = routes[user.role] || 'login.html';
+    return;
+  }
+})();
+
+// Particles
+function createParticles() {
+  const container = document.getElementById('particles');
+  const colors = ['#C9973A','#1C3564','#fff'];
+  for (let i = 0; i < 20; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const size = Math.random() * 6 + 2;
+    const dur  = Math.random() * 15 + 10;
+    const del  = Math.random() * 10;
+    const left = Math.random() * 100;
+    const col  = colors[Math.floor(Math.random() * colors.length)];
+    p.style.cssText = `width:${size}px;height:${size}px;left:${left}%;bottom:-20px;background:${col};animation-duration:${dur}s;animation-delay:${del}s`;
+    container.appendChild(p);
+  }
+}
+createParticles();
+</script>
+</body>
+</html>

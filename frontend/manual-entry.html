@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Manual Score Entry — Jaasiel RMS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="css/style.css">
+<style>
+.score-table{width:100%;border-collapse:collapse;font-size:.88rem}
+.score-table th{padding:12px 16px;background:rgba(255,255,255,.03);border-bottom:1px solid var(--border-light);font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);white-space:nowrap}
+.score-table td{padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle}
+.score-table tr:last-child td{border-bottom:none}
+.score-table tr:hover td{background:rgba(255,255,255,.02)}
+.s-input{width:70px;background:var(--bg-input);border:1px solid var(--border-light);border-radius:var(--radius-sm);padding:7px 10px;color:var(--text-primary);font-size:.88rem;text-align:center;outline:none;font-family:var(--font-mono);transition:var(--transition)}
+.s-input:focus{border-color:var(--brand-gold);background:rgba(201,151,58,.05)}
+.s-input.over{border-color:var(--danger);color:var(--danger)}
+.grade-badge{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;font-size:.78rem;font-weight:700}
+</style>
+</head>
+<body>
+<div class="page-bg"></div>
+<div class="page-loader" id="page-loader"><div class="loader-logo"><i class="fas fa-graduation-cap"></i> Jaasiel RMS</div><div class="loader-ring"></div></div>
+<div class="toast-container" id="toast-container"></div>
+<div class="app-layout">
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<aside class="sidebar" id="sidebar"></aside>
+<div class="main-content">
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" id="menu-toggle"><i class="fas fa-bars"></i></button>
+      <a href="subadmin-dashboard.html" class="btn btn-ghost btn-sm" style="padding:6px 12px"><i class="fas fa-arrow-left"></i></a>
+      <div>
+        <div class="page-title">Manual Score Entry</div>
+        <div class="breadcrumb"><a href="subadmin-dashboard.html">Dashboard</a><span class="sep">/</span><span class="text-gold">Manual Entry</span></div>
+      </div>
+    </div>
+    <div class="topbar-right" id="topbar-right"></div>
+  </header>
+  <div class="page-body">
+    <!-- Context Selection -->
+    <div class="card mb-3">
+      <div style="font-weight:700;margin-bottom:16px"><i class="fas fa-sliders" style="color:var(--brand-gold);margin-right:8px"></i>Select Context</div>
+      <div class="grid-2" style="gap:16px;margin-bottom:16px">
+        <div class="form-group mb-0">
+          <label class="form-label">Class <span class="required">*</span></label>
+          <select class="form-control" id="sel-class" onchange="onClassChange()"><option value="">Select class…</option></select>
+        </div>
+        <div class="form-group mb-0">
+          <label class="form-label">Subject <span class="required">*</span></label>
+          <select class="form-control" id="sel-subject" disabled><option value="">Select subject…</option></select>
+        </div>
+        <div class="form-group mb-0">
+          <label class="form-label">Session <span class="required">*</span></label>
+          <select class="form-control" id="sel-session" onchange="loadTermsFor()"><option value="">Select session…</option></select>
+        </div>
+        <div class="form-group mb-0">
+          <label class="form-label">Term <span class="required">*</span></label>
+          <select class="form-control" id="sel-term" disabled><option value="">Select term…</option></select>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="loadStudents()"><i class="fas fa-users"></i> Load Students</button>
+    </div>
+
+    <!-- Score Entry Grid (hidden until loaded) -->
+    <div id="entry-section" class="hidden">
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px">
+          <div>
+            <div style="font-family:var(--font-display);font-size:1.1rem;font-weight:700" id="entry-heading">Score Entry</div>
+            <div style="font-size:.8rem;color:var(--text-muted);margin-top:3px" id="entry-sub"></div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <div style="font-size:.8rem;color:var(--text-muted);display:flex;align-items:center;gap:8px">
+              <span>CA max: <strong class="text-gold" id="ca-max-label">40</strong></span>
+              <span>Exam max: <strong class="text-gold" id="exam-max-label">60</strong></span>
+            </div>
+            <button class="btn btn-ghost btn-sm" onclick="clearAll()"><i class="fas fa-eraser"></i> Clear All</button>
+            <button class="btn btn-primary" id="submit-scores-btn" onclick="submitScores()"><i class="fas fa-paper-plane"></i> Submit for Approval</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="score-table" id="score-table">
+            <thead>
+              <tr>
+                <th>#</th><th>Student Name</th><th>ID</th>
+                <th>CA Score <span style="font-weight:400;color:var(--text-muted)">(max <span id="ca-max-th">40</span>)</span></th>
+                <th>Exam Score <span style="font-weight:400;color:var(--text-muted)">(max <span id="exam-max-th">60</span>)</span></th>
+                <th>Total</th><th>Grade</th><th>Remarks</th>
+              </tr>
+            </thead>
+            <tbody id="score-tbody"></tbody>
+          </table>
+        </div>
+        <div id="validation-panel" class="hidden" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border-light)">
+          <div style="font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px"><i class="fas fa-robot" style="color:#C084FC"></i> AI Validation Report</div>
+          <div id="validation-items"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+<script src="js/core.js"></script>
+<script src="js/ui.js"></script>
+<script>
+const CA_MAX = 40, EXAM_MAX = 60;
+let students = [], classId = null;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await window.__rmsBootstrapReady;
+  initPage('sub_admin', 'subadmin');
+  populateClassSelect(document.getElementById('sel-class'), 'Select class…', false);
+  loadSessions();
+});
+
+async function loadSessions() {
+  try {
+    const data = await API.sessions.list();
+    const sel = document.getElementById('sel-session');
+    sel.innerHTML = '<option value="">Select session…</option>';
+    (data.items||data||[]).forEach(s => { const o=document.createElement('option'); o.value=s.id; o.textContent=s.session_name+(s.is_current?' ★':''); sel.appendChild(o); });
+  } catch {}
+}
+async function loadTermsFor() {
+  const sid = document.getElementById('sel-session').value;
+  const sel = document.getElementById('sel-term'); sel.innerHTML='<option value="">Loading…</option>'; sel.disabled=true;
+  if (!sid) { sel.innerHTML='<option value="">Select term…</option>'; return; }
+  try {
+    const data = await API.sessions.terms(sid);
+    sel.innerHTML='<option value="">Select term…</option>';
+    (data.items||data||[]).forEach(t=>{const o=document.createElement('option');o.value=t.id;o.textContent=t.term_name+(t.is_current?' ★':'');sel.appendChild(o);}); sel.disabled=false;
+  } catch { sel.innerHTML='<option value="">Error</option>'; }
+}
+async function onClassChange() {
+  const cls = document.getElementById('sel-class').value;
+  const sel = document.getElementById('sel-subject'); sel.innerHTML='<option value="">Loading…</option>'; sel.disabled=true;
+  if (!cls) { sel.innerHTML='<option value="">Select subject…</option>'; return; }
+  try {
+    const data = await API.classes.list();
+    const clsObj = (data.items||data||[]).find(c=>c.name===cls||c.id===cls);
+    if (clsObj) { classId=clsObj.id; const subs=await API.classes.subjects(clsObj.id); sel.innerHTML='<option value="">Select subject…</option>'; (subs.items||subs||[]).forEach(s=>{const o=document.createElement('option');o.value=s.id||s.name;o.textContent=s.name;sel.appendChild(o);}); }
+    sel.disabled=false;
+  } catch { sel.innerHTML='<option value="">Error</option>'; sel.disabled=false; }
+}
+
+async function loadStudents() {
+  const cls = document.getElementById('sel-class').value;
+  const sub = document.getElementById('sel-subject').value;
+  const ses = document.getElementById('sel-session').value;
+  const trm = document.getElementById('sel-term').value;
+  if (!cls||!sub||!ses||!trm) { Toast.warning('Incomplete','Please select all fields.'); return; }
+  document.getElementById('entry-section').classList.remove('hidden');
+  const clsText = document.getElementById('sel-class').options[document.getElementById('sel-class').selectedIndex].text;
+  const subText = document.getElementById('sel-subject').options[document.getElementById('sel-subject').selectedIndex].text;
+  document.getElementById('entry-heading').textContent = `${clsText} — ${subText}`;
+  const tbody = document.getElementById('score-tbody');
+  tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px"><div class="loader-ring" style="margin:0 auto;width:28px;height:28px;border-width:2px"></div></td></tr>';
+  try {
+    const data = await API.classes.students(classId||cls);
+    students = data.items||data||[];
+    // Also try to load existing scores for this context
+    let existing = {};
+    try {
+      const ex = await API.results.list({ class_name:cls, subject_id:sub, session_id:ses, term_id:trm });
+      (ex.items||ex||[]).forEach(r => { existing[r.student_id] = r; });
+    } catch {}
+    renderScoreGrid(students, existing);
+    document.getElementById('entry-sub').textContent = `${students.length} students loaded`;
+  } catch {
+    // Demo students
+    students = Array.from({length:10},(_,i)=>({id:`stu${i}`,full_name:`Student ${String.fromCharCode(65+i)} Lastname`,student_id:`STU-100${i}`}));
+    renderScoreGrid(students, {});
+    document.getElementById('entry-sub').textContent = `${students.length} students loaded`;
+  }
+}
+
+function renderScoreGrid(studs, existing) {
+  const tbody = document.getElementById('score-tbody');
+  tbody.innerHTML = studs.map((s,i) => {
+    const ex = existing[s.id]||existing[s.student_id]||{};
+    const ca = ex.ca_score??''; const exam = ex.exam_score??'';
+    const total = ca!==''&&exam!=='' ? (parseFloat(ca)||0)+(parseFloat(exam)||0) : '';
+    const gr = total!=='' ? Fmt.grade(total) : null;
+    return `<tr id="row-${i}">
+      <td style="color:var(--text-muted);font-size:.8rem">${i+1}</td>
+      <td><strong>${Security.sanitize(s.full_name)}</strong></td>
+      <td class="font-mono" style="font-size:.8rem;color:var(--text-muted)">${s.student_id||'—'}</td>
+      <td><input class="s-input" type="number" id="ca-${i}" min="0" max="${CA_MAX}" value="${ca}" placeholder="—" oninput="calcRow(${i})"></td>
+      <td><input class="s-input" type="number" id="exam-${i}" min="0" max="${EXAM_MAX}" value="${exam}" placeholder="—" oninput="calcRow(${i})"></td>
+      <td class="font-mono" style="font-weight:700" id="total-${i}">${total!==''?total:'—'}</td>
+      <td id="grade-${i}">${gr?`<span class="grade-badge" style="background:${Fmt.gradeColor(gr.g)}22;color:${Fmt.gradeColor(gr.g)};border:1px solid ${Fmt.gradeColor(gr.g)}44">${gr.g}</span>`:'—'}</td>
+      <td id="remark-${i}" style="font-size:.82rem;color:var(--text-secondary)">${gr?gr.r:'—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function calcRow(idx) {
+  const ca = parseFloat(document.getElementById('ca-'+idx).value)||0;
+  const exam = parseFloat(document.getElementById('exam-'+idx).value)||0;
+  const caEl = document.getElementById('ca-'+idx); const examEl = document.getElementById('exam-'+idx);
+  caEl.classList.toggle('over', ca>CA_MAX); examEl.classList.toggle('over', exam>EXAM_MAX);
+  const total = ca+exam;
+  document.getElementById('total-'+idx).textContent = ca>0||exam>0 ? total : '—';
+  const gr = ca>0||exam>0 ? Fmt.grade(total) : null;
+  document.getElementById('grade-'+idx).innerHTML = gr ? `<span class="grade-badge" style="background:${Fmt.gradeColor(gr.g)}22;color:${Fmt.gradeColor(gr.g)};border:1px solid ${Fmt.gradeColor(gr.g)}44">${gr.g}</span>` : '—';
+  document.getElementById('remark-'+idx).textContent = gr?gr.r:'—';
+}
+
+function clearAll() {
+  students.forEach((_,i) => { document.getElementById('ca-'+i).value=''; document.getElementById('exam-'+i).value=''; document.getElementById('total-'+i).textContent='—'; document.getElementById('grade-'+i).innerHTML='—'; document.getElementById('remark-'+i).textContent='—'; });
+  document.getElementById('validation-panel').classList.add('hidden');
+}
+
+async function submitScores() {
+  const rows = students.map((s,i) => {
+    const ca = parseFloat(document.getElementById('ca-'+i).value); const exam = parseFloat(document.getElementById('exam-'+i).value);
+    if (isNaN(ca)||isNaN(exam)) return null;
+    if (ca>CA_MAX||exam>EXAM_MAX) return null;
+    return { student_id:s.id||s.student_id, ca_score:ca, exam_score:exam, total_score:ca+exam };
+  }).filter(Boolean);
+  if (!rows.length) { Toast.warning('No scores','Enter scores before submitting.'); return; }
+  // AI Validation
+  const issues = [];
+  rows.forEach((r,i) => { if (r.total_score===0) issues.push({type:'warning',msg:`Row ${i+1}: Zero total score`}); });
+  const filled = students.length - rows.length;
+  if (filled>0) issues.push({type:'warning',msg:`${filled} students have no scores entered`});
+  if (issues.length) {
+    const panel = document.getElementById('validation-panel'); panel.classList.remove('hidden');
+    document.getElementById('validation-items').innerHTML = issues.map(v=>`<div class="validation-item ${v.type}"><i class="fas ${v.type==='error'?'fa-circle-exclamation':'fa-triangle-exclamation'}"></i>${v.msg}</div>`).join('');
+    if (issues.some(v=>v.type==='error')) { Toast.warning('Validation Issues','Fix errors before submitting.'); return; }
+  }
+  const btn = document.getElementById('submit-scores-btn');
+  setLoading(btn, true, 'Submitting…');
+  try {
+    await API.results.upload({
+      class_name: document.getElementById('sel-class').value, subject_id: document.getElementById('sel-subject').value,
+      session_id: document.getElementById('sel-session').value, term_id: document.getElementById('sel-term').value,
+      source: 'manual', scores: rows,
+    });
+    Toast.success('Submitted!', 'Scores sent for Super Admin approval');
+    setTimeout(() => window.location.href='upload-history.html', 1400);
+  } catch(err) { Toast.error('Failed', err.message); setLoading(btn, false); }
+}
+</script>
+</body>
+</html>

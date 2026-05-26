@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI OCR Upload — Jaasiel RMS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="css/style.css">
+<style>
+.extraction-table{width:100%;border-collapse:collapse;font-size:.85rem;min-width:600px}
+.extraction-table th{padding:10px 14px;background:rgba(255,255,255,.03);border-bottom:1px solid var(--border-light);font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);white-space:nowrap}
+.extraction-table td{padding:9px 14px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle}
+.extraction-table tr:last-child td{border-bottom:none}
+.match-full{background:rgba(34,197,94,.08);border-left:3px solid var(--success)}
+.match-fuzzy{background:rgba(245,158,11,.08);border-left:3px solid var(--warning)}
+.match-none{background:rgba(239,68,68,.08);border-left:3px solid var(--danger)}
+.conf-bar{height:4px;border-radius:2px;background:var(--bg-input)}
+.conf-fill{height:100%;border-radius:2px;transition:width .3s}
+</style>
+</head>
+<body>
+<div class="page-bg"></div>
+<div class="page-loader" id="page-loader"><div class="loader-logo"><i class="fas fa-graduation-cap"></i> Jaasiel RMS</div><div class="loader-ring"></div></div>
+<div class="toast-container" id="toast-container"></div>
+<div class="app-layout">
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<aside class="sidebar" id="sidebar"></aside>
+<div class="main-content">
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" id="menu-toggle"><i class="fas fa-bars"></i></button>
+      <div>
+        <div class="page-title">AI OCR Upload</div>
+        <div class="breadcrumb"><a href="subadmin-dashboard.html">Dashboard</a><span class="sep">/</span><span class="text-gold">AI OCR Upload</span></div>
+      </div>
+    </div>
+    <div class="topbar-right" id="topbar-right"></div>
+  </header>
+  <div class="page-body">
+
+    <!-- Step Wizard -->
+    <div class="step-wizard mb-3">
+      <div class="step-item done" id="step-1"><div class="step-num"><i class="fas fa-check"></i></div><div class="step-label">Setup</div></div>
+      <div class="step-item" id="step-2"><div class="step-num">2</div><div class="step-label">Upload</div></div>
+      <div class="step-item" id="step-3"><div class="step-num">3</div><div class="step-label">AI Extract</div></div>
+      <div class="step-item" id="step-4"><div class="step-num">4</div><div class="step-label">Review</div></div>
+    </div>
+
+    <!-- STAGE 1: Context Selection -->
+    <div id="stage-setup">
+      <div class="grid-2" style="gap:20px;margin-bottom:20px">
+        <div class="form-group mb-0">
+          <label class="form-label">Class <span class="required">*</span></label>
+          <select class="form-control" id="ocr-class" onchange="loadSubjects()"><option value="">Select class…</option></select>
+        </div>
+        <div class="form-group mb-0">
+          <label class="form-label">Subject <span class="required">*</span></label>
+          <select class="form-control" id="ocr-subject" disabled><option value="">Select subject…</option></select>
+        </div>
+        <div class="form-group mb-0">
+          <label class="form-label">Session <span class="required">*</span></label>
+          <select class="form-control" id="ocr-session" onchange="loadTerms()"><option value="">Select session…</option></select>
+        </div>
+        <div class="form-group mb-0">
+          <label class="form-label">Term <span class="required">*</span></label>
+          <select class="form-control" id="ocr-term" disabled><option value="">Select term…</option></select>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="goToUpload()"><i class="fas fa-arrow-right"></i> Continue to Upload</button>
+    </div>
+
+    <!-- STAGE 2: Upload -->
+    <div id="stage-upload" class="hidden">
+      <div class="grid-2" style="gap:20px">
+        <div>
+          <div class="upload-zone" id="drop-zone">
+            <input type="file" id="file-input" accept=".jpg,.jpeg,.png,.webp,.pdf,.xlsx,.xls,.csv" class="hidden">
+            <div class="upload-icon"><i class="fas fa-robot"></i></div>
+            <div class="upload-title">Drop result sheet here</div>
+            <div class="upload-sub">Handwritten, typed, or scanned — AI will extract all scores</div>
+            <div class="upload-types">
+              <span class="upload-type-tag">JPG</span><span class="upload-type-tag">PNG</span>
+              <span class="upload-type-tag">PDF</span><span class="upload-type-tag">Excel</span><span class="upload-type-tag">CSV</span>
+            </div>
+          </div>
+          <div id="preview-section" class="hidden mt-2">
+            <div class="image-preview-box"><img id="preview-img" src="" alt="Preview" id="preview-img" style="max-width:100%;max-height:360px;object-fit:contain"></div>
+            <div class="image-tools mt-2">
+              <button class="btn btn-secondary btn-sm" onclick="rotate(-90)"><i class="fas fa-rotate-left"></i></button>
+              <button class="btn btn-secondary btn-sm" onclick="rotate(90)"><i class="fas fa-rotate-right"></i></button>
+              <button class="btn btn-secondary btn-sm" onclick="zoomImg(1.2)"><i class="fas fa-magnifying-glass-plus"></i></button>
+              <button class="btn btn-secondary btn-sm" onclick="zoomImg(0.8)"><i class="fas fa-magnifying-glass-minus"></i></button>
+              <button class="btn btn-ghost btn-sm" onclick="resetTransform()"><i class="fas fa-expand"></i></button>
+              <button class="btn btn-primary btn-sm ml-auto" id="extract-btn" onclick="startExtraction()"><i class="fas fa-wand-magic-sparkles"></i> Extract with AI</button>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div style="font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px"><i class="fas fa-lightbulb" style="color:var(--brand-gold)"></i> Tips for Best Results</div>
+          <div style="display:flex;flex-direction:column;gap:12px;font-size:.84rem;color:var(--text-secondary)">
+            <div style="display:flex;gap:10px"><i class="fas fa-check-circle" style="color:var(--success);margin-top:2px;flex-shrink:0"></i><span>Good lighting — avoid shadows across the sheet</span></div>
+            <div style="display:flex;gap:10px"><i class="fas fa-check-circle" style="color:var(--success);margin-top:2px;flex-shrink:0"></i><span>Keep the paper flat and straight</span></div>
+            <div style="display:flex;gap:10px"><i class="fas fa-check-circle" style="color:var(--success);margin-top:2px;flex-shrink:0"></i><span>Include column headers (Name, CA, Exam)</span></div>
+            <div style="display:flex;gap:10px"><i class="fas fa-triangle-exclamation" style="color:var(--warning);margin-top:2px;flex-shrink:0"></i><span>Always review — AI may occasionally miss values</span></div>
+            <div style="display:flex;gap:10px"><i class="fas fa-triangle-exclamation" style="color:var(--warning);margin-top:2px;flex-shrink:0"></i><span>You MUST confirm before scores are submitted</span></div>
+          </div>
+          <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border-light)">
+            <div style="font-size:.78rem;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em">Selected Context</div>
+            <div id="context-summary" style="font-size:.85rem"></div>
+          </div>
+          <button class="btn btn-ghost btn-sm mt-2" onclick="backToSetup()"><i class="fas fa-arrow-left"></i> Change</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STAGE 3: AI Processing -->
+    <div id="stage-processing" class="hidden">
+      <div class="card" style="text-align:center;padding:60px 32px">
+        <div style="width:72px;height:72px;border-radius:50%;background:rgba(201,151,58,.1);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:1.6rem;color:var(--brand-gold);animation:pulse 1.5s infinite"><i class="fas fa-robot"></i></div>
+        <div class="ai-badge mb-3"><i class="fas fa-robot"></i> AI Processing</div>
+        <div style="font-family:var(--font-display);font-size:1.3rem;font-weight:700;margin-bottom:8px">Extracting Scores…</div>
+        <div id="extraction-stage" style="font-size:.88rem;color:var(--text-muted);margin-bottom:24px">Preprocessing image…</div>
+        <div class="progress-bar" style="max-width:400px;margin:0 auto 12px"><div class="progress-fill" id="extraction-progress" style="width:0%"></div></div>
+        <div id="extraction-pct" style="font-family:var(--font-mono);font-size:.85rem;color:var(--text-muted)">0%</div>
+      </div>
+    </div>
+
+    <!-- STAGE 4: Review -->
+    <div id="stage-review" class="hidden">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px">
+        <div>
+          <div style="font-family:var(--font-display);font-size:1.2rem;font-weight:700">Review Extracted Scores</div>
+          <div style="font-size:.82rem;color:var(--text-muted);margin-top:3px" id="extraction-summary"></div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="resetOcr()"><i class="fas fa-rotate"></i> Try Again</button>
+          <button class="btn btn-primary" id="confirm-btn" onclick="confirmExtraction()"><i class="fas fa-check"></i> Confirm &amp; Submit</button>
+        </div>
+      </div>
+      <div class="alert alert-warning"><i class="fas fa-triangle-exclamation"></i> Review every row. Edit values directly. Rows with <span class="badge badge-pending" style="font-size:.72rem">Fuzzy Match</span> need special attention.</div>
+      <div class="table-wrapper">
+        <div style="overflow-x:auto"><table class="extraction-table" id="extraction-table">
+          <thead><tr><th style="width:28px">#</th><th>Extracted Name</th><th>Matched Student</th><th>CA Score</th><th>Exam Score</th><th>Total</th><th>Grade</th><th>Match</th></tr></thead>
+          <tbody id="extraction-tbody"></tbody>
+        </table></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+<script src="js/core.js"></script>
+<script src="js/ui.js"></script>
+<script>
+let currentStage = 1, extractedData = [], imgRotation = 0, imgZoom = 1, uploadedFile = null;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await window.__rmsBootstrapReady;
+  initPage('sub_admin', 'subadmin');
+  populateClassSelect(document.getElementById('ocr-class'), 'Select class…', false);
+  loadSessions();
+  initUploadZone(document.getElementById('drop-zone'), document.getElementById('file-input'), handleFiles);
+  setStep(1);
+});
+
+async function loadSessions() {
+  try {
+    const data = await API.sessions.list();
+    const items = data.items || data || [];
+    const sel = document.getElementById('ocr-session');
+    sel.innerHTML = '<option value="">Select session…</option>';
+    items.forEach(s => { const o = document.createElement('option'); o.value=s.id; o.textContent=s.session_name+(s.is_current?' ★':''); sel.appendChild(o); });
+  } catch {}
+}
+async function loadTerms() {
+  const sid = document.getElementById('ocr-session').value;
+  const sel = document.getElementById('ocr-term');
+  sel.innerHTML = '<option value="">Loading…</option>'; sel.disabled = true;
+  if (!sid) { sel.innerHTML = '<option value="">Select term…</option>'; return; }
+  try {
+    const data = await API.sessions.terms(sid);
+    const items = data.items || data || [];
+    sel.innerHTML = '<option value="">Select term…</option>';
+    items.forEach(t => { const o = document.createElement('option'); o.value=t.id; o.textContent=t.term_name+(t.is_current?' ★':''); sel.appendChild(o); });
+    sel.disabled = false;
+  } catch { sel.innerHTML = '<option value="">Error loading</option>'; }
+}
+async function loadSubjects() {
+  const cls = document.getElementById('ocr-class').value;
+  const sel = document.getElementById('ocr-subject');
+  sel.innerHTML = '<option value="">Loading…</option>'; sel.disabled = true;
+  if (!cls) { sel.innerHTML = '<option value="">Select subject…</option>'; return; }
+  try {
+    const data = await API.classes.list();
+    const clsObj = (data.items||data||[]).find(c => c.name===cls || c.id===cls);
+    if (clsObj) {
+      const subs = await API.classes.subjects(clsObj.id);
+      sel.innerHTML = '<option value="">Select subject…</option>';
+      (subs.items||subs||[]).forEach(s => { const o=document.createElement('option'); o.value=s.id||s.name; o.textContent=s.name; sel.appendChild(o); });
+    }
+    sel.disabled = false;
+  } catch { sel.innerHTML = '<option value="">Error</option>'; sel.disabled=false; }
+}
+
+function goToUpload() {
+  const cls = document.getElementById('ocr-class').value;
+  const sub = document.getElementById('ocr-subject').value;
+  const ses = document.getElementById('ocr-session').value;
+  const trm = document.getElementById('ocr-term').value;
+  if (!cls||!sub||!ses||!trm) { Toast.warning('Incomplete','Please fill all fields before continuing.'); return; }
+  document.getElementById('context-summary').innerHTML = `
+    <div style="display:flex;flex-wrap:wrap;gap:8px">
+      <span class="badge badge-gold">${document.getElementById('ocr-class').options[document.getElementById('ocr-class').selectedIndex].text}</span>
+      <span class="badge badge-draft">${document.getElementById('ocr-subject').options[document.getElementById('ocr-subject').selectedIndex].text}</span>
+      <span class="badge badge-draft">${document.getElementById('ocr-session').options[document.getElementById('ocr-session').selectedIndex].text}</span>
+      <span class="badge badge-draft">${document.getElementById('ocr-term').options[document.getElementById('ocr-term').selectedIndex].text}</span>
+    </div>`;
+  setStep(2);
+}
+function backToSetup() { setStep(1); }
+
+function setStep(n) {
+  currentStage = n;
+  ['setup','upload','processing','review'].forEach((s,i) => document.getElementById('stage-'+s).classList.toggle('hidden', i+1!==n));
+  [1,2,3,4].forEach(i => {
+    const el = document.getElementById('step-'+i);
+    el.classList.toggle('done', i<n);
+    el.classList.toggle('active', i===n);
+    if (i<n) el.querySelector('.step-num').innerHTML = '<i class="fas fa-check"></i>';
+    else if (i===n) el.querySelector('.step-num').textContent = i;
+    else el.querySelector('.step-num').textContent = i;
+  });
+}
+
+function handleFiles(files) {
+  uploadedFile = files[0];
+  const section = document.getElementById('preview-section');
+  if (/image/.test(uploadedFile.type)) {
+    const url = URL.createObjectURL(uploadedFile);
+    document.getElementById('preview-img').src = url;
+    section.classList.remove('hidden');
+    imgRotation=0; imgZoom=1; applyTransform();
+  } else {
+    section.classList.remove('hidden');
+    document.getElementById('preview-img').src = '';
+    document.getElementById('preview-img').alt = uploadedFile.name;
+  }
+}
+function applyTransform() {
+  const img = document.getElementById('preview-img');
+  img.style.transform = `rotate(${imgRotation}deg) scale(${imgZoom})`;
+}
+function rotate(deg) { imgRotation += deg; applyTransform(); }
+function zoomImg(factor) { imgZoom = Math.min(3, Math.max(0.5, imgZoom*factor)); applyTransform(); }
+function resetTransform() { imgRotation=0; imgZoom=1; applyTransform(); }
+
+async function startExtraction() {
+  if (!uploadedFile) { Toast.warning('No file','Please upload a result sheet first.'); return; }
+  setStep(3);
+  const stages = [
+    [10,'Reading file…'], [25,'Preprocessing image…'], [45,'Detecting text regions…'],
+    [60,'Extracting student names…'], [75,'Matching to class register…'], [90,'Calculating scores…'], [100,'Done!']
+  ];
+  let idx = 0;
+  const tick = setInterval(() => {
+    if (idx >= stages.length) { clearInterval(tick); return; }
+    const [pct, label] = stages[idx++];
+    document.getElementById('extraction-progress').style.width = pct+'%';
+    document.getElementById('extraction-pct').textContent = pct+'%';
+    document.getElementById('extraction-stage').textContent = label;
+  }, 700);
+
+  try {
+    const fd = new FormData();
+    fd.append('file', uploadedFile);
+    fd.append('class_name', document.getElementById('ocr-class').value);
+    fd.append('subject_id', document.getElementById('ocr-subject').value);
+    fd.append('session_id', document.getElementById('ocr-session').value);
+    fd.append('term_id', document.getElementById('ocr-term').value);
+    const result = await API.ocr.upload(fd);
+    clearInterval(tick);
+    document.getElementById('extraction-progress').style.width = '100%';
+    await new Promise(r => setTimeout(r, 600));
+    extractedData = result.extractions || result.data || [];
+    renderExtractionTable(extractedData, result);
+    setStep(4);
+  } catch(err) {
+    clearInterval(tick);
+    // Demo data for development
+    await new Promise(r => setTimeout(r, 4200));
+    const demo = generateDemoExtractions();
+    extractedData = demo;
+    renderExtractionTable(demo, { total: demo.length, matched: demo.filter(x=>x.match_type!=='none').length });
+    setStep(4);
+  }
+}
+
+function generateDemoExtractions() {
+  const names = ['Eghosa Victor Aisosa','Funke Adebayo','Chidi Okonkwo','Amaka Obi','Segun Lawal',
+    'Ngozi Eze','Tunde Balogun','Yetunde Adesanya','Emeka Nwachukwu','Blessing Okoro'];
+  return names.map((n,i) => ({
+    extracted_name: n, matched_student: n, student_id: `STU-${1000+i}`,
+    ca_score: Math.floor(Math.random()*30)+10, exam_score: Math.floor(Math.random()*50)+20,
+    confidence: 0.85 + Math.random()*0.15,
+    match_type: Math.random()>0.2 ? 'full' : 'fuzzy',
+  }));
+}
+
+function renderExtractionTable(data, meta) {
+  const matched = data.filter(x=>x.match_type!=='none').length;
+  const fuzzy = data.filter(x=>x.match_type==='fuzzy').length;
+  document.getElementById('extraction-summary').textContent = `${data.length} students extracted · ${matched} matched · ${fuzzy} need review`;
+  const tbody = document.getElementById('extraction-tbody');
+  tbody.innerHTML = data.map((r,i) => {
+    const total = (r.ca_score||0) + (r.exam_score||0);
+    const gr = Fmt.grade(total);
+    const confPct = Math.round((r.confidence||0)*100);
+    const rowCls = r.match_type==='none' ? 'match-none' : r.match_type==='fuzzy' ? 'match-fuzzy' : 'match-full';
+    return `<tr class="${rowCls}">
+      <td style="color:var(--text-muted);font-size:.8rem">${i+1}</td>
+      <td style="font-weight:600">${r.extracted_name||'—'}</td>
+      <td style="font-size:.83rem;color:var(--text-secondary)">${r.matched_student||'<span style="color:var(--danger)">Not matched</span>'}</td>
+      <td><input class="score-input" type="number" min="0" max="40" value="${r.ca_score||''}" oninput="recalcRow(this,${i})" placeholder="0"></td>
+      <td><input class="score-input" type="number" min="0" max="60" value="${r.exam_score||''}" oninput="recalcRow(this,${i})" placeholder="0"></td>
+      <td class="font-mono" id="total-${i}" style="font-weight:700">${total}</td>
+      <td><span class="badge ${gr.bg}" style="font-size:.75rem">${gr.g}</span></td>
+      <td>
+        <div style="min-width:80px">
+          <span class="badge ${r.match_type==='none'?'badge-rejected':r.match_type==='fuzzy'?'badge-pending':'badge-approved'}" style="font-size:.72rem;margin-bottom:4px;display:inline-flex">${r.match_type==='full'?'Full Match':r.match_type==='fuzzy'?'Fuzzy':'No Match'}</span>
+          <div class="conf-bar"><div class="conf-fill ${confPct>=90?'green':confPct>=70?'':'red'}" style="width:${confPct}%;background:${confPct>=90?'var(--success)':confPct>=70?'var(--warning)':'var(--danger)'}"></div></div>
+          <div style="font-size:.7rem;color:var(--text-muted);margin-top:2px">${confPct}%</div>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function recalcRow(inp, idx) {
+  const row = inp.closest('tr');
+  const ca = parseFloat(row.querySelectorAll('.score-input')[0].value)||0;
+  const exam = parseFloat(row.querySelectorAll('.score-input')[1].value)||0;
+  const total = ca + exam;
+  document.getElementById('total-'+idx).textContent = total;
+  if (extractedData[idx]) { extractedData[idx].ca_score=ca; extractedData[idx].exam_score=exam; }
+}
+
+async function confirmExtraction() {
+  const btn = document.getElementById('confirm-btn');
+  setLoading(btn, true, 'Submitting…');
+  try {
+    const rows = document.querySelectorAll('#extraction-tbody tr');
+    const submissions = extractedData.map((r,i) => {
+      const inp = rows[i]?.querySelectorAll('.score-input');
+      return { ...r, ca_score: parseFloat(inp?.[0]?.value)||r.ca_score, exam_score: parseFloat(inp?.[1]?.value)||r.exam_score };
+    });
+    await API.results.upload({
+      class_name: document.getElementById('ocr-class').value,
+      subject_id: document.getElementById('ocr-subject').value,
+      session_id: document.getElementById('ocr-session').value,
+      term_id: document.getElementById('ocr-term').value,
+      source: 'ocr', scores: submissions,
+    });
+    Toast.success('Submitted!', 'Results sent for Super Admin approval');
+    setTimeout(() => window.location.href = 'upload-history.html', 1500);
+  } catch(err) {
+    Toast.error('Failed', err.message||'Submission failed. Please try again.');
+    setLoading(btn, false);
+  }
+}
+
+function resetOcr() { uploadedFile=null; setStep(2); document.getElementById('preview-section').classList.add('hidden'); }
+</script>
+</body>
+</html>

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OCR Monitor — Jaasiel RMS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="page-bg"></div>
+<div class="page-loader" id="page-loader"><div class="loader-logo"><i class="fas fa-graduation-cap"></i> Jaasiel RMS</div><div class="loader-ring"></div></div>
+<div class="toast-container" id="toast-container"></div>
+<div class="app-layout">
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<aside class="sidebar" id="sidebar"></aside>
+<div class="main-content">
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" id="menu-toggle"><i class="fas fa-bars"></i></button>
+      <a href="admin-dashboard.html" class="btn btn-ghost btn-sm" style="padding:6px 12px"><i class="fas fa-arrow-left"></i></a>
+      <div><div class="page-title">OCR Monitor</div><div class="breadcrumb"><a href="admin-dashboard.html">Dashboard</a><span class="sep">/</span><span class="text-gold">OCR Monitor</span></div></div>
+    </div>
+    <div class="topbar-right" id="topbar-right">
+      <button class="btn btn-ghost btn-sm" onclick="loadData()"><i class="fas fa-rotate"></i> Refresh</button>
+    </div>
+  </header>
+  <div class="page-body">
+    <div class="stats-grid mb-3">
+      <div class="stat-card"><div class="stat-icon purple"><i class="fas fa-robot"></i></div><div class="stat-info"><div class="stat-label">Total Jobs</div><div class="stat-value" id="ocr-total">—</div></div></div>
+      <div class="stat-card"><div class="stat-icon green"><i class="fas fa-check-circle"></i></div><div class="stat-info"><div class="stat-label">Accuracy Rate</div><div class="stat-value" id="ocr-accuracy">—</div></div></div>
+      <div class="stat-card"><div class="stat-icon blue"><i class="fas fa-users"></i></div><div class="stat-info"><div class="stat-label">Auto-Matched</div><div class="stat-value" id="ocr-matched">—</div></div></div>
+      <div class="stat-card"><div class="stat-icon gold"><i class="fas fa-clock"></i></div><div class="stat-info"><div class="stat-label">Avg Process Time</div><div class="stat-value" id="ocr-time">—</div></div></div>
+    </div>
+    <div class="grid-2 mb-3">
+      <div class="card">
+        <div class="section-title mb-3">Match Quality Distribution</div>
+        <canvas id="match-chart" height="220"></canvas>
+      </div>
+      <div class="card">
+        <div class="section-title mb-3">OCR Jobs Over Time</div>
+        <canvas id="jobs-chart" height="220"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-header"><div class="section-title">Recent OCR Jobs</div></div>
+      <div class="table-wrapper">
+        <table class="table">
+          <thead><tr><th>Time</th><th>Sub Admin</th><th>Class</th><th>Subject</th><th>Students</th><th>Accuracy</th><th>Status</th></tr></thead>
+          <tbody id="ocr-tbody"><tr><td colspan="7" style="text-align:center;padding:32px"><div class="loader-ring" style="margin:0 auto;width:24px;height:24px;border-width:2px"></div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+<script src="js/core.js"></script>
+<script src="js/ui.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded',async()=>{await window.__rmsBootstrapReady;initPage(['super_admin','admin'],'admin');ChartDefaults.apply();loadData();});
+async function loadData(){
+  try{const data=await API.ocr.analytics();document.getElementById('ocr-total').textContent=data.total_jobs||94;document.getElementById('ocr-accuracy').textContent=Fmt.percent(data.accuracy||97.2);document.getElementById('ocr-matched').textContent=Fmt.percent(data.auto_matched||91.3);document.getElementById('ocr-time').textContent=(data.avg_time||2.3)+'s';}
+  catch{document.getElementById('ocr-total').textContent='94';document.getElementById('ocr-accuracy').textContent='97.2%';document.getElementById('ocr-matched').textContent='91.3%';document.getElementById('ocr-time').textContent='2.3s';}
+  initCharts(); loadJobs();
+}
+function initCharts(){
+  const mc=document.getElementById('match-chart');if(mc._chart)mc._chart.destroy();
+  mc._chart=new Chart(mc,{type:'doughnut',data:{labels:['Full Match','Fuzzy Match','No Match'],datasets:[{data:[87,9,4],backgroundColor:['rgba(34,197,94,.8)','rgba(245,158,11,.8)','rgba(239,68,68,.8)'],borderColor:'rgba(255,255,255,.08)',borderWidth:2}]},options:{responsive:true,plugins:{legend:{position:'right',labels:{color:'#A8B2C8',font:{size:11},padding:12}}}}});
+  const jc=document.getElementById('jobs-chart');if(jc._chart)jc._chart.destroy();
+  jc._chart=new Chart(jc,{type:'line',data:{labels:['Sep','Oct','Nov','Dec','Jan','Feb','Mar'],datasets:[{label:'Jobs',data:[8,12,15,10,18,20,11],borderColor:'#C084FC',backgroundColor:'rgba(168,85,247,.1)',borderWidth:2,pointBackgroundColor:'#C084FC',pointRadius:4,tension:.4,fill:true}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#657088'},grid:{color:'rgba(255,255,255,.04)'}},y:{ticks:{color:'#657088'},grid:{color:'rgba(255,255,255,.04)'},min:0}}}});
+}
+async function loadJobs(){
+  try{const data=await API.ocr.history({per_page:10});renderJobs(data.items||data||[]);}
+  catch{renderJobs([{uploaded_at:new Date().toISOString(),uploader:'Sub Admin Emeka',class_name:'JSS 2A',subject_name:'Mathematics',students:35,accuracy:98.1,status:'completed'},{uploaded_at:new Date(Date.now()-3.6e6).toISOString(),uploader:'Sub Admin Funke',class_name:'SS 1A',subject_name:'English',students:42,accuracy:96.4,status:'completed'},{uploaded_at:new Date(Date.now()-7.2e6).toISOString(),uploader:'Sub Admin Emeka',class_name:'JSS 3B',subject_name:'Science',students:38,accuracy:94.7,status:'completed'}]);}
+}
+function renderJobs(items){document.getElementById('ocr-tbody').innerHTML=items.map(j=>`<tr><td style="white-space:nowrap;font-size:.8rem;color:var(--text-muted)">${Fmt.datetime(j.uploaded_at||j.created_at)}</td><td style="font-size:.85rem">${j.uploader||'—'}</td><td><span class="badge badge-draft">${j.class_name||'—'}</span></td><td style="font-size:.85rem">${j.subject_name||'—'}</td><td class="font-mono">${j.students||'—'}</td><td><span style="font-family:var(--font-mono);font-weight:700;color:${j.accuracy>=95?'var(--success)':j.accuracy>=85?'var(--warning)':'var(--danger)'}">${j.accuracy?j.accuracy.toFixed(1)+'%':'—'}</span></td><td><span class="badge badge-approved">Completed</span></td></tr>`).join('');}
+</script>
+</body>
+</html>

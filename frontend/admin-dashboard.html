@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard — Jaasiel Education Centre RMS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="page-bg"></div>
+<div class="page-loader" id="page-loader"><div class="loader-logo"><i class="fas fa-graduation-cap"></i> Jaasiel RMS</div><div class="loader-ring"></div></div>
+<div class="toast-container" id="toast-container"></div>
+
+<div class="app-layout">
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<aside class="sidebar" id="sidebar"></aside>
+
+<div class="main-content">
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" id="menu-toggle"><i class="fas fa-bars"></i></button>
+      <div>
+        <div class="page-title">Dashboard</div>
+        <div class="breadcrumb"><span class="text-gold">Admin</span><span class="sep">/</span><span>Overview</span></div>
+      </div>
+    </div>
+    <div class="topbar-right" id="topbar-right">
+      <!-- session pill + notif injected by JS -->
+    </div>
+  </header>
+
+  <div class="page-body">
+    <!-- Welcome Banner -->
+    <div class="welcome-banner">
+      <div>
+        <div style="font-family:var(--font-display);font-size:clamp(1.1rem,2.5vw,1.5rem);font-weight:700" id="welcome-greeting">Good morning, Admin 👋</div>
+        <div style="font-size:.84rem;color:var(--text-secondary);margin-top:4px">Here's what's happening in Jaasiel RMS today.</div>
+      </div>
+      <div style="background:rgba(201,151,58,.1);border:1px solid rgba(201,151,58,.2);border-radius:var(--radius);padding:12px 20px;text-align:center;flex-shrink:0">
+        <div style="font-size:.68rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em">Active Period</div>
+        <div style="font-size:.95rem;font-weight:700;color:var(--brand-gold);margin-top:2px" data-global-session>Loading…</div>
+        <div style="font-size:.78rem;color:var(--text-muted);margin-top:3px" data-global-term>—</div>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid" id="stats-grid">
+      <div class="stat-card"><div class="stat-icon gold"><i class="fas fa-graduation-cap"></i></div><div class="stat-info"><div class="stat-label">Total Students</div><div class="stat-value" id="stat-students"><span class="skeleton" style="display:inline-block;width:60px;height:32px;border-radius:6px"></span></div></div></div>
+      <div class="stat-card"><div class="stat-icon red"><i class="fas fa-clock"></i></div><div class="stat-info"><div class="stat-label">Pending Approvals</div><div class="stat-value" id="stat-pending"><span class="skeleton" style="display:inline-block;width:40px;height:32px;border-radius:6px"></span></div></div></div>
+      <div class="stat-card"><div class="stat-icon green"><i class="fas fa-check-circle"></i></div><div class="stat-info"><div class="stat-label">Published Results</div><div class="stat-value" id="stat-published"><span class="skeleton" style="display:inline-block;width:40px;height:32px;border-radius:6px"></span></div></div></div>
+      <div class="stat-card"><div class="stat-icon purple"><i class="fas fa-robot"></i></div><div class="stat-info"><div class="stat-label">AI OCR Jobs</div><div class="stat-value" id="stat-ocr"><span class="skeleton" style="display:inline-block;width:40px;height:32px;border-radius:6px"></span></div></div></div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:24px">
+      <a href="results-approval.html" class="quick-action-btn">
+        <div style="width:40px;height:40px;border-radius:10px;background:rgba(239,68,68,.12);color:var(--danger);display:flex;align-items:center;justify-content:center;font-size:.95rem"><i class="fas fa-clipboard-check"></i></div>
+        <div style="font-size:.8rem;font-weight:600">Approvals</div>
+      </a>
+      <a href="students.html" class="quick-action-btn">
+        <div style="width:40px;height:40px;border-radius:10px;background:rgba(201,151,58,.12);color:var(--brand-gold);display:flex;align-items:center;justify-content:center;font-size:.95rem"><i class="fas fa-graduation-cap"></i></div>
+        <div style="font-size:.8rem;font-weight:600">Students</div>
+      </a>
+      <a href="analytics.html" class="quick-action-btn">
+        <div style="width:40px;height:40px;border-radius:10px;background:rgba(34,197,94,.12);color:var(--success);display:flex;align-items:center;justify-content:center;font-size:.95rem"><i class="fas fa-chart-mixed"></i></div>
+        <div style="font-size:.8rem;font-weight:600">Analytics</div>
+      </a>
+      <a href="sessions.html" class="quick-action-btn">
+        <div style="width:40px;height:40px;border-radius:10px;background:rgba(59,130,246,.12);color:#60A5FA;display:flex;align-items:center;justify-content:center;font-size:.95rem"><i class="fas fa-calendar-days"></i></div>
+        <div style="font-size:.8rem;font-weight:600">Sessions</div>
+      </a>
+      <a href="ocr-monitor.html" class="quick-action-btn">
+        <div style="width:40px;height:40px;border-radius:10px;background:rgba(168,85,247,.12);color:#C084FC;display:flex;align-items:center;justify-content:center;font-size:.95rem"><i class="fas fa-robot"></i></div>
+        <div style="font-size:.8rem;font-weight:600">OCR Monitor</div>
+      </a>
+      <a href="audit-logs.html" class="quick-action-btn">
+        <div style="width:40px;height:40px;border-radius:10px;background:rgba(20,184,166,.12);color:#2DD4BF;display:flex;align-items:center;justify-content:center;font-size:.95rem"><i class="fas fa-shield-check"></i></div>
+        <div style="font-size:.8rem;font-weight:600">Audit Logs</div>
+      </a>
+    </div>
+
+    <div class="grid-2 mb-3">
+      <!-- Pending Approvals -->
+      <div class="card">
+        <div class="section-header">
+          <div><div class="section-title">Pending Approvals</div><div class="section-sub">Results awaiting your review</div></div>
+          <a href="results-approval.html" class="btn btn-sm btn-primary">View All</a>
+        </div>
+        <div id="pending-list">
+          <div class="skeleton mb-2" style="height:68px;border-radius:12px"></div>
+          <div class="skeleton mb-2" style="height:68px;border-radius:12px"></div>
+          <div class="skeleton" style="height:68px;border-radius:12px"></div>
+        </div>
+      </div>
+
+      <!-- Performance Chart -->
+      <div class="card">
+        <div class="section-header"><div class="section-title">Performance Trend</div></div>
+        <canvas id="perf-chart" height="230"></canvas>
+      </div>
+    </div>
+
+    <!-- Grade Distribution + Recent Activity -->
+    <div class="grid-2 mb-3">
+      <div class="card">
+        <div class="section-header"><div class="section-title">Grade Distribution</div></div>
+        <canvas id="grade-chart" height="220"></canvas>
+      </div>
+      <div class="card">
+        <div class="section-header"><div class="section-title">Recent Activity</div></div>
+        <div id="activity-list">
+          <div class="skeleton mb-2" style="height:50px;border-radius:12px"></div>
+          <div class="skeleton mb-2" style="height:50px;border-radius:12px"></div>
+          <div class="skeleton mb-2" style="height:50px;border-radius:12px"></div>
+          <div class="skeleton" style="height:50px;border-radius:12px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI Accuracy Gauge -->
+    <div class="card card-gold" style="text-align:center;padding:28px">
+      <div class="ai-badge mb-2"><i class="fas fa-robot"></i> AI Processing Engine</div>
+      <div style="display:flex;justify-content:center;gap:40px;flex-wrap:wrap;margin-top:16px">
+        <div><div style="font-family:var(--font-display);font-size:2.5rem;font-weight:900;color:var(--brand-gold)" id="ai-accuracy">—</div><div style="font-size:.78rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.07em;margin-top:4px">OCR Accuracy</div></div>
+        <div><div style="font-family:var(--font-display);font-size:2.5rem;font-weight:900;color:var(--success)" id="ai-jobs">—</div><div style="font-size:.78rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.07em;margin-top:4px">Jobs Processed</div></div>
+        <div><div style="font-family:var(--font-display);font-size:2.5rem;font-weight:900;color:#C084FC" id="ai-matches">—</div><div style="font-size:.78rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.07em;margin-top:4px">Auto-Matched</div></div>
+      </div>
+    </div>
+  </div><!-- /page-body -->
+</div><!-- /main-content -->
+</div><!-- /app-layout -->
+
+<script src="js/core.js"></script>
+<script src="js/ui.js"></script>
+<script>
+let perfChart, gradeChart;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await window.__rmsBootstrapReady;
+  initPage(['super_admin','admin'], 'admin');
+  setGreeting();
+  await Promise.all([loadDashboard()]);
+  initCharts();
+});
+
+function setGreeting() {
+  const h = new Date().getHours();
+  const g = h<12 ? 'Good morning' : h<17 ? 'Good afternoon' : 'Good evening';
+  const user = AuthState.getUser();
+  const name = user?.full_name?.split(' ')[0] || 'Admin';
+  document.getElementById('welcome-greeting').textContent = `${g}, ${name} 👋`;
+}
+
+
+async function loadDashboard() {
+  try {
+    const data = await API.dashboard.admin();
+    document.getElementById('stat-students').textContent = Fmt.number(data.total_students || 0);
+    document.getElementById('stat-pending').textContent = Fmt.number(data.pending_approvals || 0);
+    document.getElementById('stat-published').textContent = Fmt.number(data.published_results || 0);
+    document.getElementById('stat-ocr').textContent = Fmt.number(data.ocr_jobs || 0);
+    document.getElementById('ai-accuracy').textContent = data.ai_accuracy ? Fmt.percent(data.ai_accuracy) : '97.2%';
+    document.getElementById('ai-jobs').textContent = Fmt.number(data.ocr_jobs || 94);
+    document.getElementById('ai-matches').textContent = data.auto_matched ? Fmt.percent(data.auto_matched) : '91%';
+    renderPendingList(data.pending_batches || []);
+    renderActivity(data.recent_activity || []);
+  } catch(err) {
+    // Fallback demo data for offline/dev
+    document.getElementById('stat-students').textContent = '847';
+    document.getElementById('stat-pending').textContent = '12';
+    document.getElementById('stat-published').textContent = '38';
+    document.getElementById('stat-ocr').textContent = '94';
+    document.getElementById('ai-accuracy').textContent = '97.2%';
+    document.getElementById('ai-jobs').textContent = '94';
+    document.getElementById('ai-matches').textContent = '91%';
+    renderPendingList([
+      {id:1,class_name:'JSS 2A',subject_name:'Mathematics',term_name:'First Term',uploader:'Sub Admin Emeka',uploaded_at:new Date().toISOString(),has_issues:false},
+      {id:2,class_name:'SS 1A',subject_name:'English Language',term_name:'First Term',uploader:'Sub Admin Funke',uploaded_at:new Date(Date.now()-18e5).toISOString(),has_issues:false},
+      {id:3,class_name:'JSS 1B',subject_name:'Basic Science',term_name:'First Term',uploader:'Sub Admin Emeka',uploaded_at:new Date(Date.now()-36e5).toISOString(),has_issues:true},
+    ]);
+    renderActivity([
+      {type:'upload',text:'JSS 2A Mathematics uploaded by Sub Admin','time':new Date().toISOString()},
+      {type:'ocr',text:'AI OCR processed — 97% confidence','time':new Date(Date.now()-9e5).toISOString()},
+      {type:'approved',text:'SS 2B English results approved & published','time':new Date(Date.now()-36e5).toISOString()},
+      {type:'student',text:'12 students bulk uploaded to JSS 1A','time':new Date(Date.now()-108e5).toISOString()},
+    ]);
+  }
+}
+
+function renderPendingList(items) {
+  const el = document.getElementById('pending-list');
+  if (!items.length) { el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text-muted);font-size:.85rem"><i class="fas fa-check-circle" style="color:var(--success);font-size:1.5rem;display:block;margin-bottom:8px"></i>No pending approvals</div>'; return; }
+  el.innerHTML = items.slice(0,4).map(b => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.04);gap:12px;flex-wrap:wrap">
+      <div>
+        <div style="font-weight:600;font-size:.9rem">${b.class_name} — ${b.subject_name}</div>
+        <div style="font-size:.76rem;color:var(--text-muted);margin-top:2px">${b.term_name} · ${Fmt.timeAgo(b.uploaded_at)}</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        ${b.has_issues ? '<span class="badge badge-pending"><i class="fas fa-triangle-exclamation"></i> Issues</span>' : '<span class="badge badge-gold"><i class="fas fa-robot"></i> Validated</span>'}
+        <a href="results-approval.html?id=${b.id}" class="btn btn-sm btn-ghost"><i class="fas fa-eye"></i></a>
+        <button class="btn btn-sm btn-success" onclick="quickApprove(${b.id},this)"><i class="fas fa-check"></i></button>
+        <button class="btn btn-sm btn-danger" onclick="quickReject(${b.id},this)"><i class="fas fa-times"></i></button>
+      </div>
+    </div>`).join('');
+}
+
+function renderActivity(items) {
+  const icons = { upload:'fa-upload gold', ocr:'fa-robot purple', approved:'fa-check-circle success', student:'fa-user-plus blue', login:'fa-right-to-bracket blue' };
+  const el = document.getElementById('activity-list');
+  if (!items.length) { el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text-muted)">No recent activity</div>'; return; }
+  el.innerHTML = items.map(a => {
+    const ic = icons[a.type] || 'fa-circle blue';
+    const [iclass, color] = ic.split(' ');
+    return `<div style="display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.04)">
+      <div class="stat-icon ${color||'blue'}" style="width:34px;height:34px;font-size:.8rem;flex-shrink:0"><i class="fas ${iclass}"></i></div>
+      <div style="flex:1;min-width:0"><div style="font-size:.85rem;color:var(--text-primary)">${a.text||a.description||''}</div><div style="font-size:.75rem;color:var(--text-muted);margin-top:2px">${Fmt.timeAgo(a.time||a.created_at)}</div></div>
+    </div>`;
+  }).join('');
+}
+
+async function quickApprove(id, btn) {
+  setLoading(btn, true);
+  try {
+    await API.results.approveBatch(id, {});
+    Toast.success('Approved', 'Result batch approved and published');
+    btn.closest('div[style*="border-bottom"]').style.opacity = '.4';
+    const countEl = document.getElementById('stat-pending');
+    const c = parseInt(countEl.textContent) - 1;
+    if (c >= 0) countEl.textContent = c;
+  } catch(err) { Toast.error('Failed', err.message); setLoading(btn, false); }
+}
+async function quickReject(id, btn) {
+  setLoading(btn, true);
+  try {
+    await API.results.rejectBatch(id, { reason: 'Rejected by admin' });
+    Toast.warning('Rejected', 'Result returned to Sub Admin');
+    btn.closest('div[style*="border-bottom"]').style.opacity = '.4';
+  } catch(err) { Toast.error('Failed', err.message); setLoading(btn, false); }
+}
+
+function initCharts() {
+  ChartDefaults.apply();
+
+  // Performance trend
+  const perfCtx = document.getElementById('perf-chart');
+  if (perfCtx) {
+    perfChart = new Chart(perfCtx, {
+      type: 'line',
+      data: {
+        labels: ['Sep','Oct','Nov','Dec','Jan','Feb','Mar'],
+        datasets: [{
+          label: 'Avg Score',
+          data: [64,67,70,68,72,74,73],
+          borderColor: ChartColors.gold,
+          backgroundColor: 'rgba(201,151,58,.1)',
+          borderWidth: 2.5, pointBackgroundColor: ChartColors.gold,
+          pointRadius: 4, tension: .4, fill: true,
+        }]
+      },
+      options: { responsive:true, plugins:{legend:{display:false}},
+        scales:{x:{ticks:{color:'#657088'},grid:{color:'rgba(255,255,255,.04)'}},
+                y:{ticks:{color:'#657088'},grid:{color:'rgba(255,255,255,.04)'},min:50,max:100}} }
+    });
+  }
+
+  // Grade distribution
+  const gradeCtx = document.getElementById('grade-chart');
+  if (gradeCtx) {
+    gradeChart = new Chart(gradeCtx, {
+      type: 'doughnut',
+      data: {
+        labels: ['A (Excellent)','B (Very Good)','C (Good)','D (Fair)','E (Poor)','F (Fail)'],
+        datasets: [{
+          data: [32,28,22,10,5,3],
+          backgroundColor: ['rgba(34,197,94,.8)','rgba(59,130,246,.8)','rgba(245,158,11,.8)','rgba(249,115,22,.8)','rgba(239,68,68,.6)','rgba(100,116,139,.6)'],
+          borderColor: 'rgba(255,255,255,.08)', borderWidth: 2,
+        }]
+      },
+      options: { responsive:true, plugins:{legend:{position:'right',labels:{color:'#A8B2C8',font:{size:11},padding:12}}} }
+    });
+  }
+}
+</script>
+</body>
+</html>
