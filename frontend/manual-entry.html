@@ -6,7 +6,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="./css/style.css">
 <style>
 .score-table{width:100%;border-collapse:collapse;font-size:.88rem}
 .score-table th{padding:12px 16px;background:rgba(255,255,255,.03);border-bottom:1px solid var(--border-light);font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);white-space:nowrap}
@@ -30,7 +30,6 @@
   <header class="topbar">
     <div class="topbar-left">
       <button class="menu-toggle" id="menu-toggle"><i class="fas fa-bars"></i></button>
-      <a href="subadmin-dashboard.html" class="btn btn-ghost btn-sm" style="padding:6px 12px"><i class="fas fa-arrow-left"></i></a>
       <div>
         <div class="page-title">Manual Score Entry</div>
         <div class="breadcrumb"><a href="subadmin-dashboard.html">Dashboard</a><span class="sep">/</span><span class="text-gold">Manual Entry</span></div>
@@ -73,21 +72,35 @@
           </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
             <div style="font-size:.8rem;color:var(--text-muted);display:flex;align-items:center;gap:8px">
-              <span>CA max: <strong class="text-gold" id="ca-max-label">40</strong></span>
-              <span>Exam max: <strong class="text-gold" id="exam-max-label">60</strong></span>
+              <span>1st Test: <strong class="text-gold" id="ca-max-label">20</strong></span>
+              <span>2nd Test: <strong class="text-gold" id="exam-max-label">20</strong></span>
+            </div>
+            <label style="display:flex;align-items:center;gap:6px;font-size:.82rem;cursor:pointer;color:var(--text-secondary)">
+              <input type="checkbox" id="no-test-mode" style="accent-color:var(--brand-gold)" onchange="toggleNoTestMode()">
+              <span>No test (enter total/100 directly)</span>
+            </label>
+            <div style="display:flex;align-items:center;gap:6px;font-size:.82rem;color:var(--text-secondary)">
+              <label style="font-weight:600;white-space:nowrap">Days School Opened:</label>
+              <input type="number" id="days-school-opened" class="form-control" placeholder="e.g. 96" min="1" max="200"
+                style="width:80px;padding:5px 8px;font-size:.82rem;height:auto">
             </div>
             <button class="btn btn-ghost btn-sm" onclick="clearAll()"><i class="fas fa-eraser"></i> Clear All</button>
-            <button class="btn btn-primary" id="submit-scores-btn" onclick="submitScores()"><i class="fas fa-paper-plane"></i> Submit for Approval</button>
+            <button class="btn btn-secondary" id="review-scores-btn" onclick="reviewScores()"><i class="fas fa-eye"></i> Review Scores</button>
+            <button class="btn btn-primary" id="submit-scores-btn" onclick="submitScores()" style="display:none"><i class="fas fa-paper-plane"></i> Confirm &amp; Submit</button>
           </div>
         </div>
+
+
         <div style="overflow-x:auto">
           <table class="score-table" id="score-table">
             <thead>
               <tr>
                 <th>#</th><th>Student Name</th><th>ID</th>
-                <th>CA Score <span style="font-weight:400;color:var(--text-muted)">(max <span id="ca-max-th">40</span>)</span></th>
+                <th id="th-first-test">1st Test <span style="font-weight:400;color:var(--text-muted)">(max 20)</span></th>
+                <th id="th-second-test">2nd Test <span style="font-weight:400;color:var(--text-muted)">(max 20)</span></th>
                 <th>Exam Score <span style="font-weight:400;color:var(--text-muted)">(max <span id="exam-max-th">60</span>)</span></th>
-                <th>Total</th><th>Grade</th><th>Remarks</th>
+                <th>Total</th><th>Grade</th><th>Remark</th>
+                <th>Teacher's Comment</th>
               </tr>
             </thead>
             <tbody id="score-tbody"></tbody>
@@ -102,11 +115,11 @@
   </div>
 </div>
 </div>
-<script src="js/core.js"></script>
-<script src="js/ui.js"></script>
+<script src="./js/core.js"></script>
+<script src="./js/ui.js"></script>
 <script>
-const CA_MAX = 40, EXAM_MAX = 60;
-let students = [], classId = null;
+const FIRST_MAX = 20, SECOND_MAX = 20, EXAM_MAX = 60, TOTAL_MAX = 100;
+let students = [], classId = null, noTestMode = false;
 
 document.addEventListener('DOMContentLoaded', async () => {
   await window.__rmsBootstrapReady;
@@ -118,20 +131,36 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function loadSessions() {
   try {
     const data = await API.sessions.list();
+    const items = data.items || data || [];
     const sel = document.getElementById('sel-session');
     sel.innerHTML = '<option value="">Select session…</option>';
-    (data.items||data||[]).forEach(s => { const o=document.createElement('option'); o.value=s.id; o.textContent=s.session_name+(s.is_current?' ★':''); sel.appendChild(o); });
-  } catch {}
+    items.forEach(s => {
+      const o = document.createElement('option');
+      o.value = s.id; o.textContent = s.session_name + (s.is_current ? ' ★' : '');
+      if (s.is_current) o.selected = true;
+      sel.appendChild(o);
+    });
+    // Auto-load terms for current session
+    if (sel.value) loadTermsFor();
+  } catch(e) { console.warn('loadSessions error', e); }
 }
 async function loadTermsFor() {
   const sid = document.getElementById('sel-session').value;
-  const sel = document.getElementById('sel-term'); sel.innerHTML='<option value="">Loading…</option>'; sel.disabled=true;
-  if (!sid) { sel.innerHTML='<option value="">Select term…</option>'; return; }
+  const sel = document.getElementById('sel-term');
+  sel.innerHTML = '<option value="">Loading…</option>'; sel.disabled = true;
+  if (!sid) { sel.innerHTML = '<option value="">Select term…</option>'; return; }
   try {
     const data = await API.sessions.terms(sid);
-    sel.innerHTML='<option value="">Select term…</option>';
-    (data.items||data||[]).forEach(t=>{const o=document.createElement('option');o.value=t.id;o.textContent=t.term_name+(t.is_current?' ★':'');sel.appendChild(o);}); sel.disabled=false;
-  } catch { sel.innerHTML='<option value="">Error</option>'; }
+    const items = data.items || data || [];
+    sel.innerHTML = '<option value="">Select term…</option>';
+    items.forEach(t => {
+      const o = document.createElement('option');
+      o.value = t.id; o.textContent = t.term_name + (t.is_current ? ' ★' : '');
+      if (t.is_current) o.selected = true;
+      sel.appendChild(o);
+    });
+    sel.disabled = false;
+  } catch { sel.innerHTML = '<option value="">Error loading terms</option>'; }
 }
 async function onClassChange() {
   const cls = document.getElementById('sel-class').value;
@@ -176,49 +205,114 @@ async function loadStudents() {
   }
 }
 
+function toggleNoTestMode() {
+  noTestMode = document.getElementById('no-test-mode').checked;
+  document.getElementById('th-first-test').style.display = noTestMode ? 'none' : '';
+  document.getElementById('th-second-test').style.display = noTestMode ? 'none' : '';
+  document.getElementById('exam-max-th').textContent = noTestMode ? '100' : '60';
+  if (students.length) renderScoreGrid(students, {});
+}
+
 function renderScoreGrid(studs, existing) {
   const tbody = document.getElementById('score-tbody');
   tbody.innerHTML = studs.map((s,i) => {
     const ex = existing[s.id]||existing[s.student_id]||{};
-    const ca = ex.ca_score??''; const exam = ex.exam_score??'';
-    const total = ca!==''&&exam!=='' ? (parseFloat(ca)||0)+(parseFloat(exam)||0) : '';
+    const ft = ex.first_test??''; const st = ex.second_test??''; const exam = ex.exam_score??'';
+    const total = !noTestMode
+      ? (ft!==''&&exam!=='' ? (parseFloat(ft)||0)+(parseFloat(st)||0)+(parseFloat(exam)||0) : '')
+      : (exam!=='' ? parseFloat(exam)||0 : '');
     const gr = total!=='' ? Fmt.grade(total) : null;
     return `<tr id="row-${i}">
       <td style="color:var(--text-muted);font-size:.8rem">${i+1}</td>
       <td><strong>${Security.sanitize(s.full_name)}</strong></td>
       <td class="font-mono" style="font-size:.8rem;color:var(--text-muted)">${s.student_id||'—'}</td>
-      <td><input class="s-input" type="number" id="ca-${i}" min="0" max="${CA_MAX}" value="${ca}" placeholder="—" oninput="calcRow(${i})"></td>
-      <td><input class="s-input" type="number" id="exam-${i}" min="0" max="${EXAM_MAX}" value="${exam}" placeholder="—" oninput="calcRow(${i})"></td>
+      ${!noTestMode ? `
+      <td><input class="s-input" type="number" id="ft-${i}" min="0" max="${FIRST_MAX}" value="${ft}" placeholder="—" oninput="calcRow(${i})"></td>
+      <td><input class="s-input" type="number" id="st-${i}" min="0" max="${SECOND_MAX}" value="${st}" placeholder="—" oninput="calcRow(${i})"></td>
+      ` : '<td style="display:none"></td><td style="display:none"></td>'}
+      <td><input class="s-input" type="number" id="exam-${i}" min="0" max="${noTestMode?TOTAL_MAX:EXAM_MAX}" value="${exam}" placeholder="—" oninput="calcRow(${i})"></td>
       <td class="font-mono" style="font-weight:700" id="total-${i}">${total!==''?total:'—'}</td>
       <td id="grade-${i}">${gr?`<span class="grade-badge" style="background:${Fmt.gradeColor(gr.g)}22;color:${Fmt.gradeColor(gr.g)};border:1px solid ${Fmt.gradeColor(gr.g)}44">${gr.g}</span>`:'—'}</td>
       <td id="remark-${i}" style="font-size:.82rem;color:var(--text-secondary)">${gr?gr.r:'—'}</td>
+      <td><input class="s-input" type="text" id="tc-${i}" placeholder="Optional remark…" style="width:130px;text-align:left;font-family:var(--font-sans)"></td>
     </tr>`;
   }).join('');
 }
 
 function calcRow(idx) {
-  const ca = parseFloat(document.getElementById('ca-'+idx).value)||0;
-  const exam = parseFloat(document.getElementById('exam-'+idx).value)||0;
-  const caEl = document.getElementById('ca-'+idx); const examEl = document.getElementById('exam-'+idx);
-  caEl.classList.toggle('over', ca>CA_MAX); examEl.classList.toggle('over', exam>EXAM_MAX);
-  const total = ca+exam;
-  document.getElementById('total-'+idx).textContent = ca>0||exam>0 ? total : '—';
-  const gr = ca>0||exam>0 ? Fmt.grade(total) : null;
+  const ftEl = document.getElementById('ft-'+idx);
+  const stEl = document.getElementById('st-'+idx);
+  const examEl = document.getElementById('exam-'+idx);
+  const ft = ftEl ? (parseFloat(ftEl.value)||0) : 0;
+  const st = stEl ? (parseFloat(stEl.value)||0) : 0;
+  const exam = parseFloat(examEl.value)||0;
+  if (ftEl) ftEl.classList.toggle('over', ft>FIRST_MAX);
+  if (stEl) stEl.classList.toggle('over', st>SECOND_MAX);
+  examEl.classList.toggle('over', noTestMode ? exam>TOTAL_MAX : exam>EXAM_MAX);
+  const total = noTestMode ? exam : (ft+st+exam);
+  document.getElementById('total-'+idx).textContent = (ft>0||st>0||exam>0) ? total : '—';
+  const gr = (ft>0||st>0||exam>0) ? Fmt.grade(total) : null;
   document.getElementById('grade-'+idx).innerHTML = gr ? `<span class="grade-badge" style="background:${Fmt.gradeColor(gr.g)}22;color:${Fmt.gradeColor(gr.g)};border:1px solid ${Fmt.gradeColor(gr.g)}44">${gr.g}</span>` : '—';
   document.getElementById('remark-'+idx).textContent = gr?gr.r:'—';
 }
 
 function clearAll() {
-  students.forEach((_,i) => { document.getElementById('ca-'+i).value=''; document.getElementById('exam-'+i).value=''; document.getElementById('total-'+i).textContent='—'; document.getElementById('grade-'+i).innerHTML='—'; document.getElementById('remark-'+i).textContent='—'; });
+  students.forEach((_,i) => {
+    const ftEl=document.getElementById('ft-'+i); if(ftEl) ftEl.value='';
+    const stEl=document.getElementById('st-'+i); if(stEl) stEl.value='';
+    const exEl=document.getElementById('exam-'+i); if(exEl) exEl.value='';
+    document.getElementById('total-'+i).textContent='—';
+    document.getElementById('grade-'+i).innerHTML='—';
+    document.getElementById('remark-'+i).textContent='—';
+  });
   document.getElementById('validation-panel').classList.add('hidden');
+}
+
+function reviewScores() {
+  const cls = document.getElementById('sel-class').value;
+  const sub = document.getElementById('sel-subject').value;
+  const ses = document.getElementById('sel-session').value;
+  const trm = document.getElementById('sel-term').value;
+  if (!cls||!sub||!ses||!trm) { Toast.warning('Incomplete','Please select all fields.'); return; }
+  // Count filled rows
+  let filled = 0, issues = [];
+  students.forEach((s,i) => {
+    const examEl = document.getElementById('exam-'+i);
+    const exam = examEl ? parseFloat(examEl.value) : NaN;
+    if (!isNaN(exam) && exam >= 0) filled++;
+    else if (i < students.length) issues.push(s.full_name);
+  });
+  if (filled === 0) { Toast.warning('No scores','Please enter scores before reviewing.'); return; }
+  // Show summary and reveal submit button
+  const missingCount = students.length - filled;
+  let msg = `✅ ${filled} student(s) scored.`;
+  if (missingCount > 0) msg += ` ⚠️ ${missingCount} student(s) have no score entered (will be skipped).`;
+  Toast.info('Ready to Submit', msg);
+  document.getElementById('review-scores-btn').style.display = 'none';
+  document.getElementById('submit-scores-btn').style.display = '';
 }
 
 async function submitScores() {
   const rows = students.map((s,i) => {
-    const ca = parseFloat(document.getElementById('ca-'+i).value); const exam = parseFloat(document.getElementById('exam-'+i).value);
-    if (isNaN(ca)||isNaN(exam)) return null;
-    if (ca>CA_MAX||exam>EXAM_MAX) return null;
-    return { student_id:s.id||s.student_id, ca_score:ca, exam_score:exam, total_score:ca+exam };
+    const ftEl = document.getElementById('ft-'+i);
+    const stEl = document.getElementById('st-'+i);
+    const examEl = document.getElementById('exam-'+i);
+    const tcEl = document.getElementById('tc-'+i);
+    const ft = ftEl ? parseFloat(ftEl.value) : NaN;
+    const st = stEl ? parseFloat(stEl.value) : NaN;
+    const exam = examEl ? parseFloat(examEl.value) : NaN;
+    const tc = tcEl ? tcEl.value.trim() : '';
+    if (noTestMode) {
+      if (isNaN(exam)) return null;
+      if (exam > TOTAL_MAX) return null;
+      return { student_id: s.id||s.student_id, exam_score: exam, total_score: exam, teacher_comment: tc||null };
+    }
+    if ((isNaN(ft) && isNaN(st)) || isNaN(exam)) return null;
+    const firstT = isNaN(ft) ? null : ft;
+    const secondT = isNaN(st) ? null : st;
+    const ca = (firstT||0) + (secondT||0);
+    if (ca > 40 || exam > EXAM_MAX) return null;
+    return { student_id: s.id||s.student_id, first_test: firstT, second_test: secondT, ca_score: ca, exam_score: exam, total_score: ca+exam, teacher_comment: tc||null };
   }).filter(Boolean);
   if (!rows.length) { Toast.warning('No scores','Enter scores before submitting.'); return; }
   // AI Validation
@@ -234,11 +328,21 @@ async function submitScores() {
   const btn = document.getElementById('submit-scores-btn');
   setLoading(btn, true, 'Submitting…');
   try {
+    // Add attendance count to each score row
+    const daysOpened = parseInt(document.getElementById('days-school-opened')?.value)||null;
+    if (daysOpened) rows.forEach(r => r.attendance = daysOpened);
+
+    const termId = document.getElementById('sel-term').value;
+    const className = document.getElementById('sel-class').value;
+
     await API.results.upload({
-      class_name: document.getElementById('sel-class').value, subject_id: document.getElementById('sel-subject').value,
-      session_id: document.getElementById('sel-session').value, term_id: document.getElementById('sel-term').value,
-      source: 'manual', scores: rows,
+      class_name: className,
+      subject_id: document.getElementById('sel-subject').value,
+      session_id: document.getElementById('sel-session').value,
+      term_id: termId,
+      source: 'manual', no_test: noTestMode, scores: rows,
     });
+
     Toast.success('Submitted!', 'Scores sent for Super Admin approval');
     setTimeout(() => window.location.href='upload-history.html', 1400);
   } catch(err) { Toast.error('Failed', err.message); setLoading(btn, false); }

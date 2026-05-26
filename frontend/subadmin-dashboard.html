@@ -6,7 +6,21 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="./css/style.css">
+<style>
+@media (max-width: 640px) {
+  .topbar { height: 56px; padding: 0 12px; gap: 8px; }
+  .topbar-left { gap: 8px; min-width: 0; }
+  .page-title  { font-size: .88rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px; }
+  .breadcrumb  { display: none; }
+  .session-pill { display: none !important; }
+  .topbar-right { gap: 4px; }
+}
+
+/* Hide Settings from subadmin sidebar and user dropdown */
+.sidebar a[href="settings.html"],
+.dropdown-menu a[href="settings.html"] { display: none !important; }
+</style>
 </head>
 <body>
 <div class="page-bg"></div>
@@ -85,8 +99,8 @@
   </div>
 </div>
 </div>
-<script src="js/core.js"></script>
-<script src="js/ui.js"></script>
+<script src="./js/core.js"></script>
+<script src="./js/ui.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', async () => {
   await window.__rmsBootstrapReady;

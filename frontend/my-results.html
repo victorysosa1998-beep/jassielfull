@@ -6,7 +6,92 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="./css/style.css">
+<style>
+.result-row {
+  cursor: pointer;
+  transition: background .15s, transform .1s;
+}
+.result-row:hover {
+  background: rgba(201,151,58,.07) !important;
+  transform: translateX(2px);
+}
+.result-row:hover td:first-child {
+  color: var(--brand-gold);
+}
+.subject-link-hint {
+  font-size: .7rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.mode-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: .72rem;
+  font-weight: 600;
+  border: 1px solid;
+}
+.mode-badge.current {
+  background: rgba(201,151,58,.12);
+  color: var(--brand-gold);
+  border-color: rgba(201,151,58,.3);
+}
+.mode-badge.all {
+  background: rgba(99,179,237,.1);
+  color: #63b3ed;
+  border-color: rgba(99,179,237,.25);
+}
+.view-rc-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: .82rem;
+  font-weight: 600;
+  background: linear-gradient(135deg,#C9973A,#9A6E20);
+  color: #fff;
+  text-decoration: none;
+  transition: opacity .15s, transform .15s;
+  white-space: nowrap;
+}
+.view-rc-btn:hover {
+  opacity: .88;
+  transform: translateY(-1px);
+}
+@media (max-width: 768px) {
+  .results-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 0 -4px;
+  }
+  .term-card-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+  }
+  .term-card-controls {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .filter-bar { flex-direction: column; align-items: stretch; }
+  .filter-bar > select, .filter-bar > div { width: 100%; }
+  #topbar-right .btn span { display: none; }
+}
+@media (max-width: 480px) {
+  .filter-bar { flex-direction: column; align-items: stretch; }
+  .filter-bar > select, .filter-bar > #mode-indicator { width: 100%; max-width: 100% !important; }
+}
+</style>
 </head>
 <body>
 <div class="page-bg"></div>
@@ -19,46 +104,199 @@
   <header class="topbar">
     <div class="topbar-left">
       <button class="menu-toggle" id="menu-toggle"><i class="fas fa-bars"></i></button>
-      <a href="student-dashboard.html" class="btn btn-ghost btn-sm" style="padding:6px 12px"><i class="fas fa-arrow-left"></i></a>
-      <div><div class="page-title">All My Results</div><div class="breadcrumb"><a href="student-dashboard.html">Dashboard</a><span class="sep">/</span><span class="text-gold">Results</span></div></div>
+      <div>
+        <div class="page-title">My Results</div>
+        <div class="breadcrumb"><a href="student-dashboard.html">Dashboard</a><span class="sep">/</span><span class="text-gold">Results</span></div>
+      </div>
     </div>
     <div class="topbar-right" id="topbar-right">
-      <a href="report-card.html" class="btn btn-primary btn-sm"><i class="fas fa-file-pdf"></i> Report Card</a>
+      <a href="report-card.html" class="btn btn-primary btn-sm"><i class="fas fa-file-pdf"></i> <span class="report-label">Report Card</span></a>
     </div>
   </header>
   <div class="page-body">
-    <div class="filter-bar mb-3">
-      <select class="filter-select" id="session-filter" onchange="loadAll()"><option value="">All Sessions</option></select>
-      <select class="filter-select" id="term-filter" onchange="loadAll()"><option value="">All Terms</option></select>
+    <div class="filter-bar mb-3" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <select class="filter-select" id="session-filter" onchange="onSessionChange()" style="flex:1;min-width:120px;max-width:200px">
+        <option value="">All Sessions</option>
+      </select>
+      <select class="filter-select" id="term-filter" onchange="loadAll()" style="flex:1;min-width:100px;max-width:160px">
+        <option value="">All Terms</option>
+      </select>
+      <div id="mode-indicator"></div>
     </div>
     <div id="results-by-term"></div>
   </div>
 </div>
 </div>
-<script src="js/core.js"></script>
-<script src="js/ui.js"></script>
+
+<script src="./js/core.js"></script>
+<script src="./js/ui.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded',async()=>{await window.__rmsBootstrapReady;initPage('student','student');loadSessions();loadAll();});
-async function loadSessions(){try{const d=await API.sessions.list();const sel=document.getElementById('session-filter');(d.items||d||[]).forEach(s=>{const o=document.createElement('option');o.value=s.id;o.textContent=s.session_name;sel.appendChild(o);});}catch{}}
-async function loadAll(){
-  const container=document.getElementById('results-by-term');
-  showSkeleton(container,3,'120px','14px');
-  try{
-    const params={};const sid=document.getElementById('session-filter').value;if(sid)params.session_id=sid;
-    const data=await API.students.myResults(params);
-    const grouped=groupByTerm(data.results||data.items||data||[],data);
-    container.innerHTML=Object.entries(grouped).map(([key,{termName,sessionName,results}])=>{
-      const avgs=results.map(r=>r.total_score||0);const avg=avgs.length?(avgs.reduce((a,b)=>a+b,0)/avgs.length):0;
-      return`<div class="card mb-3"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px"><div><div style="font-family:var(--font-display);font-weight:700;font-size:1rem">${termName}</div><div style="font-size:.78rem;color:var(--text-muted)">${sessionName}</div></div><div style="display:flex;gap:8px;align-items:center"><span style="font-family:var(--font-mono);font-size:1.2rem;font-weight:900;color:var(--brand-gold)">${avg.toFixed(1)}</span><span class="badge ${Fmt.grade(avg).bg}">${Fmt.grade(avg).g}</span><a href="report-card.html" class="btn btn-sm btn-ghost"><i class="fas fa-download"></i></a></div></div>
-      <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:.85rem"><thead><tr style="border-bottom:1px solid var(--border-light)">${['Subject','CA','Exam','Total','Grade','Remarks'].map(h=>`<th style="padding:8px 12px;text-align:${h==='Subject'?'left':'center'};font-size:.72rem;color:var(--text-muted);text-transform:uppercase">${h}</th>`).join('')}</tr></thead><tbody>${results.map(r=>{const gr=Fmt.grade(r.total_score||0);return`<tr style="border-bottom:1px solid rgba(255,255,255,.04)"><td style="padding:9px 12px;font-weight:600">${r.subject_name||'—'}</td><td style="padding:9px 12px;text-align:center;font-family:var(--font-mono)">${r.ca_score??'—'}</td><td style="padding:9px 12px;text-align:center;font-family:var(--font-mono)">${r.exam_score??'—'}</td><td style="padding:9px 12px;text-align:center;font-family:var(--font-mono);font-weight:700">${r.total_score??'—'}</td><td style="padding:9px 12px;text-align:center"><span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;font-weight:700;font-size:.8rem;background:${Fmt.gradeColor(gr.g)}22;color:${Fmt.gradeColor(gr.g)};border:1px solid ${Fmt.gradeColor(gr.g)}44">${gr.g}</span></td><td style="padding:9px 12px;color:var(--text-secondary);font-size:.82rem">${gr.r}</td></tr>`;}).join('')}</tbody></table></div></div>`;
-    }).join('')||'<div class="card" style="text-align:center;padding:48px;color:var(--text-muted)"><i class="fas fa-inbox" style="font-size:2rem;display:block;margin-bottom:12px"></i>No results found</div>';
-  }catch{
-    const demoTerms=[{term:'First Term 2024/2025',results:[{subject_name:'Mathematics',ca_score:35,exam_score:52,total_score:87},{subject_name:'English Language',ca_score:30,exam_score:48,total_score:78},{subject_name:'Basic Science',ca_score:28,exam_score:44,total_score:72}]},{term:'Second Term 2024/2025',results:[{subject_name:'Mathematics',ca_score:38,exam_score:55,total_score:93},{subject_name:'English Language',ca_score:32,exam_score:50,total_score:82},{subject_name:'Basic Science',ca_score:30,exam_score:48,total_score:78}]}];
-    container.innerHTML=demoTerms.map(({term,results})=>{const avgs=results.map(r=>r.total_score);const avg=avgs.reduce((a,b)=>a+b,0)/avgs.length;return`<div class="card mb-3"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px"><div style="font-family:var(--font-display);font-weight:700;font-size:1rem">${term}</div><div style="display:flex;gap:8px;align-items:center"><span style="font-family:var(--font-mono);font-size:1.2rem;font-weight:900;color:var(--brand-gold)">${avg.toFixed(1)}</span><span class="badge ${Fmt.grade(avg).bg}">${Fmt.grade(avg).g}</span></div></div><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:.85rem"><thead><tr style="border-bottom:1px solid var(--border-light)">${['Subject','CA','Exam','Total','Grade','Remarks'].map(h=>`<th style="padding:8px 12px;text-align:${h==='Subject'?'left':'center'};font-size:.72rem;color:var(--text-muted);text-transform:uppercase">${h}</th>`).join('')}</tr></thead><tbody>${results.map(r=>{const gr=Fmt.grade(r.total_score);return`<tr style="border-bottom:1px solid rgba(255,255,255,.04)"><td style="padding:9px 12px;font-weight:600">${r.subject_name}</td><td style="padding:9px 12px;text-align:center;font-family:var(--font-mono)">${r.ca_score}</td><td style="padding:9px 12px;text-align:center;font-family:var(--font-mono)">${r.exam_score}</td><td style="padding:9px 12px;text-align:center;font-family:var(--font-mono);font-weight:700">${r.total_score}</td><td style="padding:9px 12px;text-align:center"><span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;font-weight:700;font-size:.8rem;background:${Fmt.gradeColor(gr.g)}22;color:${Fmt.gradeColor(gr.g)};border:1px solid ${Fmt.gradeColor(gr.g)}44">${gr.g}</span></td><td style="padding:9px 12px;color:var(--text-secondary);font-size:.82rem">${gr.r}</td></tr>`;}).join('')}</tbody></table></div></div>`;}).join('');
+let _sessions = [];
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await window.__rmsBootstrapReady;
+  initPage('student', 'student');
+  await loadSessions();
+  loadAll();
+});
+
+/* ── SESSION / TERM DROPDOWNS ── */
+async function loadSessions() {
+  try {
+    const data = await API.students.mySessions();
+    _sessions = data.items || [];
+    const sessSel = document.getElementById('session-filter');
+    const termSel = document.getElementById('term-filter');
+    if (!sessSel) return;
+
+    sessSel.innerHTML = '<option value="">All Sessions</option>';
+    _sessions.forEach(s => {
+      const o = document.createElement('option');
+      o.value = s.id; o.textContent = s.session_name;
+      if (s.is_current) o.selected = true;
+      sessSel.appendChild(o);
+    });
+
+    populateTerms(sessSel.value);
+  } catch(e) { console.warn('loadSessions failed', e); }
+}
+
+function populateTerms(sid) {
+  const termSel = document.getElementById('term-filter');
+  if (!termSel) return;
+  termSel.innerHTML = '<option value="">All Terms</option>';
+  const sess = _sessions.find(s => String(s.id) === String(sid));
+  if (sess && sess.terms) {
+    sess.terms.forEach(t => {
+      const o = document.createElement('option');
+      o.value = t.id; o.textContent = t.term_name;
+      if (t.is_current) o.selected = true;
+      termSel.appendChild(o);
+    });
   }
 }
-function groupByTerm(results,meta){
-  const groups={};results.forEach(r=>{const key=`${r.session_id||'s'}_${r.term_id||'t'}`;if(!groups[key])groups[key]={termName:r.term_name||meta.term_name||'Term',sessionName:r.session_name||meta.session_name||'Session',results:[]};groups[key].results.push(r);});return groups;
+
+function onSessionChange() {
+  const sid = document.getElementById('session-filter').value;
+  populateTerms(sid);
+  loadAll();
+}
+
+/* ── MAIN LOADER ── */
+async function loadAll() {
+  const container = document.getElementById('results-by-term');
+  const modeEl    = document.getElementById('mode-indicator');
+  showSkeleton(container, 3, '120px', '14px');
+
+  const sid = document.getElementById('session-filter').value;
+  const tid = document.getElementById('term-filter').value;
+  const showAll = !sid && !tid;
+
+  modeEl.innerHTML = showAll
+    ? `<span class="mode-badge all"><i class="fas fa-layer-group"></i> Showing all results</span>`
+    : `<span class="mode-badge current"><i class="fas fa-filter"></i> Filtered view</span>`;
+
+  try {
+    const params = {};
+    if (sid) params.session_id = sid;
+    if (tid) params.term_id    = tid;
+
+    const data = await API.students.myResults(params);
+    const rawResults = data.results || data.items || data || [];
+
+    if (!rawResults.length) {
+      container.innerHTML = `<div class="card" style="text-align:center;padding:48px;color:var(--text-muted)">
+        <i class="fas fa-inbox" style="font-size:2rem;display:block;margin-bottom:12px"></i>
+        No results found for this period. Results appear once published by your school.</div>`;
+      return;
+    }
+
+    const grouped = groupByTerm(rawResults, data);
+    container.innerHTML = Object.entries(grouped).map(([key, { termName, sessionName, sessionId, termId, results }]) => {
+      const avgs = results.map(r => r.total_score || 0);
+      const avg  = avgs.length ? avgs.reduce((a,b)=>a+b,0) / avgs.length : 0;
+      const gr   = Fmt.grade(avg);
+
+      /* Build the URL that links directly to this term's report card */
+      const rcUrl = `report-card.html?session_id=${encodeURIComponent(sessionId)}&term_id=${encodeURIComponent(termId)}`;
+
+      return `<div class="card mb-3">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px" class="term-card-header">
+          <div>
+            <div style="font-family:var(--font-display);font-weight:700;font-size:1rem">${termName}</div>
+            <div style="font-size:.78rem;color:var(--text-muted)">${sessionName}</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap" class="term-card-controls">
+            <span style="font-family:var(--font-mono);font-size:1.2rem;font-weight:900;color:var(--brand-gold)">${avg.toFixed(1)}</span>
+            <span class="badge ${gr.bg}">${gr.g}</span>
+            <a href="${rcUrl}" class="view-rc-btn">
+              <i class="fas fa-file-alt"></i> View Report Card
+            </a>
+          </div>
+        </div>
+
+        <div class="results-table-wrapper" style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+          <table style="width:100%;border-collapse:collapse;font-size:.85rem;min-width:560px">
+            <thead>
+              <tr style="border-bottom:1px solid var(--border-light)">
+                ${['Subject','1st Test','2nd Test','CA','Exam','Total','Grade','Remarks'].map(h =>
+                  `<th style="padding:8px 12px;text-align:${h==='Subject'?'left':'center'};font-size:.72rem;color:var(--text-muted);text-transform:uppercase">${h}</th>`
+                ).join('')}
+              </tr>
+            </thead>
+            <tbody>
+              ${results.map((r, idx) => {
+                const rgr = Fmt.grade(r.total_score || 0);
+                return `<tr class="result-row" onclick="window.location.href='${rcUrl}'" title="Click to view full report card for ${termName}">
+                  <td style="padding:9px 12px;font-weight:600">
+                    ${r.subject_name || '—'}
+                    ${idx === 0 ? `<div class="subject-link-hint"><i class="fas fa-arrow-up-right-from-square" style="font-size:.65rem"></i>Click any row for report card</div>` : ''}
+                  </td>
+                  <td style="padding:9px 12px;text-align:center;font-family:var(--font-mono)">${r.first_test  ?? '—'}</td>
+                  <td style="padding:9px 12px;text-align:center;font-family:var(--font-mono)">${r.second_test ?? '—'}</td>
+                  <td style="padding:9px 12px;text-align:center;font-family:var(--font-mono)">${r.ca_score    ?? '—'}</td>
+                  <td style="padding:9px 12px;text-align:center;font-family:var(--font-mono)">${r.exam_score  ?? '—'}</td>
+                  <td style="padding:9px 12px;text-align:center;font-family:var(--font-mono);font-weight:700">${r.total_score ?? '—'}</td>
+                  <td style="padding:9px 12px;text-align:center">
+                    <span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;font-weight:700;font-size:.8rem;background:${Fmt.gradeColor(rgr.g)}22;color:${Fmt.gradeColor(rgr.g)};border:1px solid ${Fmt.gradeColor(rgr.g)}44">${rgr.g}</span>
+                  </td>
+                  <td style="padding:9px 12px;color:var(--text-secondary);font-size:.82rem">${rgr.r}</td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+
+        <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border-light);display:flex;justify-content:flex-end">
+          <a href="${rcUrl}" class="view-rc-btn">
+            <i class="fas fa-file-pdf"></i> Download / Print Report Card
+          </a>
+        </div>
+      </div>`;
+    }).join('');
+
+  } catch(e) {
+    container.innerHTML = `<div class="card" style="text-align:center;padding:48px;color:var(--text-muted)">
+      <i class="fas fa-exclamation-circle" style="font-size:2rem;display:block;margin-bottom:12px"></i>
+      Could not load results. Please try again.</div>`;
+  }
+}
+
+/* ── GROUP HELPER ── */
+function groupByTerm(results, meta) {
+  const groups = {};
+  results.forEach(r => {
+    const key = `${r.session_id || 's'}_${r.term_id || 't'}`;
+    if (!groups[key]) groups[key] = {
+      termName:    r.term_name    || meta.term_name    || 'Term',
+      sessionName: r.session_name || meta.session_name || 'Session',
+      sessionId:   r.session_id   || '',
+      termId:      r.term_id      || '',
+      results: []
+    };
+    groups[key].results.push(r);
+  });
+  return groups;
 }
 </script>
 </body>

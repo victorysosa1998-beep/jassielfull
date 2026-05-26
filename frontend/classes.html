@@ -6,7 +6,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="./css/style.css">
 </head>
 <body>
 <div class="page-bg"></div>
@@ -19,7 +19,6 @@
   <header class="topbar">
     <div class="topbar-left">
       <button class="menu-toggle" id="menu-toggle"><i class="fas fa-bars"></i></button>
-      <a href="admin-dashboard.html" class="btn btn-ghost btn-sm" style="padding:6px 12px"><i class="fas fa-arrow-left"></i></a>
       <div><div class="page-title">Classes &amp; Subjects</div><div class="breadcrumb"><a href="admin-dashboard.html">Dashboard</a><span class="sep">/</span><span class="text-gold">Classes</span></div></div>
     </div>
     <div class="topbar-right" id="topbar-right"></div>
@@ -43,9 +42,16 @@
   </div>
 </div>
 </div>
-<div class="modal-overlay" id="modal-new-subject"><div class="modal modal-sm"><div class="modal-header"><div class="modal-title">Add Subject</div><button class="modal-close" onclick="Modal.close('modal-new-subject')"><i class="fas fa-times"></i></button></div><div class="form-group"><label class="form-label">Subject Name <span class="required">*</span></label><input type="text" class="form-control" id="new-sub-name" placeholder="e.g. Mathematics"></div><div class="modal-footer"><button class="btn btn-ghost" onclick="Modal.close('modal-new-subject')">Cancel</button><button class="btn btn-primary" onclick="addSubject()"><i class="fas fa-plus"></i> Add</button></div></div></div>
-<script src="js/core.js"></script>
-<script src="js/ui.js"></script>
+<div class="modal-overlay" id="modal-new-subject"><div class="modal"><div class="modal-header"><div class="modal-title">Add Subject</div><button class="modal-close" onclick="Modal.close('modal-new-subject')"><i class="fas fa-times"></i></button></div>
+<div class="form-group"><label class="form-label">Subject Name <span class="required">*</span></label><input type="text" class="form-control" id="new-sub-name" placeholder="e.g. Mathematics" data-validate="required"></div>
+<div class="form-group"><label class="form-label">Subject Code <span style="color:var(--text-muted);font-weight:400">(optional)</span></label><input type="text" class="form-control" id="new-sub-code" placeholder="e.g. MTH"></div>
+<div class="form-group"><label class="form-label">Assign to Classes <span style="color:var(--text-muted);font-size:.8rem">(select all that apply)</span></label>
+<div id="class-checkboxes" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;max-height:200px;overflow-y:auto;padding:8px;border:1px solid var(--border-light);border-radius:var(--radius);background:rgba(255,255,255,.02)">
+<div style="padding:8px;color:var(--text-muted)">Loading classes…</div>
+</div></div>
+<div class="modal-footer"><button class="btn btn-ghost" onclick="Modal.close('modal-new-subject')">Cancel</button><button class="btn btn-primary" onclick="addSubject()"><i class="fas fa-plus"></i> Add Subject</button></div></div></div>
+<script src="./js/core.js"></script>
+<script src="./js/ui.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded',async()=>{await window.__rmsBootstrapReady;initPage(['super_admin','admin'],'admin');loadClasses();});
 function switchTab(t,btn){document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');document.getElementById('classes-panel').classList.toggle('hidden',t!=='classes');document.getElementById('subjects-panel').classList.toggle('hidden',t!=='subjects');if(t==='subjects')loadSubjects();}
@@ -55,9 +61,83 @@ async function loadClasses(){
   catch{document.getElementById('classes-grid').innerHTML=SCHOOL_CLASSES.map(n=>`<div class="card" style="text-align:center;cursor:pointer" onclick="window.location.href='students.html?class=${encodeURIComponent(n)}'"><div style="font-size:1.8rem;margin-bottom:8px">🏫</div><div style="font-weight:700;margin-bottom:4px">${n}</div><div style="font-size:.78rem;color:var(--text-muted)">Click to view students</div></div>`).join('');}}
 async function loadSubjects(){
   try{const data=await API.subjects.list();const items=data.items||data||[];
-  document.getElementById('subjects-tbody').innerHTML=items.length?items.map(s=>`<tr><td><strong>${s.name}</strong></td><td style="color:var(--text-muted);font-size:.85rem">${(s.classes||[]).join(', ')||'All classes'}</td><td><div style="display:flex;gap:6px"><button class="btn btn-icon btn-danger btn-sm" onclick="deleteSubject(${s.id})"><i class="fas fa-trash"></i></button></div></td></tr>`).join(''):'<tr><td colspan="3" style="text-align:center;padding:32px;color:var(--text-muted)">No subjects yet</td></tr>';}
+  document.getElementById('subjects-tbody').innerHTML=items.length?items.map(s=>{
+    const classNames=(s.classes||[]).map(c=>typeof c==='object'?c.name:c).filter(Boolean);
+    return`<tr>
+      <td><strong>${s.name}</strong>${s.code?`<span style="margin-left:6px;font-size:.72rem;color:var(--text-muted)">(${s.code})</span>`:''}</td>
+      <td style="color:var(--text-muted);font-size:.82rem">${classNames.length?classNames.join(', '):'All classes'}</td>
+      <td><div style="display:flex;gap:6px">
+        <button class="btn btn-ghost btn-sm" onclick="editSubjectClasses(${s.id},'${s.name.replace(/'/g,"\\'")}')" title="Edit class assignment"><i class="fas fa-pencil"></i></button>
+        <button class="btn btn-icon btn-danger btn-sm" onclick="deleteSubject(${s.id})"><i class="fas fa-trash"></i></button>
+      </div></td>
+    </tr>`}).join(''):'<tr><td colspan="3" style="text-align:center;padding:32px;color:var(--text-muted)">No subjects yet. Click &ldquo;Add Subject&rdquo; to create one.</td></tr>';}
   catch{document.getElementById('subjects-tbody').innerHTML=['Mathematics','English Language','Basic Science','Social Studies','French','Physical Education','Fine Arts','CRS','Computer Science','Agricultural Science'].map(n=>`<tr><td><strong>${n}</strong></td><td style="color:var(--text-muted)">All classes</td><td></td></tr>`).join('');}}
-async function addSubject(){const name=document.getElementById('new-sub-name').value.trim();if(!name)return;try{await API.subjects.create({name});Toast.success('Added',`${name} added`);Modal.close('modal-new-subject');document.getElementById('new-sub-name').value='';loadSubjects();}catch(err){Toast.error('Failed',err.message);}}
+async function addSubject(){
+  const nameEl = document.getElementById('new-sub-name');
+  const editId = nameEl.dataset.editId ? parseInt(nameEl.dataset.editId) : null;
+  const name = nameEl.value.trim();
+  if(!name){Toast.warning('Required','Enter a subject name');return;}
+  const code = document.getElementById('new-sub-code')?.value.trim()||null;
+  const checked = [...document.querySelectorAll('#class-checkboxes input[type=checkbox]:checked')].map(cb=>parseInt(cb.value));
+  try{
+    if (editId) {
+      await API.post(`/subjects/${editId}/assign-classes`, {class_ids: checked});
+      Toast.success('Updated', `Class assignment updated for ${name}`);
+    } else {
+      await API.subjects.create({name, code, class_ids: checked});
+      Toast.success('Added', `${name} added and assigned to ${checked.length} class(es)`);
+    }
+    Modal.close('modal-new-subject');
+    // Reset modal state
+    nameEl.value=''; nameEl.disabled=false; delete nameEl.dataset.editId;
+    document.querySelector('#modal-new-subject .modal-title').textContent='Add Subject';
+    document.querySelector('[onclick="addSubject()"]').innerHTML='<i class="fas fa-plus"></i> Add Subject';
+    if(document.getElementById('new-sub-code'))document.getElementById('new-sub-code').value='';
+    document.querySelectorAll('#class-checkboxes input[type=checkbox]').forEach(cb=>cb.checked=false);
+    loadSubjects();
+  }catch(err){Toast.error('Failed',err.message);}
+}
+
+async function populateClassCheckboxes(){
+  try{
+    const data=await API.classes.list();
+    const box=document.getElementById('class-checkboxes');
+    if(!box)return;
+    const classes=data.items||data||[];
+    box.innerHTML=classes.map(c=>`<label style="display:flex;align-items:center;gap:6px;padding:4px 6px;border-radius:6px;cursor:pointer;font-size:.82rem;hover:background:rgba(255,255,255,.05)"><input type="checkbox" value="${c.id}" style="accent-color:var(--brand-gold)"> ${c.name}</label>`).join('');
+  }catch{
+    const box=document.getElementById('class-checkboxes');
+    if(box)box.innerHTML='<div style="color:var(--text-muted);font-size:.82rem;padding:4px">Could not load classes</div>';
+  }
+}
+
+document.getElementById('modal-new-subject')?.addEventListener('click',function(e){
+  if(e.target===this)return;
+});
+// Populate class list when modal opens
+document.querySelector('[onclick="Modal.open(\'modal-new-subject\')"]')?.addEventListener('click',()=>populateClassCheckboxes());
+async function editSubjectClasses(subjectId, subjectName) {
+  // populate checkboxes first
+  await populateClassCheckboxes();
+  // load current assignments from API
+  try {
+    const data = await API.subjects.list();
+    const sub = (data.items||[]).find(s=>s.id===subjectId);
+    if (sub && sub.classes) {
+      const assignedIds = sub.classes.map(c=>typeof c==='object'?c.id:c);
+      document.querySelectorAll('#class-checkboxes input[type=checkbox]').forEach(cb=>{
+        cb.checked = assignedIds.includes(parseInt(cb.value));
+      });
+    }
+  } catch {}
+  document.getElementById('new-sub-name').value = subjectName;
+  document.getElementById('new-sub-name').disabled = true;
+  document.getElementById('new-sub-name').dataset.editId = subjectId;
+  document.querySelector('#modal-new-subject .modal-title').textContent = 'Edit Class Assignment';
+  document.querySelector('[onclick="addSubject()"]').textContent = 'Save Changes';
+  Modal.open('modal-new-subject');
+}
+
 async function deleteSubject(id){if(!confirm('Delete this subject?'))return;try{await API.subjects.delete(id);Toast.success('Deleted','Subject removed');loadSubjects();}catch(err){Toast.error('Failed',err.message);}}
 </script>
 </body>

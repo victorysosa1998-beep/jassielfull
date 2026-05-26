@@ -6,7 +6,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="./css/style.css">
 </head>
 <body>
 <div class="page-bg"></div>
@@ -19,7 +19,6 @@
   <header class="topbar">
     <div class="topbar-left">
       <button class="menu-toggle" id="menu-toggle"><i class="fas fa-bars"></i></button>
-      <a href="admin-dashboard.html" class="btn btn-ghost btn-sm" style="padding:6px 12px"><i class="fas fa-arrow-left"></i></a>
       <div>
         <div class="page-title">Audit Logs</div>
         <div class="breadcrumb"><a href="admin-dashboard.html">Dashboard</a><span class="sep">/</span><span class="text-gold">Audit Logs</span></div>
@@ -81,8 +80,8 @@
   </div>
 </div>
 </div>
-<script src="js/core.js"></script>
-<script src="js/ui.js"></script>
+<script src="./js/core.js"></script>
+<script src="./js/ui.js"></script>
 <script>
 let currentTab = 'activity';
 const actionColors = {login:'blue',logout:'blue',upload:'gold',approve:'success',reject:'red',delete:'red',create:'success',correction:'blue'};
@@ -112,7 +111,7 @@ async function loadLogs(page=1) {
     renderLogs(items);
     renderPagination(document.getElementById('logs-pagination'),{page,total:data.total||items.length,perPage:20,onChange:'loadLogs'});
   } catch {
-    const demo = Array.from({length:12},(_,i)=>({id:i,user:['Admin','Sub Admin Emeka','Sub Admin Funke','Student Eghosa'][i%4],role:['super_admin','sub_admin','sub_admin','student'][i%4],action:['login','upload','approve','create','logout','reject'][i%6],details:['Logged in from Chrome','Uploaded JSS 2A Mathematics results','Approved batch #12','Created 5 students','Logged out','Rejected SS 1B Physics'][i%6],ip:'192.168.'+Math.floor(Math.random()*255)+'.'+Math.floor(Math.random()*255),created_at:new Date(Date.now()-i*3.6e6).toISOString()}));
+    const demo = Array.from({length:12},(_,i)=>({id:i,user:['Admin','Sub Admin Iyere','Sub Admin Funke','Student Eghosa'][i%4],role:['super_admin','sub_admin','sub_admin','student'][i%4],action:['login','upload','approve','create','logout','reject'][i%6],details:['Logged in from Chrome','Uploaded JSS 2A Mathematics results','Approved batch #12','Created 5 students','Logged out','Rejected SS 1B Physics'][i%6],ip:'192.168.'+Math.floor(Math.random()*255)+'.'+Math.floor(Math.random()*255),created_at:new Date(Date.now()-i*3.6e6).toISOString()}));
     renderLogs(demo);
   }
 }

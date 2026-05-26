@@ -6,7 +6,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="./css/style.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 </head>
 <body>
@@ -20,7 +20,6 @@
   <header class="topbar">
     <div class="topbar-left">
       <button class="menu-toggle" id="menu-toggle"><i class="fas fa-bars"></i></button>
-      <a href="admin-dashboard.html" class="btn btn-ghost btn-sm" style="padding:6px 12px"><i class="fas fa-arrow-left"></i></a>
       <div><div class="page-title">OCR Monitor</div><div class="breadcrumb"><a href="admin-dashboard.html">Dashboard</a><span class="sep">/</span><span class="text-gold">OCR Monitor</span></div></div>
     </div>
     <div class="topbar-right" id="topbar-right">
@@ -56,8 +55,8 @@
   </div>
 </div>
 </div>
-<script src="js/core.js"></script>
-<script src="js/ui.js"></script>
+<script src="./js/core.js"></script>
+<script src="./js/ui.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded',async()=>{await window.__rmsBootstrapReady;initPage(['super_admin','admin'],'admin');ChartDefaults.apply();loadData();});
 async function loadData(){
@@ -73,7 +72,7 @@ function initCharts(){
 }
 async function loadJobs(){
   try{const data=await API.ocr.history({per_page:10});renderJobs(data.items||data||[]);}
-  catch{renderJobs([{uploaded_at:new Date().toISOString(),uploader:'Sub Admin Emeka',class_name:'JSS 2A',subject_name:'Mathematics',students:35,accuracy:98.1,status:'completed'},{uploaded_at:new Date(Date.now()-3.6e6).toISOString(),uploader:'Sub Admin Funke',class_name:'SS 1A',subject_name:'English',students:42,accuracy:96.4,status:'completed'},{uploaded_at:new Date(Date.now()-7.2e6).toISOString(),uploader:'Sub Admin Emeka',class_name:'JSS 3B',subject_name:'Science',students:38,accuracy:94.7,status:'completed'}]);}
+  catch{renderJobs([{uploaded_at:new Date().toISOString(),uploader:'Sub Admin Iyere',class_name:'JSS 2A',subject_name:'Mathematics',students:35,accuracy:98.1,status:'completed'},{uploaded_at:new Date(Date.now()-3.6e6).toISOString(),uploader:'Sub Admin Funke',class_name:'SS 1A',subject_name:'English',students:42,accuracy:96.4,status:'completed'},{uploaded_at:new Date(Date.now()-7.2e6).toISOString(),uploader:'Sub Admin iyere',class_name:'JSS 3B',subject_name:'Science',students:38,accuracy:94.7,status:'completed'}]);}
 }
 function renderJobs(items){document.getElementById('ocr-tbody').innerHTML=items.map(j=>`<tr><td style="white-space:nowrap;font-size:.8rem;color:var(--text-muted)">${Fmt.datetime(j.uploaded_at||j.created_at)}</td><td style="font-size:.85rem">${j.uploader||'—'}</td><td><span class="badge badge-draft">${j.class_name||'—'}</span></td><td style="font-size:.85rem">${j.subject_name||'—'}</td><td class="font-mono">${j.students||'—'}</td><td><span style="font-family:var(--font-mono);font-weight:700;color:${j.accuracy>=95?'var(--success)':j.accuracy>=85?'var(--warning)':'var(--danger)'}">${j.accuracy?j.accuracy.toFixed(1)+'%':'—'}</span></td><td><span class="badge badge-approved">Completed</span></td></tr>`).join('');}
 </script>

@@ -6,7 +6,94 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="./css/style.css">
+<style>
+/* ══════════════════════════════════════
+   ADMIN DASHBOARD — MOBILE RESPONSIVE
+   ══════════════════════════════════════ */
+@media (max-width: 640px) {
+
+  /* ── Topbar ── */
+  .topbar        { height: 56px; padding: 0 12px; gap: 8px; }
+  .topbar-left   { gap: 8px; min-width: 0; }
+  .page-title    { font-size: .88rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px; }
+  .breadcrumb    { display: none; }
+  .session-pill  { display: none !important; }
+  .topbar-right  { gap: 4px; }
+
+  /* ── Page body padding ── */
+  .page-body { padding: 14px; }
+
+  /* ── Welcome banner: stack vertically ── */
+  .welcome-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 18px 16px;
+  }
+  .welcome-banner > div:last-child {
+    width: 100%;
+    text-align: left !important;
+  }
+
+  /* ── Stat cards: compact 2-col ── */
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .stat-card {
+    padding: 14px 12px;
+    gap: 10px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .stat-icon {
+    width: 38px;
+    height: 38px;
+    font-size: 1rem;
+    border-radius: 10px;
+    flex-shrink: 0;
+  }
+  .stat-info    { width: 100%; min-width: 0; }
+  .stat-label   { font-size: .65rem; letter-spacing: .03em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .stat-value   { font-size: 1.45rem; line-height: 1.1; }
+
+  /* ── Quick actions: 3-col tight grid ── */
+  .quick-actions-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 8px !important;
+  }
+  .quick-action-btn {
+    padding: 12px 8px;
+    gap: 6px;
+  }
+  .quick-action-btn > div:first-child {
+    width: 36px !important;
+    height: 36px !important;
+    font-size: .85rem !important;
+  }
+  .quick-action-btn > div:nth-child(2) {
+    font-size: .72rem !important;
+  }
+
+  /* ── Charts: constrain height on small screens ── */
+  #perf-chart  { max-height: 200px; }
+  #grade-chart { max-height: 240px; }
+
+  /* ── AI stats row: smaller numbers ── */
+  #ai-accuracy,
+  #ai-jobs,
+  #ai-matches { font-size: 1.8rem !important; }
+}
+
+@media (max-width: 380px) {
+  .quick-actions-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .stats-grid { gap: 8px; }
+  .stat-card  { padding: 12px 10px; }
+}
+</style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 </head>
 <body>
@@ -55,7 +142,7 @@
     </div>
 
     <!-- Quick Actions -->
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:24px">
+    <div class="quick-actions-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:24px">
       <a href="results-approval.html" class="quick-action-btn">
         <div style="width:40px;height:40px;border-radius:10px;background:rgba(239,68,68,.12);color:var(--danger);display:flex;align-items:center;justify-content:center;font-size:.95rem"><i class="fas fa-clipboard-check"></i></div>
         <div style="font-size:.8rem;font-weight:600">Approvals</div>
@@ -99,7 +186,7 @@
       <!-- Performance Chart -->
       <div class="card">
         <div class="section-header"><div class="section-title">Performance Trend</div></div>
-        <canvas id="perf-chart" height="230"></canvas>
+        <canvas id="perf-chart" style="width:100%"></canvas>
       </div>
     </div>
 
@@ -107,7 +194,7 @@
     <div class="grid-2 mb-3">
       <div class="card">
         <div class="section-header"><div class="section-title">Grade Distribution</div></div>
-        <canvas id="grade-chart" height="220"></canvas>
+        <canvas id="grade-chart" style="width:100%"></canvas>
       </div>
       <div class="card">
         <div class="section-header"><div class="section-title">Recent Activity</div></div>
@@ -133,8 +220,8 @@
 </div><!-- /main-content -->
 </div><!-- /app-layout -->
 
-<script src="js/core.js"></script>
-<script src="js/ui.js"></script>
+<script src="./js/core.js"></script>
+<script src="./js/ui.js"></script>
 <script>
 let perfChart, gradeChart;
 
@@ -177,9 +264,9 @@ async function loadDashboard() {
     document.getElementById('ai-jobs').textContent = '94';
     document.getElementById('ai-matches').textContent = '91%';
     renderPendingList([
-      {id:1,class_name:'JSS 2A',subject_name:'Mathematics',term_name:'First Term',uploader:'Sub Admin Emeka',uploaded_at:new Date().toISOString(),has_issues:false},
-      {id:2,class_name:'SS 1A',subject_name:'English Language',term_name:'First Term',uploader:'Sub Admin Funke',uploaded_at:new Date(Date.now()-18e5).toISOString(),has_issues:false},
-      {id:3,class_name:'JSS 1B',subject_name:'Basic Science',term_name:'First Term',uploader:'Sub Admin Emeka',uploaded_at:new Date(Date.now()-36e5).toISOString(),has_issues:true},
+      {id:1,class_name:'JSS 2A',subject_name:'Mathematics',term_name:'First Term',uploader:'Sub Admin Iyere',uploaded_at:new Date().toISOString(),has_issues:false},
+      {id:2,class_name:'SS 1A',subject_name:'English Language',term_name:'First Term',uploader:'Sub Admin iyere',uploaded_at:new Date(Date.now()-18e5).toISOString(),has_issues:false},
+      {id:3,class_name:'JSS 1B',subject_name:'Basic Science',term_name:'First Term',uploader:'Sub Admin Iyere',uploaded_at:new Date(Date.now()-36e5).toISOString(),has_issues:true},
     ]);
     renderActivity([
       {type:'upload',text:'JSS 2A Mathematics uploaded by Sub Admin','time':new Date().toISOString()},
@@ -194,12 +281,12 @@ function renderPendingList(items) {
   const el = document.getElementById('pending-list');
   if (!items.length) { el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text-muted);font-size:.85rem"><i class="fas fa-check-circle" style="color:var(--success);font-size:1.5rem;display:block;margin-bottom:8px"></i>No pending approvals</div>'; return; }
   el.innerHTML = items.slice(0,4).map(b => `
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.04);gap:12px;flex-wrap:wrap">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.04);gap:10px;flex-wrap:wrap">
       <div>
         <div style="font-weight:600;font-size:.9rem">${b.class_name} — ${b.subject_name}</div>
         <div style="font-size:.76rem;color:var(--text-muted);margin-top:2px">${b.term_name} · ${Fmt.timeAgo(b.uploaded_at)}</div>
       </div>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;flex-shrink:0">
         ${b.has_issues ? '<span class="badge badge-pending"><i class="fas fa-triangle-exclamation"></i> Issues</span>' : '<span class="badge badge-gold"><i class="fas fa-robot"></i> Validated</span>'}
         <a href="results-approval.html?id=${b.id}" class="btn btn-sm btn-ghost"><i class="fas fa-eye"></i></a>
         <button class="btn btn-sm btn-success" onclick="quickApprove(${b.id},this)"><i class="fas fa-check"></i></button>
@@ -261,15 +348,21 @@ function initCharts() {
           pointRadius: 4, tension: .4, fill: true,
         }]
       },
-      options: { responsive:true, plugins:{legend:{display:false}},
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        aspectRatio: window.innerWidth < 640 ? 1.6 : 2,
+        plugins:{legend:{display:false}},
         scales:{x:{ticks:{color:'#657088'},grid:{color:'rgba(255,255,255,.04)'}},
-                y:{ticks:{color:'#657088'},grid:{color:'rgba(255,255,255,.04)'},min:50,max:100}} }
+                y:{ticks:{color:'#657088'},grid:{color:'rgba(255,255,255,.04)'},min:50,max:100}}
+      }
     });
   }
 
   // Grade distribution
   const gradeCtx = document.getElementById('grade-chart');
   if (gradeCtx) {
+    const isMobile = () => window.innerWidth < 640;
     gradeChart = new Chart(gradeCtx, {
       type: 'doughnut',
       data: {
@@ -280,7 +373,30 @@ function initCharts() {
           borderColor: 'rgba(255,255,255,.08)', borderWidth: 2,
         }]
       },
-      options: { responsive:true, plugins:{legend:{position:'right',labels:{color:'#A8B2C8',font:{size:11},padding:12}}} }
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        aspectRatio: isMobile() ? 1 : 1.6,
+        plugins: {
+          legend: {
+            position: isMobile() ? 'bottom' : 'right',
+            labels: { color: '#A8B2C8', font: { size: isMobile() ? 10 : 11 }, padding: isMobile() ? 8 : 12, boxWidth: isMobile() ? 10 : 12 }
+          }
+        }
+      }
+    });
+
+    // Update legend position + aspectRatio on resize
+    window.addEventListener('resize', () => {
+      if (!gradeChart) return;
+      const mobile = isMobile();
+      gradeChart.options.plugins.legend.position = mobile ? 'bottom' : 'right';
+      gradeChart.options.aspectRatio = mobile ? 1 : 1.6;
+      gradeChart.update();
+      if (perfChart) {
+        perfChart.options.aspectRatio = mobile ? 1.6 : 2;
+        perfChart.update();
+      }
     });
   }
 }

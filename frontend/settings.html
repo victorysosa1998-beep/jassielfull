@@ -6,7 +6,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="./css/style.css">
 </head>
 <body>
 <div class="page-bg"></div>
@@ -28,10 +28,10 @@
   </header>
   <div class="page-body">
     <div class="tabs mb-3" id="settings-tabs">
-      <div class="tab-btn active" onclick="switchTab('school',this)"><i class="fas fa-school"></i> School Info</div>
-      <div class="tab-btn" onclick="switchTab('grading',this)"><i class="fas fa-star"></i> Grading System</div>
+      <div class="tab-btn active" onclick="switchTab('school',this)" id="school-tab"><i class="fas fa-school"></i> School Info</div>
+      <div class="tab-btn" onclick="switchTab('grading',this)" id="grading-tab"><i class="fas fa-star"></i> Grading System</div>
       <div class="tab-btn" onclick="switchTab('subadmins',this)" id="subadmins-tab"><i class="fas fa-users"></i> Sub Admins</div>
-      <div class="tab-btn" onclick="switchTab('security',this)"><i class="fas fa-shield-check"></i> Security</div>
+      <div class="tab-btn" onclick="switchTab('security',this)" id="security-tab"><i class="fas fa-shield-check"></i> Security</div>
     </div>
 
     <!-- School Info -->
@@ -117,7 +117,7 @@
     <div class="modal-header"><div class="modal-title">Add Sub Admin</div><button class="modal-close" onclick="Modal.close('modal-new-subadmin')"><i class="fas fa-times"></i></button></div>
     <form id="subadmin-form" onsubmit="createSubAdmin(event)">
       <div class="form-group"><label class="form-label">Full Name <span class="required">*</span></label><input type="text" class="form-control" id="sa-name" data-validate="required"></div>
-      <div class="form-group"><label class="form-label">Username <span class="required">*</span></label><input type="text" class="form-control" id="sa-username" data-validate="required" placeholder="e.g. emeka.admin"></div>
+      <div class="form-group"><label class="form-label">Username <span class="required">*</span></label><input type="text" class="form-control" id="sa-username" data-validate="required" placeholder="e.g. iyere.admin"></div>
       <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-control" id="sa-email"></div>
       <div class="form-group"><label class="form-label">Password <span class="required">*</span></label>
         <div class="input-group"><i class="input-icon fas fa-lock"></i><input type="password" class="form-control" id="sa-password" data-validate="required|minLen:6"><span class="input-addon-right" onclick="togglePwd('sa-password',this)"><i class="fas fa-eye"></i></span></div></div>
@@ -129,8 +129,8 @@
   </div>
 </div>
 
-<script src="js/core.js"></script>
-<script src="js/ui.js"></script>
+<script src="./js/core.js"></script>
+<script src="./js/ui.js"></script>
 <script>
 const GRADING = [{g:'A',min:70,max:100,r:'Excellent'},{g:'B',min:60,max:69,r:'Very Good'},{g:'C',min:50,max:59,r:'Good'},{g:'D',min:45,max:49,r:'Fair'},{g:'E',min:40,max:44,r:'Poor'},{g:'F',min:0,max:39,r:'Fail'}];
 
@@ -138,7 +138,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   await window.__rmsBootstrapReady;
   const role = AuthState.getRole();
   initPage(['super_admin','admin','sub_admin'], role==='sub_admin'?'subadmin':'admin');
-  if (role==='sub_admin' || role==='admin') { const tab=document.getElementById('subadmins-tab'); if(tab) tab.style.display='none'; }
+  if (role==='sub_admin') {
+    ['school-tab','grading-tab','security-tab'].forEach(id => { const el=document.getElementById(id); if(el) el.style.display='none'; });
+    ['school','grading','security'].forEach(p => { const el=document.getElementById('panel-'+p); if(el) el.classList.add('hidden'); });
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    const subTab=document.getElementById('subadmins-tab');
+    if(subTab){subTab.classList.add('active');}
+    const subPanel=document.getElementById('panel-subadmins');
+    if(subPanel){subPanel.classList.remove('hidden');}
+  }
   loadSchool();
   renderGrading();
 });
@@ -206,7 +214,6 @@ async function loadSubAdmins() {
 }
 
 async function createSubAdmin(e) {
-  if (!AuthState.isAdmin()) { Toast.error('No access','Only Super Admin can create Sub Admins'); return; }
   e.preventDefault(); if (!Validator.validate(document.getElementById('subadmin-form'))) return;
   const btn=document.getElementById('create-sa-btn'); setLoading(btn,true);
   try {

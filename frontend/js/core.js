@@ -6,12 +6,13 @@
 'use strict';
 
 const CONFIG = {
-  API_BASE: 'https://jaasiel-school-project-backend-production.up.railway.app/api/v1',
+  API_BASE: '/api/v1',
   TOKEN_KEY: 'jrms_token',
   REFRESH_KEY: 'jrms_refresh',
   USER_KEY: 'jrms_user',
-  TOAST_DURATION: 4500,
-  REQUEST_TIMEOUT: 30000,
+  TOAST_DURATION: 4000,
+  REQUEST_TIMEOUT: 15000,   // normal API calls
+  AI_TIMEOUT: 120000,        // Claude AI calls (image extraction can take 30-60s)
 };
 
 /* ── Security ── */
@@ -71,6 +72,8 @@ const AuthState = {
 const API = {
   _refreshing: false, _queue: [],
 
+  _inflight: {},   // dedup identical simultaneous GET requests
+
   async request(method, endpoint, data = null) {
     let token = TokenManager.get();
     if (token && TokenManager.isExpired(token)) {
@@ -88,6 +91,19 @@ const API = {
     } else if (data) {
       cfg.body = JSON.stringify(data);
     }
+
+    // Deduplicate simultaneous identical GET requests (e.g. sidebar + page both call /sessions)
+    if (cfg.method === 'GET') {
+      const key = url;
+      if (this._inflight[key]) return this._inflight[key];
+      const promise = this._doRequest(url, cfg).finally(() => { delete this._inflight[key]; });
+      this._inflight[key] = promise;
+      return promise;
+    }
+    return this._doRequest(url, cfg);
+  },
+
+  async _doRequest(url, cfg) {
     const controller = new AbortController();
     const tid = setTimeout(() => controller.abort(), CONFIG.REQUEST_TIMEOUT);
     cfg.signal = controller.signal;
@@ -96,7 +112,13 @@ const API = {
       clearTimeout(tid);
       if (resp.status === 401) {
         const ok = await this._doRefresh();
-        if (ok) return this.request(method, endpoint, data);
+        if (ok) {
+          // Retry with fresh token
+          const token = TokenManager.get();
+          if (token) cfg.headers['Authorization'] = `Bearer ${token}`;
+          delete cfg.signal;
+          return this._doRequest(url, cfg);
+        }
         AuthState.clear(); window.location.replace('login.html'); return;
       }
       const json = await resp.json().catch(() => ({}));
@@ -133,17 +155,50 @@ const API = {
 
   async upload(endpoint, formData) {
     const token = TokenManager.get();
-    const resp = await fetch(CONFIG.API_BASE + endpoint, {
-      method: 'POST',
-      headers: token ? { 'Authorization': `Bearer ${token}` } : {},
-      body: formData,
-    });
-    const json = await resp.json().catch(() => ({}));
-    if (!resp.ok) throw { status: resp.status, message: json.detail || json.message || 'Upload failed' };
-    return json;
+    const controller = new AbortController();
+    // AI endpoints (OCR/bulk-upload) get 2 minutes; others get 30s
+    const isAI = endpoint.includes('ocr') || endpoint.includes('bulk-upload');
+    const tid  = setTimeout(() => controller.abort(), isAI ? CONFIG.AI_TIMEOUT : 30000);
+    try {
+      const resp = await fetch(CONFIG.API_BASE + endpoint, {
+        method: 'POST',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+        body: formData,
+        signal: controller.signal,
+      });
+      clearTimeout(tid);
+      const json = await resp.json().catch(() => ({}));
+      if (!resp.ok) throw { status: resp.status, message: json.detail || json.message || 'Upload failed' };
+      return json;
+    } catch(err) {
+      clearTimeout(tid);
+      if (err.name === 'AbortError') throw { status: 0, message: 'Request timed out. The AI is still processing — try a smaller or clearer image.' };
+      if (err.status) throw err;
+      throw { status: 0, message: 'Network error during upload.' };
+    }
   },
 
-  get:    (ep, p) => API.request('GET',    ep, p),
+  _cache: {},   // short-lived cache for stable read endpoints
+  _cacheTTL: 60000,  // 60 seconds
+  _cacheable: ['/classes', '/subjects', '/sessions'],
+
+  get(ep, p) {
+    // Use cache only for no-param requests on stable endpoints
+    if (!p && this._cacheable.some(c => ep === c || ep.endsWith('/students') || ep.endsWith('/subjects'))) {
+      const key = ep;
+      const hit = this._cache[key];
+      if (hit && Date.now() - hit.ts < this._cacheTTL) return Promise.resolve(hit.data);
+      const promise = this.request('GET', ep, p).then(data => {
+        this._cache[key] = { data, ts: Date.now() };
+        return data;
+      });
+      return promise;
+    }
+    return this.request('GET', ep, p);
+  },
+  invalidateCache(prefix) {
+    Object.keys(this._cache).forEach(k => { if (!prefix || k.startsWith(prefix)) delete this._cache[k]; });
+  },
   post:   (ep, d) => API.request('POST',   ep, d),
   put:    (ep, d) => API.request('PUT',    ep, d),
   patch:  (ep, d) => API.request('PATCH',  ep, d),
@@ -162,16 +217,18 @@ const API = {
     student: () => API.get('/dashboard/student'),
   },
   students: {
-    list:       p      => API.get('/students', p),
-    get:        id     => API.get(`/students/${id}`),
-    create:     d      => API.post('/students', d),
-    update:     (id,d) => API.put(`/students/${id}`, d),
-    delete:     id     => API.delete(`/students/${id}`),
-    results:    (id,p) => API.get(`/students/${id}/results`, p),
-    bulkUpload: fd     => API.upload('/students/bulk-upload', fd),
-    myProfile:  ()     => API.get('/students/me'),
-    myResults:  p      => API.get('/students/me/results', p),
-    myChangePwd:d      => API.post('/students/me/change-password', d),
+    list:        p      => API.get('/students', p),
+    get:         id     => API.get(`/students/${id}`),
+    create:      d      => API.post('/students', d),
+    update:      (id,d) => API.put(`/students/${id}`, d),
+    delete:      id     => API.delete(`/students/${id}`),
+    uploadPhoto: (id,fd)=> API.upload(`/students/${id}/photo`, fd),
+    results:     (id,p) => API.get(`/students/${id}/results`, p),
+    bulkUpload:  fd     => API.upload('/students/bulk-upload', fd),
+    myProfile:   ()     => API.get('/students/me'),
+    myResults:   p      => API.get('/students/me/results', p),
+    mySessions:  ()     => API.get('/students/me/sessions'),
+    myChangePwd: d      => API.post('/auth/student-change-password', d),
   },
   classes: {
     list:    ()  => API.get('/classes'),
@@ -186,20 +243,23 @@ const API = {
   results: {
     list:            p      => API.get('/results', p),
     upload:          d      => API.post('/results/upload', d),
+    submitClass:     d      => API.post('/results/submit-class', d),
+    publish:         d      => API.post('/results/publish', d),
+    classStatus:     p      => API.get('/results/class-status', p),
+    publishOverview: p      => API.get('/results/publish-overview', p),
     batches:         p      => API.get('/results/batches', p),
     batchDetail:     id     => API.get(`/results/batches/${id}`),
     approveBatch:    (id,d) => API.post(`/results/batches/${id}/approve`, d || {}),
     rejectBatch:     (id,d) => API.post(`/results/batches/${id}/reject`, d || {}),
     correctionBatch: (id,d) => API.post(`/results/batches/${id}/correction`, d || {}),
+    addComment:      (id,d) => API.post(`/results/batches/${id}/comment`, d),
+    publishSettings: (tid,d)=> API.post(`/results/terms/${tid}/publish-settings`, d),
+    subAdminFees:    (tid,d)=> API.post(`/results/terms/${tid}/sub-admin-fees`, d),
     lock:            id     => API.post(`/results/${id}/lock`),
     unlock:          id     => API.post(`/results/${id}/unlock`),
     pending:         p      => API.get('/results/pending', p),
+    transcript:      (id,p) => API.get(`/results/transcript/${id}`, p),
     myUploads:       p      => API.get('/results/subadmin/uploads', p),
-    submitClass:     d      => API.post('/results/submit-class', d),
-    publish:         d      => API.post('/results/publish', d),
-    publishOverview: p      => API.get('/results/publish-overview', p),
-    classStatus:     p      => API.get('/results/class-status', p),
-    transcript:      (id,p) => API.get('/results/transcript/'+id, p),
   },
   ocr: {
     upload:   fd => API.upload('/ocr/upload', fd),
@@ -369,46 +429,18 @@ const Router = {
   },
 };
 
-/* ── Sidebar (mobile-first) ── */
+/* ── Sidebar ── */
 const Sidebar = {
   init() {
-    // Attach toggle to ALL menu-toggle buttons (including dynamically added ones)
-    this._attachToggle();
-    // Close on overlay click
-    document.addEventListener('click', e => {
-      if (e.target.classList.contains('sidebar-overlay') || e.target.id === 'sidebar-overlay') {
-        this.close();
-      }
-    });
-    // Close sidebar when nav item is clicked on mobile
-    document.addEventListener('click', e => {
-      if (window.innerWidth < 769 && e.target.closest('.nav-item')) {
-        setTimeout(() => this.close(), 150);
-      }
-    });
+    // Use onclick not addEventListener — safe to call multiple times, never stacks
+    const btn = document.getElementById('menu-toggle');
+    const ov  = document.querySelector('.sidebar-overlay');
+    if (btn) btn.onclick = () => Sidebar.toggle();
+    if (ov)  ov.onclick  = () => Sidebar.close();
   },
-  _attachToggle() {
-    document.querySelectorAll('#menu-toggle, .menu-toggle').forEach(btn => {
-      if (!btn._sidebarBound) {
-        btn._sidebarBound = true;
-        btn.addEventListener('click', e => { e.stopPropagation(); Sidebar.toggle(); });
-      }
-    });
-  },
-  open() {
-    document.querySelector('.sidebar')?.classList.add('open');
-    document.getElementById('sidebar-overlay')?.classList.add('show');
-    document.querySelector('.sidebar-overlay:not(#sidebar-overlay)')?.classList.add('show');
-    if (window.innerWidth < 769) document.body.style.overflow = 'hidden';
-  },
-  close() {
-    document.querySelector('.sidebar')?.classList.remove('open');
-    document.querySelectorAll('.sidebar-overlay').forEach(el => el.classList.remove('show'));
-    document.body.style.overflow = '';
-  },
-  toggle() {
-    document.querySelector('.sidebar')?.classList.contains('open') ? this.close() : this.open();
-  },
+  open()   { document.querySelector('.sidebar')?.classList.add('open'); document.querySelector('.sidebar-overlay')?.classList.add('show'); document.body.style.overflow = 'hidden'; },
+  close()  { document.querySelector('.sidebar')?.classList.remove('open'); document.querySelector('.sidebar-overlay')?.classList.remove('show'); document.body.style.overflow = ''; },
+  toggle() { document.querySelector('.sidebar')?.classList.contains('open') ? this.close() : this.open(); },
 };
 
 /* ── Page Loader ── */
@@ -460,10 +492,20 @@ function initUploadZone(zone, input, onFile) {
 function setLoading(btn, loading, text = '') {
   if (!btn) return;
   if (loading) {
-    btn._orig = btn.innerHTML;
-    btn.innerHTML = `<span style="display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle"></span>${text ? ' ' + text : ''}`;
-    btn.disabled = true;
-  } else { btn.innerHTML = btn._orig || btn.innerHTML; btn.disabled = false; }
+    // Only save _orig if we are NOT already in loading state
+    // (prevents spinner HTML from being saved as the "original")
+    if (!btn._isLoading) {
+      btn._orig = btn.innerHTML;
+    }
+    btn._isLoading = true;
+    btn.disabled   = true;
+    btn.innerHTML  = `<span class="btn-spinner"></span>${text ? ' ' + Security.sanitize(text) : ''}`;
+  } else {
+    btn._isLoading = false;
+    btn.disabled   = false;
+    btn.innerHTML  = btn._orig || btn.innerHTML;
+    btn._orig      = null;
+  }
 }
 
 /* ── Skeleton loader ── */
@@ -561,18 +603,37 @@ async function loadNotifications(badgeEl, listEl) {
   try {
     const d = await API.notifications.list({ per_page: 15 });
     const items = d.items || [];
-    if (badgeEl) { const cnt = items.filter(n => !n.read).length; badgeEl.style.display = cnt > 0 ? '' : 'none'; }
+    const unreadCnt = items.filter(n => !n.read).length;
+    if (badgeEl) {
+      badgeEl.style.display = unreadCnt > 0 ? '' : 'none';
+      badgeEl.textContent = unreadCnt > 0 ? (unreadCnt > 9 ? '9+' : String(unreadCnt)) : '';
+    }
+    // Also update numeric badge if it exists
+    const numBadge = document.getElementById('notif-count-badge');
+    if (numBadge) { numBadge.textContent = unreadCnt; numBadge.style.display = unreadCnt > 0 ? '' : 'none'; }
     if (listEl) {
       const imap = { approved:'fa-check-circle', rejected:'fa-times-circle', correction:'fa-rotate', upload:'fa-upload', promotion:'fa-arrow-up' };
       const cmap = { approved:'success', rejected:'red', correction:'blue', upload:'gold', promotion:'gold' };
       listEl.innerHTML = items.length
-        ? items.map(n => `<div class="notif-item ${n.read?'':'unread'}" onclick="API.notifications.markRead('${n.id}');this.classList.remove('unread')">
+        ? items.map(n => `<div class="notif-item ${n.read?'':'unread'}" onclick="API.notifications.markRead('${n.id}');this.classList.remove('unread');_updateNotifBadge(-1)">
             <div class="notif-icon ${cmap[n.type]||'blue'}"><i class="fas ${imap[n.type]||'fa-bell'}"></i></div>
             <div class="flex-1"><div class="notif-text"><strong>${Security.sanitize(n.title||'')}</strong><br>${Security.sanitize(n.message||'')}</div><div class="notif-time">${Fmt.timeAgo(n.created_at)}</div></div>
           </div>`).join('')
         : '<div style="padding:24px;text-align:center;font-size:.83rem;color:var(--text-muted)">No notifications</div>';
     }
   } catch {}
+}
+
+function _updateNotifBadge(delta) {
+  const dot = document.getElementById('notif-dot');
+  const numBadge = document.getElementById('notif-count-badge');
+  if (dot) {
+    const cur = parseInt(dot.textContent || '0') + delta;
+    const next = Math.max(0, cur);
+    dot.style.display = next > 0 ? '' : 'none';
+    dot.textContent = next > 9 ? '9+' : (next > 0 ? String(next) : '');
+    if (numBadge) { numBadge.textContent = next; numBadge.style.display = next > 0 ? '' : 'none'; }
+  }
 }
 
 /* ── Chart defaults ── */
@@ -593,9 +654,11 @@ const ChartDefaults = {
 };
 
 /* ── School Classes ── */
-window.SCHOOL_CLASSES = ['Creche','Daycare','Pre-Nursery','KG 1','KG 2','KG 3',
-  'Primary 1','Primary 2','Primary 3','Primary 4','Primary 5',
-  'JSS 1','JSS 2','JSS 3','SS 1','SS 2','SS 3'];
+window.SCHOOL_CLASSES = ['Creche', 'Daycare', 'Pre-Nursery',
+'KG 1', 'KG 2', 'KG 3',
+'Basic 1', 'Basic 2', 'Basic 3', 'Basic 4', 'Basic 5',
+'Basic 7', 'Basic 8', 'Basic 9',
+'SS 1', 'SS 2', 'SS 3',];
 
 window.populateClassSelect = function(selectEl, emptyLabel, addAll) {
   if (!selectEl) return;
@@ -651,6 +714,150 @@ window.loadCurrentSession = async function() {
     document.querySelectorAll('[data-global-term]').forEach(el => el.textContent = d.term_name || '—');
   } catch {}
 };
+
+/* ── Shared Session Loader Utilities ──────────────────────────────────────
+   Usage (staff pages):
+     await SessionLoader.loadStaff('sel-session', 'sel-term');
+   Usage (student pages):
+     await SessionLoader.loadStudent('session-filter', 'term-filter');
+   Both return { sessionId, termId } for the auto-selected values.
+   ──────────────────────────────────────────────────────────────────────── */
+const SessionLoader = {
+  /* Internal cache so we don't hit the API multiple times per page */
+  _staffCache: null,
+  _studentCache: null,
+
+  /* ── Staff: load all sessions + terms, auto-select current ── */
+  async loadStaff(sessionSelId, termSelId, opts = {}) {
+    const { onSessionChange, onTermChange, includeAllOption = false } = opts;
+    try {
+      if (!this._staffCache) {
+        const data = await API.sessions.list();
+        this._staffCache = data.items || data || [];
+      }
+      const sessions = this._staffCache;
+      const sessSel  = document.getElementById(sessionSelId);
+      const termSel  = document.getElementById(termSelId);
+      if (!sessSel) return {};
+
+      // Populate sessions
+      sessSel.innerHTML = '';
+      if (includeAllOption) sessSel.innerHTML = '<option value="">All Sessions</option>';
+      sessions.forEach(s => {
+        const o = document.createElement('option');
+        o.value = s.id;
+        o.textContent = s.session_name + (s.is_current ? ' ★' : '');
+        o.dataset.isCurrent = s.is_current ? '1' : '0';
+        sessSel.appendChild(o);
+      });
+
+      // Auto-select current session
+      const curSess = sessions.find(s => s.is_current) || sessions[0];
+      if (curSess) sessSel.value = curSess.id;
+
+      // Populate terms for selected session
+      const _populateTerms = async (sessionId, defaultTermId) => {
+        if (!termSel) return null;
+        try {
+          const tdata = await API.sessions.terms(sessionId);
+          const terms = tdata.items || tdata || [];
+          termSel.innerHTML = '';
+          if (includeAllOption) termSel.innerHTML = '<option value="">All Terms</option>';
+          terms.forEach(t => {
+            const o = document.createElement('option');
+            o.value = t.id;
+            o.textContent = t.term_name + (t.is_current ? ' ★' : '');
+            o.dataset.isCurrent = t.is_current ? '1' : '0';
+            termSel.appendChild(o);
+          });
+          const curTerm = terms.find(t => t.is_current) || terms[terms.length - 1];
+          if (defaultTermId) termSel.value = defaultTermId;
+          else if (curTerm) termSel.value = curTerm.id;
+          termSel.disabled = false;
+          if (onTermChange) onTermChange(parseInt(termSel.value));
+          return parseInt(termSel.value);
+        } catch { return null; }
+      };
+
+      const termId = await _populateTerms(sessSel.value);
+
+      // Wire session change → reload terms
+      sessSel.addEventListener('change', async () => {
+        if (termSel) termSel.disabled = true;
+        await _populateTerms(sessSel.value);
+        if (onSessionChange) onSessionChange(parseInt(sessSel.value));
+      });
+
+      return { sessionId: parseInt(sessSel.value), termId };
+    } catch(e) {
+      console.warn('SessionLoader.loadStaff failed', e);
+      return {};
+    }
+  },
+
+  /* ── Student: load sessions where student has published results ── */
+  async loadStudent(sessionSelId, termSelId, opts = {}) {
+    const { onSessionChange, onTermChange, includeAllOption = true } = opts;
+    try {
+      if (!this._studentCache) {
+        const data = await API.students.mySessions();
+        this._studentCache = data.items || [];
+      }
+      const sessions = this._studentCache;
+      const sessSel  = document.getElementById(sessionSelId);
+      const termSel  = document.getElementById(termSelId);
+      if (!sessSel) return {};
+
+      sessSel.innerHTML = '';
+      if (includeAllOption) sessSel.innerHTML = '<option value="">All Sessions</option>';
+      sessions.forEach(s => {
+        const o = document.createElement('option');
+        o.value = s.id;
+        o.textContent = s.session_name;
+        o.dataset.isCurrent = s.is_current ? '1' : '0';
+        sessSel.appendChild(o);
+      });
+      const curSess = sessions.find(s => s.is_current) || sessions[0];
+      if (curSess) sessSel.value = curSess.id;
+
+      const _populateTerms = (sessionId) => {
+        if (!termSel) return null;
+        termSel.innerHTML = '';
+        if (includeAllOption) termSel.innerHTML = '<option value="">All Terms</option>';
+        const sess = sessions.find(s => String(s.id) === String(sessionId));
+        if (sess && sess.terms) {
+          sess.terms.forEach(t => {
+            const o = document.createElement('option');
+            o.value = t.id;
+            o.textContent = t.term_name;
+            o.dataset.isCurrent = t.is_current ? '1' : '0';
+            termSel.appendChild(o);
+          });
+          const curTerm = sess.terms.find(t => t.is_current) || sess.terms[sess.terms.length - 1];
+          if (curTerm) termSel.value = curTerm.id;
+        }
+        if (onTermChange) onTermChange(termSel ? parseInt(termSel.value) : null);
+        return termSel ? parseInt(termSel.value) : null;
+      };
+
+      const termId = _populateTerms(sessSel.value);
+
+      sessSel.addEventListener('change', () => {
+        _populateTerms(sessSel.value);
+        if (onSessionChange) onSessionChange(parseInt(sessSel.value));
+      });
+
+      return { sessionId: parseInt(sessSel.value) || null, termId };
+    } catch(e) {
+      console.warn('SessionLoader.loadStudent failed', e);
+      return {};
+    }
+  },
+
+  /* Clear caches (call after session create/update) */
+  clearCache() { this._staffCache = null; this._studentCache = null; },
+};
+window.SessionLoader = SessionLoader;
 
 /* ── Load pending badge count ── */
 window.loadPendingBadge = async function() {

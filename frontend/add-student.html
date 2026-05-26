@@ -6,7 +6,81 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="./css/style.css">
+<style>
+/* ══════════════════════════════════════
+   ADD/EDIT STUDENT — MOBILE RESPONSIVE
+   ══════════════════════════════════════ */
+
+/* Hard-stop any horizontal overflow at every level */
+html, body { overflow-x: hidden; }
+.main-content, .page-body { overflow-x: hidden; min-width: 0; }
+
+/* Main layout: form + credentials sidebar */
+.student-layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 24px;
+  align-items: start;
+}
+
+/* Credentials card sticky on desktop */
+.credentials-card {
+  position: sticky;
+  top: calc(var(--topbar-h) + 16px);
+}
+
+/* ── Tablet: sidebar hidden, but margin-left still 260px from style.css
+       at ≤1024px style.css sets margin-left:0, so layout starts working.
+       Stack the two columns earlier at 900px ── */
+@media (max-width: 900px) {
+  .student-layout {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  /* Credentials above the form on mobile */
+  .credentials-col  { order: -1; }
+  .credentials-card { position: static; }
+}
+
+/* ── Phone: single-column form fields ── */
+@media (max-width: 600px) {
+  /* Kill any residual margin that bleeds out */
+  .page-body { padding: 12px !important; }
+
+  /* All grid-2 inside the form → single column */
+  .student-form .grid-2 {
+    grid-template-columns: 1fr !important;
+    gap: 0 !important;
+  }
+
+  /* grid-column span no longer needed in 1-col grid */
+  .student-form .grid-2 .form-group[style*="grid-column"] {
+    grid-column: unset !important;
+  }
+
+  /* Inputs/selects must never exceed their container */
+  .student-form .form-control,
+  .student-form .input-group,
+  .student-form textarea {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Photo row stays horizontal but wraps cleanly */
+  .photo-row { gap: 12px; }
+
+  /* Footer buttons: stack, full-width, primary on top */
+  .form-footer {
+    flex-direction: column-reverse !important;
+    gap: 10px;
+  }
+  .form-footer .btn {
+    width: 100% !important;
+    justify-content: center;
+  }
+}
+</style>
 </head>
 <body>
 <div class="page-bg"></div>
@@ -19,7 +93,6 @@
   <header class="topbar">
     <div class="topbar-left">
       <button class="menu-toggle" id="menu-toggle"><i class="fas fa-bars"></i></button>
-      <a href="students.html" class="btn btn-ghost btn-sm" style="padding:6px 12px"><i class="fas fa-arrow-left"></i></a>
       <div>
         <div class="page-title" id="page-heading">Register Student</div>
         <div class="breadcrumb"><a href="students.html">Students</a><span class="sep">/</span><span class="text-gold" id="breadcrumb-label">New Student</span></div>
@@ -28,10 +101,10 @@
     <div class="topbar-right" id="topbar-right"></div>
   </header>
   <div class="page-body">
-    <div style="display:grid;grid-template-columns:1fr 340px;gap:24px;align-items:start">
+    <div class="student-layout">
       <!-- Main Form -->
       <div class="card">
-        <form id="student-form" onsubmit="saveStudent(event)">
+        <form id="student-form" class="student-form" onsubmit="saveStudent(event)">
           <div style="font-family:var(--font-display);font-size:1.1rem;font-weight:700;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--border-light)">
             <i class="fas fa-user-graduate" style="color:var(--brand-gold);margin-right:8px"></i>Personal Information
           </div>
@@ -90,7 +163,7 @@
           <div style="font-family:var(--font-display);font-size:1rem;font-weight:700;margin:24px 0 16px;padding-top:16px;border-top:1px solid var(--border-light)">
             <i class="fas fa-image" style="color:var(--brand-gold);margin-right:8px"></i>Passport Photograph
           </div>
-          <div style="display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap">
+          <div class="photo-row" style="display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap">
             <div id="photo-preview" style="width:100px;height:100px;border-radius:var(--radius-lg);background:var(--bg-input);border:2px dashed var(--border-light);display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:1.8rem;flex-shrink:0;overflow:hidden">
               <i class="fas fa-user"></i>
             </div>
@@ -101,7 +174,7 @@
             </div>
           </div>
 
-          <div class="modal-footer" style="padding-top:24px;margin-top:24px">
+          <div class="modal-footer form-footer" style="padding-top:24px;margin-top:24px">
             <a href="students.html" class="btn btn-ghost">Cancel</a>
             <button type="submit" class="btn btn-primary" id="save-btn"><i class="fas fa-user-plus"></i> <span id="save-btn-label">Register Student</span></button>
           </div>
@@ -109,8 +182,8 @@
       </div>
 
       <!-- Credentials Preview -->
-      <div>
-        <div class="card card-gold" style="position:sticky;top:calc(var(--topbar-h) + 16px)">
+      <div class="credentials-col">
+        <div class="card card-gold credentials-card">
           <div style="font-family:var(--font-display);font-size:1rem;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px">
             <i class="fas fa-key" style="color:var(--brand-gold)"></i> Auto-Generated Login
           </div>
@@ -137,8 +210,8 @@
   </div>
 </div>
 </div>
-<script src="js/core.js"></script>
-<script src="js/ui.js"></script>
+<script src="./js/core.js"></script>
+<script src="./js/ui.js"></script>
 <script>
 const editId = new URLSearchParams(window.location.search).get('id');
 
@@ -202,6 +275,18 @@ async function saveStudent(e) {
   const mn = document.getElementById('middle-name').value.trim();
   const ln = document.getElementById('last-name').value.trim();
   const dob = document.getElementById('dob').value;
+
+  // Get photo as base64 if one was selected
+  let photoUrl = null;
+  const photoInput = document.getElementById('photo-input');
+  if (photoInput && photoInput.files && photoInput.files[0]) {
+    photoUrl = await new Promise(resolve => {
+      const reader = new FileReader();
+      reader.onload = e => resolve(e.target.result);
+      reader.readAsDataURL(photoInput.files[0]);
+    });
+  }
+
   const payload = {
     full_name: [fn, mn, ln].filter(Boolean).join(' '),
     first_name: fn, middle_name: mn, last_name: ln,
@@ -213,6 +298,7 @@ async function saveStudent(e) {
     address: document.getElementById('address').value.trim()||null,
     username: Fmt.generateUsername(fn, mn, ln, dob),
     default_password: Fmt.generatePassword(dob),
+    photo_url: photoUrl,
   };
   try {
     if (editId) await API.students.update(editId, payload);

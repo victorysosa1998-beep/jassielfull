@@ -1,70 +1,176 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Transcript — Jaasiel Education Centre</title>
+<title>Academic Transcript — Jaasiel RMS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400&family=Source+Serif+4:ital,wght@0,300;0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="./css/style.css">
 <style>
-/* ── Transcript document styles ── */
-.transcript{background:#fff;color:#111;max-width:820px;margin:0 auto;border:2px solid #0B1A35;font-family:'DM Sans',sans-serif;font-size:.82rem}
-.tr-header{background:#0B1A35;padding:20px 28px;display:flex;align-items:center;gap:16px}
-.tr-logo{width:70px;height:70px;border-radius:50%;object-fit:contain;background:#0B1A35;border:2px solid #C9973A;flex-shrink:0}
-.tr-school{flex:1;text-align:center}
-.tr-school-name{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:900;color:#C9973A}
-.tr-school-sub{font-size:.72rem;color:rgba(255,255,255,.6);margin:3px 0}
-.tr-doc-title{font-size:.9rem;font-weight:700;color:#fff;border:1px solid rgba(255,255,255,.4);display:inline-block;padding:3px 20px;border-radius:3px;margin-top:6px}
-
-.tr-student-info{background:#f5f5f5;padding:12px 20px;border-bottom:2px solid #0B1A35;display:grid;grid-template-columns:repeat(3,1fr);gap:6px 20px}
-.tr-info-item{font-size:.8rem}
-.tr-info-label{color:#666;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em}
-.tr-info-value{font-weight:700;color:#111}
-
-.tr-term-block{border-bottom:1px solid #ccc}
-.tr-term-header{background:#e8e8e8;padding:7px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #ccc;flex-wrap:wrap;gap:6px}
-.tr-term-title{font-weight:700;font-size:.85rem}
-.tr-term-avg{font-size:.82rem;font-weight:700}
-
-table.tr-table{width:100%;border-collapse:collapse;font-size:.78rem}
-table.tr-table th{background:#f0f0f0;padding:6px 10px;text-align:center;font-size:.7rem;font-weight:700;text-transform:uppercase;border:1px solid #ccc}
-table.tr-table th:first-child{text-align:left}
-table.tr-table td{padding:6px 10px;border:1px solid #ddd}
-table.tr-table td:not(:first-child){text-align:center;font-family:'DM Mono',monospace}
-table.tr-table tr:hover td{background:#fafafa}
-.grade-A{color:#15803d;font-weight:700} .grade-B{color:#1d4ed8;font-weight:700}
-.grade-C{color:#b45309;font-weight:700} .grade-D{color:#c2410c;font-weight:700}
-.grade-E,.grade-F{color:#dc2626;font-weight:700}
-
-.tr-summary{background:#f5f5f5;padding:12px 20px;border-top:2px solid #0B1A35;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;font-size:.82rem}
-.tr-sum-item{display:flex;flex-direction:column;gap:2px}
-.tr-sum-label{font-size:.7rem;color:#666;text-transform:uppercase}
-.tr-sum-value{font-weight:700;font-size:1rem;color:#0B1A35}
-.tr-sum-value.gold{color:#C9973A}
-
-.tr-sigs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;padding:16px 20px;border-top:1px solid #ccc}
-.tr-sig-line{border-top:2px solid #555;padding-top:5px;font-size:.72rem;color:#555;text-align:center;margin-top:28px}
-
-/* Print styles */
-@media print {
-  body { background:#fff!important }
-  .page-bg,.sidebar,.topbar,.no-print,.sidebar-overlay { display:none!important }
-  .main-content { margin:0!important }
-  .page-body { padding:0!important }
-  .transcript { border-radius:0; max-width:100%; border-left:none; border-right:none; }
+/* ═══ SCOPE SELECTOR ═══ */
+.scope-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  margin-bottom: 20px;
 }
+.scope-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.scope-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: .83rem;
+  font-weight: 600;
+  border: 1.5px solid var(--border-light);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all .15s;
+}
+.scope-btn:hover {
+  border-color: var(--brand-gold);
+  color: var(--brand-gold);
+}
+.scope-btn.active {
+  background: rgba(201,151,58,.12);
+  border-color: var(--brand-gold);
+  color: var(--brand-gold);
+}
+.scope-range-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.scope-range-row.hidden { display: none; }
 
-/* Mobile */
-@media(max-width:600px){
-  .tr-student-info { grid-template-columns:1fr 1fr }
-  .tr-summary { grid-template-columns:1fr 1fr }
-  .tr-sigs { grid-template-columns:1fr 1fr }
-  .tr-header { flex-direction:column; text-align:center; padding:14px }
-  .tr-term-header { flex-direction:column; align-items:flex-start }
-  .tr-table { font-size:.72rem }
-  .tr-table th, .tr-table td { padding:4px 6px }
-  .table-wrapper { overflow-x:auto; -webkit-overflow-scrolling:touch }
+/* Download button highlight */
+.btn-download {
+  background: linear-gradient(135deg, #002060, #1a56c8);
+  color: #fff;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: .83rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  transition: opacity .15s;
+}
+.btn-download:hover { opacity: .88; }
+.btn-download:disabled { opacity: .5; cursor: not-allowed; }
+
+/* ═══ TRANSCRIPT PREVIEW ═══ */
+.transcript-preview { margin-top: 6px; }
+.tc-session-block { margin-bottom: 20px; }
+
+/* ═══ REPORT CARD ═══ */
+.rc-page {
+  background: #fff;
+  color: #1a1a2e;
+  max-width: 820px;
+  margin: 0 auto;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10.5px;
+  border: 3px double #002060;
+  position: relative;
+  page-break-after: always;
+  break-after: page;
+}
+.rc-page:last-child { page-break-after: auto; break-after: auto; }
+.rc-page::before {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border: 1px solid rgba(0,32,96,.15);
+  pointer-events: none;
+  z-index: 0;
+}
+.rc-head { padding:0; border-bottom:3px solid #002060; position:relative; z-index:1; background:linear-gradient(180deg,#f0f4ff 0%,#fff 100%); }
+.rc-head-top { background:linear-gradient(135deg,#002060 0%,#0a3d8f 50%,#1a56c8 100%); height:7px; }
+.rc-head-inner { display:flex; align-items:center; padding:12px 18px 10px; gap:14px; }
+.rc-logo { width:72px; height:72px; flex-shrink:0; border-radius:50%; border:2px solid rgba(0,32,96,.2); overflow:hidden; box-shadow:0 2px 8px rgba(0,32,96,.15); background:#fff; }
+.rc-logo img { width:100%; height:100%; object-fit:contain; }
+.rc-school-info { flex:1; text-align:center; }
+.rc-school-name { font-family:'Playfair Display',serif; font-size:24px; font-weight:900; color:#002060; letter-spacing:.5px; line-height:1.1; text-transform:uppercase; }
+.rc-school-sub { font-size:9px; color:#444; margin:2px 0; font-style:italic; }
+.rc-school-contact { font-size:8.5px; color:#1a56c8; margin:2px 0; }
+.rc-motto { font-family:'Playfair Display',serif; font-size:10px; font-weight:700; color:#b8860b; margin-top:3px; text-transform:uppercase; letter-spacing:.8px; }
+.rc-photo-box { width:72px; height:86px; flex-shrink:0; border:2px solid #002060; background:#f8f9fc; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+.rc-photo-box img { width:100%; height:100%; object-fit:cover; }
+.rc-title-bar { background:linear-gradient(135deg,#002060,#0a3d8f); color:#fff; padding:6px 18px; font-family:'Playfair Display',serif; font-size:13px; font-weight:700; text-align:center; letter-spacing:.5px; position:relative; z-index:1; }
+.rc-info-section { padding:8px 18px; border-bottom:1px solid #dde; position:relative; z-index:1; }
+.rc-row { display:flex; flex-wrap:wrap; gap:0; border:1px solid #ccd; margin-bottom:-1px; }
+.rc-cell { flex:1; min-width:120px; padding:4px 8px; border-right:1px solid #ccd; display:flex; flex-direction:column; gap:1px; }
+.rc-cell:last-child { border-right:none; }
+.rc-cell.double { flex:2; }
+.rc-cell.triple { flex:3; }
+.rc-lbl { font-size:7.5px; color:#666; text-transform:uppercase; letter-spacing:.4px; font-weight:600; }
+.rc-val { font-size:10px; font-weight:700; color:#1a1a2e; }
+.rc-stats-row { display:flex; border:2px solid #002060; background:linear-gradient(135deg,#e8eeff,#f5f7ff); position:relative; z-index:1; }
+.rc-stat-cell { flex:1; padding:6px 10px; border-right:1px solid #002060; text-align:center; display:flex; flex-direction:column; gap:2px; }
+.rc-stat-cell:last-child { border-right:none; }
+.rc-stat-val { font-size:14px; font-weight:900; color:#002060; font-family:'Playfair Display',serif; }
+.rc-section-head { background:#002060; color:#fff; padding:4px 18px; font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:.8px; position:relative; z-index:1; }
+.rc-scores { width:100%; border-collapse:collapse; position:relative; z-index:1; }
+.rc-scores thead th { background:#001a4e; color:#fff; padding:5px 6px; text-align:center; font-size:8.5px; font-weight:700; text-transform:uppercase; letter-spacing:.3px; border:1px solid #002060; }
+.rc-scores thead th.left { text-align:left; }
+.rc-scores tbody tr:nth-child(even) { background:#f7f9ff; }
+.rc-scores tbody td { padding:4px 6px; border:1px solid #dde; font-size:9.5px; text-align:center; }
+.rc-scores tbody td.left { text-align:left; font-weight:600; }
+.rc-scores tfoot td { background:#e8eeff; padding:5px 6px; border:1px solid #002060; font-weight:700; font-size:10px; text-align:center; }
+.rc-scores tfoot td.left { text-align:left; }
+.grade-A { color:#15803d; font-weight:800; }
+.grade-B { color:#1d4ed8; font-weight:800; }
+.grade-C { color:#b45309; font-weight:800; }
+.grade-D { color:#ea580c; font-weight:800; }
+.grade-E { color:#dc2626; font-weight:800; }
+.grade-F { color:#dc2626; font-weight:800; }
+.rc-lower { display:grid; grid-template-columns:repeat(3,1fr); border:1px solid #ccd; position:relative; z-index:1; }
+.rc-lower-col { padding:8px 10px; border-right:1px solid #ccd; }
+.rc-lower-col:last-child { border-right:none; }
+.rc-lower-head { background:#002060; color:#fff; padding:3px 6px; font-size:8.5px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; margin:-8px -10px 6px; }
+.rc-lower-table { width:100%; border-collapse:collapse; }
+.rc-lower-table td { padding:2px 4px; border-bottom:1px solid #eef; font-size:9px; }
+.rc-keys-head { font-size:8px; font-weight:700; color:#002060; text-transform:uppercase; letter-spacing:.4px; margin-bottom:3px; }
+.rc-keys-row { font-size:8.5px; color:#333; margin-bottom:2px; }
+.rc-bill-row { display:flex; justify-content:space-between; align-items:center; padding:2px 0; border-bottom:1px dotted #dde; font-size:8.5px; }
+.rc-bill-row.total { font-weight:800; color:#002060; border-top:2px solid #002060; border-bottom:none; margin-top:3px; padding-top:3px; font-size:9.5px; }
+.rc-footer { padding:12px 18px; border-top:1px solid #dde; position:relative; z-index:1; }
+.rc-comment-row { display:flex; align-items:flex-end; gap:8px; font-size:9px; margin-bottom:8px; }
+.rc-comment-lbl { font-weight:700; color:#002060; white-space:nowrap; font-size:8.5px; padding-bottom:4px; }
+.rc-comment-line { flex:1; min-width:140px; text-align:center; font-style:italic; line-height:2; border-bottom:1px solid #002060; padding-bottom:3px; }
+.rc-next-bar { display:flex; gap:20px; padding:5px 18px; background:#f0f4ff; border-top:1px solid #ccd; font-size:8.5px; position:relative; z-index:1; }
+.rc-next-lbl { font-weight:700; color:#002060; margin-right:4px; }
+.rc-sig-area { display:flex; justify-content:space-between; align-items:flex-end; padding:14px 28px 10px; position:relative; z-index:1; }
+.rc-sig-block { text-align:center; min-width:140px; }
+.rc-sig-lbl { font-size:8px; color:#666; text-transform:uppercase; letter-spacing:.5px; display:block; margin-top:5px; }
+.rc-sig-val { display:block; font-size:11px; font-weight:700; color:#1a1a2e; min-width:160px; text-align:center; font-style:italic; border-bottom:1.5px solid #002060; padding-bottom:6px; line-height:2; }
+.rc-stamp-wrap { width:100px; height:100px; flex-shrink:0; }
+.rc-stamp-img { width:100px; height:100px; object-fit:contain; mix-blend-mode:multiply; opacity:.85; }
+.rc-fine-print { text-align:center; padding:4px; font-size:7.5px; color:#aaa; border-top:1px solid #dde; background:#fafbff; position:relative; z-index:1; }
+
+@media print {
+  body { background:#fff !important; }
+  .page-bg,.sidebar,.topbar,.no-print { display:none !important; }
+  .main-content { margin:0 !important; }
+  .page-body { padding:0 !important; }
+  .rc-page { box-shadow:none; border:3px double #002060; max-width:100%; }
+  .scope-card { display:none; }
+}
+@media screen {
+  .rc-page { box-shadow:0 12px 60px rgba(0,32,96,.2),0 2px 8px rgba(0,0,0,.08); border-radius:4px; overflow:hidden; }
 }
 </style>
 </head>
@@ -72,73 +178,83 @@ table.tr-table tr:hover td{background:#fafafa}
 <div class="page-bg"></div>
 <div class="page-loader" id="page-loader"><div class="loader-logo"><i class="fas fa-graduation-cap"></i> Jaasiel RMS</div><div class="loader-ring"></div></div>
 <div class="toast-container" id="toast-container"></div>
-
 <div class="app-layout">
 <div class="sidebar-overlay" id="sidebar-overlay"></div>
 <aside class="sidebar" id="sidebar"></aside>
 <div class="main-content">
-
-  <!-- Topbar — topbar-right injected by initPage, don't put buttons there -->
-  <header class="topbar">
+  <header class="topbar no-print">
     <div class="topbar-left">
       <button class="menu-toggle" id="menu-toggle"><i class="fas fa-bars"></i></button>
-      <a href="my-results.html" class="btn btn-ghost btn-sm" style="padding:6px 12px"><i class="fas fa-arrow-left"></i></a>
       <div>
-        <div class="page-title">Transcript</div>
-        <div class="breadcrumb">
-          <a href="student-dashboard.html">Dashboard</a><span class="sep">/</span>
-          <a href="my-results.html">Results</a><span class="sep">/</span>
-          <span class="text-gold">Transcript</span>
-        </div>
+        <div class="page-title">Academic Transcript</div>
+        <div class="breadcrumb"><a href="student-dashboard.html">Dashboard</a><span class="sep">/</span><span class="text-gold">Transcript</span></div>
       </div>
     </div>
-    <div class="topbar-right" id="topbar-right"></div>
   </header>
-
   <div class="page-body">
 
-    <!-- ── Filter card — in page body so initPage can't wipe it ── -->
-    <div class="card mb-3 no-print" style="padding:18px 20px">
-      <div style="font-weight:700;font-size:.9rem;margin-bottom:14px">
-        <i class="fas fa-scroll" style="color:var(--brand-gold);margin-right:7px"></i>
-        Generate Academic Transcript
+    <!-- ── SCOPE SELECTOR ── -->
+    <div class="scope-card no-print">
+      <div style="font-family:var(--font-display);font-weight:700;font-size:.95rem;margin-bottom:12px">
+        <i class="fas fa-filter" style="color:var(--brand-gold);margin-right:6px"></i>
+        Choose what to download
+      </div>
+      <div class="scope-options">
+        <button class="scope-btn active" id="scope-all" onclick="setScope('all')">
+          <i class="fas fa-history"></i> All Time
+        </button>
+        <button class="scope-btn" id="scope-session" onclick="setScope('session')">
+          <i class="fas fa-calendar-alt"></i> Full Session
+        </button>
+        <button class="scope-btn" id="scope-term" onclick="setScope('term')">
+          <i class="fas fa-bookmark"></i> Single Term
+        </button>
+        <button class="scope-btn" id="scope-range" onclick="setScope('range')">
+          <i class="fas fa-sliders-h"></i> Custom Range
+        </button>
       </div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
-        <div class="form-group mb-0">
-          <label class="form-label">From Session</label>
-          <select class="form-control" id="from-session">
-            <option value="">All Sessions (Full History)</option>
-          </select>
-        </div>
-        <div class="form-group mb-0">
-          <label class="form-label">To Session</label>
-          <select class="form-control" id="to-session">
-            <option value="">Latest</option>
-          </select>
-        </div>
+      <!-- Session picker -->
+      <div class="scope-range-row hidden" id="row-session">
+        <label style="font-size:.82rem;color:var(--text-muted)">Session:</label>
+        <select class="filter-select" id="sel-session" onchange="loadTranscript()" style="font-size:.82rem"></select>
       </div>
 
-      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-        <button class="btn btn-primary" onclick="loadTranscript()">
-          <i class="fas fa-scroll"></i> Generate Transcript
+      <!-- Term picker -->
+      <div class="scope-range-row hidden" id="row-term">
+        <label style="font-size:.82rem;color:var(--text-muted)">Session:</label>
+        <select class="filter-select" id="sel-term-session" onchange="onTermSessionChange()" style="font-size:.82rem"></select>
+        <label style="font-size:.82rem;color:var(--text-muted)">Term:</label>
+        <select class="filter-select" id="sel-term" onchange="loadTranscript()" style="font-size:.82rem"></select>
+      </div>
+
+      <!-- Range picker -->
+      <div class="scope-range-row hidden" id="row-range">
+        <label style="font-size:.82rem;color:var(--text-muted)">From:</label>
+        <select class="filter-select" id="sel-from" style="font-size:.82rem"></select>
+        <label style="font-size:.82rem;color:var(--text-muted)">To:</label>
+        <select class="filter-select" id="sel-to" style="font-size:.82rem"></select>
+        <button class="btn btn-primary btn-sm" onclick="loadTranscript()"><i class="fas fa-sync"></i> Generate</button>
+      </div>
+
+      <!-- Action bar -->
+      <div style="display:flex;align-items:center;gap:10px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border-light);flex-wrap:wrap">
+        <button class="btn-download" onclick="downloadPDF()" id="btn-dl" disabled>
+          <i class="fas fa-file-pdf"></i> Download as PDF
         </button>
-        <button class="btn btn-ghost" onclick="clearFilter()">
-          <i class="fas fa-rotate"></i> Full History
+        <button class="btn btn-secondary btn-sm" onclick="window.print()">
+          <i class="fas fa-print"></i> Print
         </button>
-        <div style="margin-left:auto;display:flex;gap:8px">
-          <button class="btn btn-ghost btn-sm no-print" onclick="window.print()">
-            <i class="fas fa-print"></i> Print
-          </button>
-        </div>
+        <span id="dl-label" style="font-size:.78rem;color:var(--text-muted)"></span>
       </div>
     </div>
 
-    <!-- Transcript renders here -->
+    <!-- ── TRANSCRIPT / REPORT CARDS ── -->
     <div id="transcript-container">
-      <div style="text-align:center;padding:60px;color:var(--text-muted)">
-        <i class="fas fa-scroll" style="font-size:2.5rem;display:block;margin-bottom:12px;opacity:.3"></i>
-        Select a date range above and click <strong>Generate Transcript</strong>
+      <div class="card" style="text-align:center;padding:60px;color:var(--text-muted)">
+        <i class="fas fa-scroll" style="font-size:3rem;display:block;margin-bottom:16px;opacity:.3"></i>
+        <div style="font-size:1rem;margin-bottom:8px">Choose a scope above to generate your transcript</div>
+        <div style="font-size:.83rem">Your report cards will appear here ready to download as PDF</div>
       </div>
     </div>
 
@@ -146,266 +262,611 @@ table.tr-table tr:hover td{background:#fafafa}
 </div>
 </div>
 
-<script src="js/core.js"></script>
-<script src="js/ui.js"></script>
+<script src="./js/core.js"></script>
+<script src="./js/ui.js"></script>
 <script>
-let sessions = [], studentData = null;
+const LOGO_SRC  = './images/logo.png';
+const STAMP_SRC = 'images/schoolstamp.png';
+
+let _sessions = [];
+let _currentScope = 'all';
+let _currentResults = [];
+let _currentMeta = {};
 
 document.addEventListener('DOMContentLoaded', async () => {
   await window.__rmsBootstrapReady;
   initPage('student', 'student');
-  await Promise.all([loadSessions(), loadStudentInfo()]);
-  // Auto-generate full history on page load
+  await loadSessionDropdowns();
   loadTranscript();
 });
 
-/* ── Load sessions into selectors ── */
-async function loadSessions() {
+/* ─────────────────────────────────────────────
+   DROPDOWNS
+───────────────────────────────────────────── */
+async function loadSessionDropdowns() {
   try {
-    const data = await API.sessions.list();
-    sessions = data.items || [];
-    ['from-session', 'to-session'].forEach(id => {
+    const data = await API.students.mySessions();
+    _sessions = data.items || [];
+    const ids = ['sel-session','sel-term-session','sel-from','sel-to'];
+    ids.forEach(id => {
       const sel = document.getElementById(id);
-      const isFrom = id === 'from-session';
-      sel.innerHTML = `<option value="">${isFrom ? 'All Sessions (Full History)' : 'Latest'}</option>`;
-      sessions.forEach(s => {
+      if (!sel) return;
+      sel.innerHTML = (id === 'sel-from' || id === 'sel-to')
+        ? '<option value="">— Any —</option>'
+        : '<option value="">Select…</option>';
+      _sessions.forEach(s => {
         const o = document.createElement('option');
-        o.value = s.id;
-        o.textContent = s.session_name;
+        o.value = s.id; o.textContent = s.session_name;
+        if (s.is_current && id !== 'sel-from' && id !== 'sel-to') o.selected = true;
         sel.appendChild(o);
       });
     });
-  } catch(err) {
-    console.error('Sessions load failed:', err);
+    const toSel = document.getElementById('sel-to');
+    if (_sessions.length && toSel) toSel.value = _sessions[0].id;
+    populateTermSel(document.getElementById('sel-term-session')?.value);
+  } catch(e) { console.warn('loadSessionDropdowns failed', e); }
+}
+
+function populateTermSel(sid) {
+  const sel = document.getElementById('sel-term');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Select…</option>';
+  const sess = _sessions.find(s => String(s.id) === String(sid));
+  if (sess?.terms) {
+    sess.terms.forEach(t => {
+      const o = document.createElement('option');
+      o.value = t.id; o.textContent = t.term_name;
+      if (t.is_current) o.selected = true;
+      sel.appendChild(o);
+    });
   }
 }
 
-/* ── Load student profile ── */
-async function loadStudentInfo() {
-  try {
-    studentData = await API.students.myProfile();
-  } catch(err) {
-    console.error('Student profile failed:', err);
-  }
-}
-
-/* ── Clear filter and reload full history ── */
-function clearFilter() {
-  document.getElementById('from-session').value = '';
-  document.getElementById('to-session').value   = '';
+function onTermSessionChange() {
+  populateTermSel(document.getElementById('sel-term-session').value);
   loadTranscript();
 }
 
-/* ── Main: generate transcript ── */
+/* ─────────────────────────────────────────────
+   SCOPE
+───────────────────────────────────────────── */
+function setScope(scope) {
+  _currentScope = scope;
+  ['all','session','term','range'].forEach(s => {
+    document.getElementById(`scope-${s}`).classList.toggle('active', s === scope);
+  });
+  ['row-session','row-term','row-range'].forEach(id => {
+    document.getElementById(id).classList.add('hidden');
+  });
+  if (scope === 'session') document.getElementById('row-session').classList.remove('hidden');
+  if (scope === 'term')    document.getElementById('row-term').classList.remove('hidden');
+  if (scope === 'range')   document.getElementById('row-range').classList.remove('hidden');
+  if (scope !== 'range') loadTranscript();
+}
+
+/* ─────────────────────────────────────────────
+   LOAD TRANSCRIPT
+───────────────────────────────────────────── */
 async function loadTranscript() {
-  if (!studentData) {
-    Toast.error('Not ready', 'Student data not loaded yet. Please wait a moment and try again.');
-    return;
-  }
-
   const container = document.getElementById('transcript-container');
-  container.innerHTML = `
-    <div style="text-align:center;padding:48px">
-      <div class="loader-ring" style="margin:0 auto;width:36px;height:36px;border-width:3px"></div>
-      <div style="margin-top:12px;color:var(--text-muted);font-size:.85rem">Generating transcript…</div>
-    </div>`;
-
-  const fromSes = document.getElementById('from-session').value;
-  const toSes   = document.getElementById('to-session').value;
-  const params  = {};
-  if (fromSes) params.from_session_id = fromSes;
-  if (toSes)   params.to_session_id   = toSes;
+  const dlBtn     = document.getElementById('btn-dl');
+  const dlLabel   = document.getElementById('dl-label');
+  dlBtn.disabled  = true;
+  dlLabel.textContent = '';
+  showSkeleton(container, 4, '100px', '12px');
 
   try {
-    const data = await API.results.transcript(studentData.id, params);
-    renderTranscript(data);
-  } catch(err) {
-    container.innerHTML = `
-      <div class="alert alert-danger">
-        <i class="fas fa-circle-exclamation"></i>
-        ${Security.sanitize(err.message || 'Failed to load transcript. Please try again.')}
+    const params = {};
+    let filterDesc = 'Full academic history';
+
+    if (_currentScope === 'session') {
+      const sid = document.getElementById('sel-session').value;
+      if (sid) params.session_id = sid;
+      const sess = _sessions.find(s => String(s.id) === String(sid));
+      if (sess) filterDesc = sess.session_name;
+    } else if (_currentScope === 'term') {
+      const sid = document.getElementById('sel-term-session').value;
+      const tid = document.getElementById('sel-term').value;
+      if (sid) params.session_id = sid;
+      if (tid) params.term_id    = tid;
+      const sess = _sessions.find(s => String(s.id) === String(sid));
+      const term = sess?.terms?.find(t => String(t.id) === String(tid));
+      filterDesc = [sess?.session_name, term?.term_name].filter(Boolean).join(' · ');
+    } else if (_currentScope === 'range') {
+      const fromId   = document.getElementById('sel-from').value;
+      const toId     = document.getElementById('sel-to').value;
+      const fromSess = _sessions.find(s => String(s.id) === String(fromId));
+      const toSess   = _sessions.find(s => String(s.id) === String(toId));
+      filterDesc = [fromSess?.session_name, toSess?.session_name].filter(Boolean).join(' → ');
+    }
+
+    const data   = await API.students.myResults(params);
+    let results  = data.results || [];
+    _currentMeta = data;
+
+    if (_currentScope === 'range') {
+      const fromId = parseInt(document.getElementById('sel-from').value) || 0;
+      const toId   = parseInt(document.getElementById('sel-to').value)   || Infinity;
+      if (fromId || toId !== Infinity) {
+        results = results.filter(r => {
+          const sid = r.session_id || 0;
+          return sid >= fromId && sid <= toId;
+        });
+      }
+    }
+
+    _currentResults = results;
+
+    if (!results.length) {
+      container.innerHTML = `<div class="card" style="text-align:center;padding:60px;color:var(--text-muted)">
+        <i class="fas fa-inbox" style="font-size:3rem;display:block;margin-bottom:16px;opacity:.3"></i>
+        No results found for the selected range. Results appear once published by your school.
       </div>`;
+      return;
+    }
+
+    const grouped = {};
+    results.forEach(r => {
+      const sk = r.session_id;
+      const tk = r.term_id;
+      if (!grouped[sk]) grouped[sk] = { session_name: r.session_name||'—', terms: {} };
+      if (!grouped[sk].terms[tk]) grouped[sk].terms[tk] = { term_name: r.term_name||'—', results: [] };
+      grouped[sk].terms[tk].results.push(r);
+    });
+
+    const allTotals  = results.map(r => r.total_score || 0);
+    const overallAvg = allTotals.length ? allTotals.reduce((a,b)=>a+b,0) / allTotals.length : 0;
+    const sessKeys   = Object.keys(grouped).sort((a,b) => parseInt(a)-parseInt(b));
+    let termCount    = 0;
+    sessKeys.forEach(sk => termCount += Object.keys(grouped[sk].terms).length);
+
+    container.innerHTML = `
+      <div class="card mb-3 no-print" style="background:linear-gradient(135deg,var(--bg-card),rgba(201,151,58,.05));border-color:rgba(201,151,58,.2)">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px">
+          <div>
+            <div style="font-family:var(--font-display);font-size:1.1rem;font-weight:900">${data.full_name||'—'}</div>
+            <div style="font-size:.8rem;color:var(--text-muted);margin-top:2px">
+              ${data.student_id||''} · ${data.class_name||'—'}
+              ${filterDesc ? ' · <strong style="color:var(--brand-gold)">' + filterDesc + '</strong>' : ''}
+            </div>
+          </div>
+          <div style="display:flex;gap:20px;flex-wrap:wrap">
+            <div style="text-align:center">
+              <div style="font-family:var(--font-mono);font-size:1.5rem;font-weight:900;color:var(--brand-gold)">${overallAvg.toFixed(1)}</div>
+              <div style="font-size:.68rem;color:var(--text-muted);text-transform:uppercase">Avg Score</div>
+            </div>
+            <div style="text-align:center">
+              <div style="font-family:var(--font-mono);font-size:1.5rem;font-weight:900;color:var(--brand-gold)">${sessKeys.length}</div>
+              <div style="font-size:.68rem;color:var(--text-muted);text-transform:uppercase">Sessions</div>
+            </div>
+            <div style="text-align:center">
+              <div style="font-family:var(--font-mono);font-size:1.5rem;font-weight:900;color:var(--brand-gold)">${termCount}</div>
+              <div style="font-size:.68rem;color:var(--text-muted);text-transform:uppercase">Terms</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      ${sessKeys.map(sk => {
+        const sess = grouped[sk];
+        return Object.keys(sess.terms).sort((a,b)=>parseInt(a)-parseInt(b)).map(tk => {
+          const term = sess.terms[tk];
+          const cardData = { ...data, session_name: sess.session_name, term_name: term.term_name };
+          return buildCardHTML(cardData, term.results);
+        }).join('<div style="height:20px" class="no-print"></div>');
+      }).join('<div style="height:20px" class="no-print"></div>')}
+    `;
+
+    dlBtn.disabled = false;
+    dlLabel.textContent = `${termCount} report card${termCount !== 1 ? 's' : ''} ready`;
+
+  } catch(e) {
+    console.error(e);
+    container.innerHTML = `<div class="card" style="text-align:center;padding:60px;color:var(--text-muted)">
+      <i class="fas fa-exclamation-circle" style="font-size:3rem;display:block;margin-bottom:16px;color:var(--danger);opacity:.6"></i>
+      Could not load transcript. Please try again or contact your school admin.
+    </div>`;
   }
 }
 
-/* ── Render the transcript document ── */
-function renderTranscript(data) {
-  const terms = data.terms || [];
+/* ─────────────────────────────────────────────
+   PDF DOWNLOAD
+   Strategy: render each .rc-page card one at a
+   time inside a hidden iframe (so all styles are
+   fully computed, no CSS variable issues), capture
+   each with html2canvas, then stitch into one PDF
+   via jsPDF. Direct download — no print dialog.
+───────────────────────────────────────────── */
 
-  // Build human-readable range label
-  const rangeText = (() => {
-    const fromSel = document.getElementById('from-session');
-    const toSel   = document.getElementById('to-session');
-    const fs = fromSel.options[fromSel.selectedIndex]?.text || '';
-    const ts = toSel.options[toSel.selectedIndex]?.text   || '';
-    if (!fromSel.value && !toSel.value) return 'Full Academic History';
-    if (!fromSel.value) return `Up to ${ts}`;
-    if (!toSel.value)   return `From ${fs} onwards`;
-    return `${Security.sanitize(fs)} — ${Security.sanitize(ts)}`;
-  })();
+// Inlined card CSS — same as <style> in this file,
+// so the iframe renders identically to the screen.
+const _RC_STYLES = `
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: #fff; font-family: 'DM Sans', Arial, sans-serif; }
+.rc-page {
+  background: #fff; color: #1a1a2e;
+  width: 794px; /* A4 at 96dpi */
+  font-family: 'DM Sans', sans-serif; font-size: 10.5px;
+  border: 3px double #002060; position: relative;
+}
+.rc-page::before {
+  content: ''; position: absolute; inset: 6px;
+  border: 1px solid rgba(0,32,96,.15); pointer-events: none; z-index: 0;
+}
+.rc-head { padding:0; border-bottom:3px solid #002060; position:relative; z-index:1; background:linear-gradient(180deg,#f0f4ff 0%,#fff 100%); }
+.rc-head-top { background:linear-gradient(135deg,#002060 0%,#0a3d8f 50%,#1a56c8 100%); height:7px; }
+.rc-head-inner { display:flex; align-items:center; padding:12px 18px 10px; gap:14px; }
+.rc-logo { width:72px; height:72px; flex-shrink:0; border-radius:50%; border:2px solid rgba(0,32,96,.2); overflow:hidden; background:#fff; }
+.rc-logo img { width:100%; height:100%; object-fit:contain; }
+.rc-school-info { flex:1; text-align:center; }
+.rc-school-name { font-family:'Playfair Display',Georgia,serif; font-size:24px; font-weight:900; color:#002060; letter-spacing:.5px; line-height:1.1; text-transform:uppercase; }
+.rc-school-sub { font-size:9px; color:#444; margin:2px 0; font-style:italic; }
+.rc-school-contact { font-size:8.5px; color:#1a56c8; margin:2px 0; }
+.rc-motto { font-family:'Playfair Display',Georgia,serif; font-size:10px; font-weight:700; color:#b8860b; margin-top:3px; text-transform:uppercase; letter-spacing:.8px; }
+.rc-photo-box { width:72px; height:86px; flex-shrink:0; border:2px solid #002060; background:#f8f9fc; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+.rc-photo-box img { width:100%; height:100%; object-fit:cover; }
+.rc-title-bar { background:linear-gradient(135deg,#002060,#0a3d8f); color:#fff; padding:6px 18px; font-family:'Playfair Display',Georgia,serif; font-size:13px; font-weight:700; text-align:center; letter-spacing:.5px; position:relative; z-index:1; }
+.rc-info-section { padding:8px 18px; border-bottom:1px solid #dde; position:relative; z-index:1; }
+.rc-row { display:flex; flex-wrap:wrap; gap:0; border:1px solid #ccd; margin-bottom:-1px; }
+.rc-cell { flex:1; min-width:120px; padding:4px 8px; border-right:1px solid #ccd; display:flex; flex-direction:column; gap:1px; }
+.rc-cell:last-child { border-right:none; }
+.rc-cell.double { flex:2; } .rc-cell.triple { flex:3; }
+.rc-lbl { font-size:7.5px; color:#666; text-transform:uppercase; letter-spacing:.4px; font-weight:600; }
+.rc-val { font-size:10px; font-weight:700; color:#1a1a2e; }
+.rc-stats-row { display:flex; border:2px solid #002060; background:linear-gradient(135deg,#e8eeff,#f5f7ff); position:relative; z-index:1; }
+.rc-stat-cell { flex:1; padding:6px 10px; border-right:1px solid #002060; text-align:center; display:flex; flex-direction:column; gap:2px; }
+.rc-stat-cell:last-child { border-right:none; }
+.rc-stat-val { font-size:14px; font-weight:900; color:#002060; font-family:'Playfair Display',Georgia,serif; }
+.rc-section-head { background:#002060; color:#fff; padding:4px 18px; font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:.8px; position:relative; z-index:1; }
+.rc-scores { width:100%; border-collapse:collapse; position:relative; z-index:1; }
+.rc-scores thead th { background:#001a4e; color:#fff; padding:5px 6px; text-align:center; font-size:8.5px; font-weight:700; text-transform:uppercase; letter-spacing:.3px; border:1px solid #002060; }
+.rc-scores thead th.left { text-align:left; }
+.rc-scores tbody tr:nth-child(even) { background:#f7f9ff; }
+.rc-scores tbody td { padding:4px 6px; border:1px solid #dde; font-size:9.5px; text-align:center; }
+.rc-scores tbody td.left { text-align:left; font-weight:600; }
+.rc-scores tfoot td { background:#e8eeff; padding:5px 6px; border:1px solid #002060; font-weight:700; font-size:10px; text-align:center; }
+.rc-scores tfoot td.left { text-align:left; }
+.grade-A { color:#15803d; font-weight:800; } .grade-B { color:#1d4ed8; font-weight:800; }
+.grade-C { color:#b45309; font-weight:800; } .grade-D { color:#ea580c; font-weight:800; }
+.grade-E { color:#dc2626; font-weight:800; } .grade-F { color:#dc2626; font-weight:800; }
+.rc-lower { display:grid; grid-template-columns:repeat(3,1fr); border:1px solid #ccd; position:relative; z-index:1; }
+.rc-lower-col { padding:8px 10px; border-right:1px solid #ccd; }
+.rc-lower-col:last-child { border-right:none; }
+.rc-lower-head { background:#002060; color:#fff; padding:3px 6px; font-size:8.5px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; margin:-8px -10px 6px; }
+.rc-lower-table { width:100%; border-collapse:collapse; }
+.rc-lower-table td { padding:2px 4px; border-bottom:1px solid #eef; font-size:9px; }
+.rc-keys-head { font-size:8px; font-weight:700; color:#002060; text-transform:uppercase; letter-spacing:.4px; margin-bottom:3px; }
+.rc-keys-row { font-size:8.5px; color:#333; margin-bottom:2px; }
+.rc-bill-row { display:flex; justify-content:space-between; align-items:center; padding:2px 0; border-bottom:1px dotted #dde; font-size:8.5px; }
+.rc-bill-row.total { font-weight:800; color:#002060; border-top:2px solid #002060; border-bottom:none; margin-top:3px; padding-top:3px; font-size:9.5px; }
+.rc-footer { padding:12px 18px; border-top:1px solid #dde; position:relative; z-index:1; }
+.rc-comment-row { display:flex; align-items:flex-end; gap:8px; font-size:9px; margin-bottom:8px; }
+.rc-comment-lbl { font-weight:700; color:#002060; white-space:nowrap; font-size:8.5px; padding-bottom:4px; }
+.rc-comment-line { flex:1; min-width:140px; text-align:center; font-style:italic; line-height:2; border-bottom:1px solid #002060; padding-bottom:3px; }
+.rc-next-bar { display:flex; gap:20px; padding:5px 18px; background:#f0f4ff; border-top:1px solid #ccd; font-size:8.5px; position:relative; z-index:1; }
+.rc-next-lbl { font-weight:700; color:#002060; margin-right:4px; }
+.rc-sig-area { display:flex; justify-content:space-between; align-items:flex-end; padding:14px 28px 10px; position:relative; z-index:1; }
+.rc-sig-block { text-align:center; min-width:140px; }
+.rc-sig-lbl { font-size:8px; color:#666; text-transform:uppercase; letter-spacing:.5px; display:block; margin-top:5px; }
+.rc-sig-val { display:block; font-size:11px; font-weight:700; color:#1a1a2e; min-width:160px; text-align:center; font-style:italic; border-bottom:1.5px solid #002060; padding-bottom:6px; line-height:2; }
+.rc-stamp-wrap { width:100px; height:100px; flex-shrink:0; }
+.rc-stamp-img { width:100px; height:100px; object-fit:contain; opacity:.85; }
+.rc-fine-print { text-align:center; padding:4px; font-size:7.5px; color:#aaa; border-top:1px solid #dde; background:#fafbff; position:relative; z-index:1; }
+`;
 
-  // No results for range
-  if (!terms.length) {
-    document.getElementById('transcript-container').innerHTML = `
-      <div class="transcript">
-        <div class="tr-header">
-          <img class="tr-logo" src="images/logo.png" alt="Jaasiel Logo" onerror="this.style.display='none'">
-          <div class="tr-school">
-            <div class="tr-school-name">JAASIEL EDUCATION CENTRE</div>
-            <div class="tr-school-sub">By Oxygen House, Off Ovbieko Rod, Idokpa, Benin City</div>
-            <div class="tr-doc-title">ACADEMIC TRANSCRIPT</div>
-          </div>
-          <img class="tr-logo" src="images/logo.png" alt="" onerror="this.style.display='none'">
-        </div>
-        <div style="padding:48px;text-align:center;color:#999">
-          <i class="fas fa-inbox" style="font-size:2rem;display:block;margin-bottom:12px"></i>
-          No published results found for: <strong>${rangeText}</strong><br>
-          <span style="font-size:.82rem;margin-top:8px;display:block">Results must be published by admin before they appear on your transcript.</span>
-        </div>
-      </div>`;
-    return;
+function _loadScript(src) {
+  return new Promise((resolve, reject) => {
+    if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
+    const s = document.createElement('script');
+    s.src = src; s.onload = resolve; s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+
+async function downloadPDF() {
+  const btn = document.getElementById('btn-dl');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating PDF…';
+
+  try {
+    // 1. Get cards
+    const cards = [...document.querySelectorAll('#transcript-container .rc-page')];
+    if (!cards.length) {
+      alert('No report cards to download. Please generate a transcript first.');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-file-pdf"></i> Download as PDF';
+      return;
+    }
+
+    // 2. Load libraries
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading libraries…';
+    await _loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+    await _loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+
+    const { jsPDF } = window.jspdf;
+
+    // A4 dimensions in mm
+    const PAGE_W = 210, PAGE_H = 297;
+    const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait', compress: true });
+
+    // 3. Create a single hidden iframe with correct styles already loaded.
+    //    We render each card inside it one at a time → no CSS variable issues.
+    const iframe = document.createElement('iframe');
+    Object.assign(iframe.style, {
+      position: 'fixed',
+      top: '0', left: '-9999px',
+      width: '794px', height: '1200px', // tall enough to render full card without collapsing
+      border: 'none', opacity: '0',     // opacity:0 hides it visually but does NOT affect html2canvas
+      pointerEvents: 'none',
+    });
+    document.body.appendChild(iframe);
+
+    // Write base document into iframe once
+    const iDoc = iframe.contentDocument || iframe.contentWindow.document;
+    iDoc.open();
+    iDoc.write(`<!DOCTYPE html><html><head>
+      <meta charset="UTF-8">
+      <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+      <style>${_RC_STYLES}</style>
+    </head><body style="margin:0;padding:0;background:#fff"></body></html>`);
+    iDoc.close();
+
+    // Inject html2canvas into the iframe so it runs in the correct window context
+    await new Promise((resolve, reject) => {
+      const s = iDoc.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+      s.onload = resolve; s.onerror = reject;
+      iDoc.head.appendChild(s);
+    });
+
+    // Wait for iframe fonts to load
+    await new Promise(r => setTimeout(r, 900));
+
+    // 4. Render each card
+    for (let i = 0; i < cards.length; i++) {
+      btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Rendering card ${i + 1} of ${cards.length}…`;
+
+      // Put this card's HTML into the iframe body
+      iDoc.body.innerHTML = cards[i].outerHTML;
+      const cardEl = iDoc.body.firstElementChild;
+
+      // Fix image srcs to absolute URLs
+      cardEl.querySelectorAll('img').forEach(img => {
+        const src = img.getAttribute('src');
+        if (src && !src.startsWith('http') && !src.startsWith('data:')) {
+          img.src = new URL(src, window.location.href).href;
+        }
+      });
+
+      // Wait for all images to load
+      const imgs = [...cardEl.querySelectorAll('img')];
+      await Promise.all(imgs.map(img =>
+        img.complete ? Promise.resolve()
+          : new Promise(r => { img.onload = r; img.onerror = r; })
+      ));
+
+      // Size iframe to exact card height so nothing is cropped
+      const cardH = cardEl.scrollHeight;
+      iframe.style.height = (cardH + 40) + 'px';
+
+      // Two rAFs: layout + paint flush
+      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+      // Capture using html2canvas running INSIDE the iframe's own window
+      const iWin = iframe.contentWindow;
+      const canvas = await iWin.html2canvas(cardEl, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        width: 794,
+        windowWidth: 794,
+        scrollX: 0,
+        scrollY: 0,
+      });
+
+      // Add page (first page already exists)
+      if (i > 0) pdf.addPage();
+
+      const imgData = canvas.toDataURL('image/jpeg', 0.97);
+
+      // canvas captured at scale:2 → logical width = canvas.width / 2 = 794px
+      // Map 794px → 210mm (PAGE_W). Height preserves aspect ratio.
+      const pxToMm = PAGE_W / 794;
+      const imgH   = (canvas.height / 2) * pxToMm;
+
+      pdf.addImage(imgData, 'JPEG', 0, 0, PAGE_W, imgH);
+    }
+
+    // 5. Cleanup and save
+    iframe.remove();
+    pdf.save('Jaasiel_Transcript.pdf');
+
+  } catch (err) {
+    console.error('PDF error:', err);
+    alert('PDF generation failed: ' + err.message + '\n\nTry using the Print button as a fallback.');
   }
 
-  document.getElementById('transcript-container').innerHTML = `
-  <div class="transcript">
+  btn.disabled = false;
+  btn.innerHTML = '<i class="fas fa-file-pdf"></i> Download as PDF';
+}
 
-    <!-- Header -->
-    <div class="tr-header">
-      <img class="tr-logo" src="images/logo.png" alt="Jaasiel Logo" onerror="this.style.display='none'">
-      <div class="tr-school">
-        <div class="tr-school-name">JAASIEL EDUCATION CENTRE</div>
-        <div class="tr-school-sub">By Oxygen House, Off Ovbieko Rod, Idokpa, Benin City</div>
-        <div class="tr-doc-title">OFFICIAL ACADEMIC TRANSCRIPT</div>
-      </div>
-      <img class="tr-logo" src="images/logo.png" alt="" onerror="this.style.display='none'">
-    </div>
+/* ─────────────────────────────────────────────
+   REPORT CARD BUILDER
+───────────────────────────────────────────── */
+function gradeInfo(score) {
+  if (score >= 70) return { g:'A', r:'Distinction', c:'grade-A' };
+  if (score >= 60) return { g:'B', r:'Credit',      c:'grade-B' };
+  if (score >= 50) return { g:'C', r:'Good',         c:'grade-C' };
+  if (score >= 45) return { g:'D', r:'Fair',          c:'grade-D' };
+  if (score >= 40) return { g:'E', r:'Pass',           c:'grade-E' };
+  return                   { g:'F', r:'Fail',           c:'grade-F' };
+}
 
-    <!-- Student info -->
-    <div class="tr-student-info">
-      <div class="tr-info-item">
-        <div class="tr-info-label">Student Name</div>
-        <div class="tr-info-value">${Security.sanitize(data.full_name || '—')}</div>
-      </div>
-      <div class="tr-info-item">
-        <div class="tr-info-label">Student ID</div>
-        <div class="tr-info-value" style="font-family:'DM Mono',monospace">${Security.sanitize(data.student_no || '—')}</div>
-      </div>
-      <div class="tr-info-item">
-        <div class="tr-info-label">Current Class</div>
-        <div class="tr-info-value">${Security.sanitize(data.class_name || '—')}</div>
-      </div>
-      <div class="tr-info-item">
-        <div class="tr-info-label">Period Covered</div>
-        <div class="tr-info-value">${rangeText}</div>
-      </div>
-      <div class="tr-info-item">
-        <div class="tr-info-label">Date Issued</div>
-        <div class="tr-info-value">${new Date().toLocaleDateString('en-NG',{day:'2-digit',month:'long',year:'numeric'})}</div>
-      </div>
-      <div class="tr-info-item">
-        <div class="tr-info-label">Overall Average</div>
-        <div class="tr-info-value" style="color:#C9973A;font-size:1.05rem">${data.overall_avg || '—'}%</div>
-      </div>
-    </div>
+function buildCardHTML(data, results) {
+  if (!results?.length) results = data.results || [];
+  const totals       = results.map(r => r.total_score || 0);
+  const overallTotal = totals.reduce((a,b) => a+b, 0);
+  const avg          = totals.length ? overallTotal / totals.length : 0;
+  const timesOpen    = results.length ? Math.max(...results.map(r => r.attendance || 0)) : 0;
+  const teacherCmt   = results.find(r => r.teacher_comment)?.teacher_comment || '';
+  const adminCmt     = results.find(r => r.admin_comment)?.admin_comment     || '';
+  const hasBreak     = results.some(r => r.first_test != null || r.second_test != null);
+  const gl           = gradeInfo(avg);
+  const today        = new Date();
+  const dateStr      = today.toLocaleDateString('en-NG', { day:'2-digit', month:'long', year:'numeric' });
 
-    <!-- One block per term -->
-    ${terms.map(term => {
-      const gr = Fmt.grade(term.average);
-      const isPass = term.average >= 40;
-      return `
-      <div class="tr-term-block">
-        <div class="tr-term-header">
-          <div class="tr-term-title">
-            ${Security.sanitize(term.session_name)} — ${Security.sanitize(term.term_name)}
-            <span style="font-weight:400;color:#777;font-size:.78rem;margin-left:6px">${Security.sanitize(term.class_name || '')}</span>
-          </div>
-          <div class="tr-term-avg" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
-            <span>Avg: <strong class="grade-${gr.g}">${term.average}%</strong></span>
-            <span>Total: <strong>${term.total_score}</strong></span>
-            ${!term.is_ss && term.position
-              ? `<span>Position: <strong>${Fmt.ordinal(term.position)}</strong></span>`
-              : ''}
-            <span style="color:${isPass?'#15803d':'#dc2626'};font-weight:700;padding:2px 10px;border-radius:12px;background:${isPass?'rgba(21,128,61,.1)':'rgba(220,38,38,.1)'};border:1px solid ${isPass?'rgba(21,128,61,.25)':'rgba(220,38,38,.25)'}">${isPass?'PASS':'FAIL'}</span>
-          </div>
+  return `<div class="rc-page">
+    <div class="rc-head-top"></div>
+    <div class="rc-head">
+      <div class="rc-head-inner">
+        <div class="rc-logo"><img src="${LOGO_SRC}" alt="Logo" onerror="this.style.display='none'"></div>
+        <div class="rc-school-info">
+          <div class="rc-school-name">Jaasiel Education Centre</div>
+          <div class="rc-school-sub">Idokpa, Benin City, Edo State, Nigeria</div>
+          <div class="rc-school-contact">📧 admin@jaasiel.edu.ng &nbsp;|&nbsp; 📞 +234 703 630 4408</div>
+          <div class="rc-motto">✦ Adequate Knowledge is a Virtue ✦</div>
         </div>
-        <div class="table-wrapper">
-          <table class="tr-table">
-            <thead>
-              <tr>
-                <th style="text-align:left;min-width:140px">Subject</th>
-                <th>1st CA<br>(20)</th>
-                <th>2nd CA<br>(20)</th>
-                <th>Exam<br>(60)</th>
-                <th>Total<br>(100)</th>
-                <th>Grade</th>
-                <th>Remark</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${term.results.map(r => {
-                const rg = Fmt.grade(r.total_score || 0);
-                const ca1 = r.ca_score != null ? Math.round(r.ca_score / 2) : '—';
-                const ca2 = r.ca_score != null ? Math.ceil(r.ca_score / 2)  : '—';
-                return `<tr>
-                  <td style="font-weight:600;text-align:left">${Security.sanitize(r.subject_name || '—')}</td>
-                  <td>${ca1}</td>
-                  <td>${ca2}</td>
-                  <td>${r.exam_score  ?? '—'}</td>
-                  <td style="font-weight:700">${r.total_score ?? '—'}</td>
-                  <td class="grade-${rg.g}">${rg.g}</td>
-                  <td style="color:#666">${Security.sanitize(rg.r)}</td>
-                </tr>`;
-              }).join('')}
-              <!-- Term summary row -->
-              <tr style="background:#f0f0f0;font-weight:700;border-top:2px solid #ccc">
-                <td style="text-align:left">TERM AVERAGE</td>
-                <td colspan="3"></td>
-                <td>${term.average}%</td>
-                <td class="grade-${gr.g}">${gr.g}</td>
-                <td style="color:#666">${Security.sanitize(gr.r)}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>`;
-    }).join('')}
-
-    <!-- Overall summary -->
-    <div class="tr-summary">
-      <div class="tr-sum-item">
-        <div class="tr-sum-label">Total Terms on Record</div>
-        <div class="tr-sum-value">${data.total_terms}</div>
-      </div>
-      <div class="tr-sum-item">
-        <div class="tr-sum-label">Overall Average</div>
-        <div class="tr-sum-value gold">${data.overall_avg}%</div>
-      </div>
-      <div class="tr-sum-item">
-        <div class="tr-sum-label">Overall Grade</div>
-        <div class="tr-sum-value grade-${Fmt.grade(data.overall_avg).g}">
-          ${Fmt.grade(data.overall_avg).g} — ${Security.sanitize(Fmt.grade(data.overall_avg).r)}
+        <div class="rc-photo-box">
+          ${data.photo_url
+            ? `<img src="${data.photo_url}" alt="Photo">`
+            : `<div style="text-align:center;padding:4px;font-size:8px;color:#999;line-height:1.4">PASSPORT<br>PHOTO</div>`}
         </div>
       </div>
     </div>
-
-    <!-- Signatures -->
-    <div class="tr-sigs">
-      <div><div class="tr-sig-line">Class Teacher's Signature</div></div>
-      <div style="text-align:center">
-        <img src="images/logo.png" style="width:52px;height:52px;border-radius:50%;object-fit:contain" alt="" onerror="this.style.display='none'">
-        <div class="tr-sig-line">Official Stamp</div>
+    <div class="rc-title-bar">${data.term_name||'Term'} Report Sheet &mdash; Academic Session ${data.session_name||''}</div>
+    <div class="rc-info-section">
+      <div class="rc-row">
+        <div class="rc-cell triple"><span class="rc-lbl">Name:</span><span class="rc-val">${data.full_name||'—'}</span></div>
+        <div class="rc-cell"><span class="rc-lbl">Class:</span><span class="rc-val">${data.class_name||'—'}</span></div>
+        <div class="rc-cell"><span class="rc-lbl">Gender:</span><span class="rc-val" style="text-transform:capitalize">${data.gender||'—'}</span></div>
+        <div class="rc-cell"><span class="rc-lbl">Term:</span><span class="rc-val">${(data.term_name||'').split(' ')[0]||'—'}</span></div>
       </div>
-      <div><div class="tr-sig-line">Principal / Director</div></div>
+      <div class="rc-row">
+        <div class="rc-cell double"><span class="rc-lbl">Session:</span><span class="rc-val">${data.session_name||'—'}</span></div>
+        <div class="rc-cell"><span class="rc-lbl">No. in Class:</span><span class="rc-val">${data.total_students||'—'}</span></div>
+        <div class="rc-cell"><span class="rc-lbl">Date of Birth:</span><span class="rc-val">${data.date_of_birth ? new Date(data.date_of_birth).toLocaleDateString('en-NG',{day:'2-digit',month:'short',year:'numeric'}) : '—'}</span></div>
+        <div class="rc-cell"><span class="rc-lbl">Age:</span><span class="rc-val">${data.age != null ? data.age + ' yrs' : '—'}</span></div>
+        <div class="rc-cell"><span class="rc-lbl">Student ID:</span><span class="rc-val" style="font-family:monospace">${data.student_id||'—'}</span></div>
+      </div>
+      <div class="rc-row">
+        <div class="rc-cell double"><span class="rc-lbl">No. of Times School Opened:</span><span class="rc-val">${timesOpen||'—'}</span></div>
+        <div class="rc-cell double"><span class="rc-lbl">No. of Times Present:</span><span class="rc-val">${timesOpen||'—'}</span></div>
+        <div class="rc-cell double"><span class="rc-lbl">No. of Times Absent:</span><span class="rc-val"></span></div>
+      </div>
     </div>
-
-    <!-- Footer -->
-    <div style="padding:10px 20px;border-top:1px solid #ccc;background:#f9f9f9;text-align:center;font-size:.7rem;color:#777">
-      This transcript is an official document issued by <strong>Jaasiel Education Centre</strong> · Idokpa, Benin City<br>
-      Results are stored permanently and reflect official academic records · Issued: ${new Date().toLocaleDateString('en-NG',{day:'2-digit',month:'long',year:'numeric'})} · ${new Date().getFullYear()}
+    <div class="rc-stats-row">
+      <div class="rc-stat-cell"><span class="rc-lbl">Overall Total:</span><span class="rc-stat-val">${overallTotal}</span></div>
+      <div class="rc-stat-cell"><span class="rc-lbl">Average:</span><span class="rc-stat-val">${avg.toFixed(2)}</span></div>
+      <div class="rc-stat-cell"><span class="rc-lbl">Percentage:</span><span class="rc-stat-val">${avg.toFixed(1)}%</span></div>
+      <div class="rc-stat-cell"><span class="rc-lbl">Position:</span><span class="rc-stat-val">${Fmt.ordinal(data.position||'—')}</span></div>
+      <div class="rc-stat-cell"><span class="rc-lbl">Grade:</span><span class="rc-stat-val ${gl.c}">${gl.g}</span></div>
     </div>
-
+    <div class="rc-section-head">Student's Academic Performance</div>
+    <table class="rc-scores">
+      <thead><tr>
+        <th class="left" style="width:150px">Subject</th>
+        ${hasBreak ? '<th>1st Test<br><span style="font-weight:400;opacity:.8">/20</span></th><th>2nd Test<br><span style="font-weight:400;opacity:.8">/20</span></th>' : ''}
+        <th>Assignment<br><span style="font-weight:400;opacity:.8">/40</span></th>
+        <th>Exam<br><span style="font-weight:400;opacity:.8">/60</span></th>
+        <th>Total<br><span style="font-weight:400;opacity:.8">/100</span></th>
+        <th>Grade</th>
+        <th>Remarks</th>
+      </tr></thead>
+      <tbody>
+        ${results.map(r => {
+          const t  = r.total_score ?? 0;
+          const gi = gradeInfo(t);
+          return `<tr>
+            <td class="left">${r.subject_name||'—'}</td>
+            ${hasBreak ? `<td>${r.first_test??'—'}</td><td>${r.second_test??'—'}</td>` : ''}
+            <td>${r.ca_score??'—'}</td>
+            <td>${r.exam_score??'—'}</td>
+            <td style="font-weight:700;font-size:11px">${r.total_score??'—'}</td>
+            <td><span class="${gi.c}">${gi.g}</span></td>
+            <td style="font-family:'Source Serif 4',serif;font-weight:600;font-size:10px"><span class="${gi.c}">${gi.r}</span></td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+      <tfoot>
+        <tr>
+          <td class="left" colspan="${hasBreak ? 4 : 2}">Overall Average</td>
+          <td>${avg.toFixed(1)}</td>
+          <td><span class="${gl.c}">${gl.g}</span></td>
+          <td><span class="${gl.c}">${gl.r}</span></td>
+        </tr>
+      </tfoot>
+    </table>
+    <div class="rc-lower">
+      <div class="rc-lower-col">
+        <div class="rc-lower-head">Domains / Rating</div>
+        <table class="rc-lower-table"><tbody>
+          ${[['Punctuality','4'],['Attendance','5'],['Self-Control','4'],['Neatness','4'],['Responsibility','5'],['Diligence','5'],['Attentiveness','4'],['Legibility','5'],['Accuracy','4'],['Sports & Games','3']].map(([k,v])=>
+            `<tr><td style="font-size:9px">${k}</td><td style="text-align:center;font-weight:700;width:28px">${v}</td></tr>`
+          ).join('')}
+        </tbody></table>
+      </div>
+      <div class="rc-lower-col">
+        <div class="rc-lower-head">Grading Keys</div>
+        <div class="rc-keys-head" style="margin-top:4px">Keys to Grading</div>
+        <div class="rc-keys-row"><strong>70% &amp; Above</strong> — A = Distinction</div>
+        <div class="rc-keys-row"><strong>60% – 69%</strong> — B = Credit</div>
+        <div class="rc-keys-row"><strong>50% – 59%</strong> — C = Good</div>
+        <div class="rc-keys-row"><strong>45% – 49%</strong> — D = Fair</div>
+        <div class="rc-keys-row"><strong>40% – 44%</strong> — E = Pass</div>
+        <div class="rc-keys-row"><strong>Below 40%</strong> — F = Fail</div>
+        <div class="rc-keys-head" style="margin-top:5px">Keys to Rating</div>
+        <div class="rc-keys-row">5 = Excellent &nbsp; 4 = Very Good</div>
+        <div class="rc-keys-row">3 = Good &nbsp; 2 = Poor &nbsp; 1 = Very Poor</div>
+      </div>
+      <div class="rc-lower-col">
+        <div class="rc-lower-head">School Bill</div>
+        <div class="rc-bill-row"><span>Tuition Fee</span><span style="border-bottom:1px solid #999;min-width:60px"></span></div>
+        <div class="rc-bill-row"><span>Equipment</span><span style="border-bottom:1px solid #999;min-width:60px"></span></div>
+        <div class="rc-bill-row"><span>Library</span><span style="border-bottom:1px solid #999;min-width:60px"></span></div>
+        <div class="rc-bill-row"><span>Phonics Fee</span><span style="border-bottom:1px solid #999;min-width:60px"></span></div>
+        <div class="rc-bill-row"><span>Games / Sports</span><span style="border-bottom:1px solid #999;min-width:60px"></span></div>
+        <div class="rc-bill-row"><span>P.T.A Fee</span><span style="border-bottom:1px solid #999;min-width:60px"></span></div>
+        ${data.next_term_fee
+          ? `<div class="rc-bill-row"><span>Next Term Fees</span><span style="font-weight:700">₦${Number(data.next_term_fee).toLocaleString()}</span></div>`
+          : `<div class="rc-bill-row"><span>Next Term Fees</span><span style="border-bottom:1px solid #999;min-width:60px"></span></div>`}
+        <div class="rc-bill-row total"><span>TOTAL ₦</span><span>${data.next_term_fee ? Number(data.next_term_fee).toLocaleString() : '—'}</span></div>
+      </div>
+    </div>
+    <div class="rc-footer">
+      <div class="rc-comment-row">
+        <span class="rc-comment-lbl">Form Teacher's Comment:</span>
+        <span class="rc-comment-line">${teacherCmt}</span>
+      </div>
+      <div class="rc-comment-row" style="margin-top:5px">
+        <span class="rc-comment-lbl">Principal's Remark:</span>
+        <span class="rc-comment-line">${adminCmt}</span>
+      </div>
+    </div>
+    ${(data.resumption_date || data.next_term_fee) ? `
+    <div class="rc-next-bar">
+      <div><span class="rc-next-lbl">Closing Date:</span>—</div>
+      ${data.resumption_date ? `<div><span class="rc-next-lbl">Resumption:</span>${new Date(data.resumption_date).toLocaleDateString('en-NG',{day:'numeric',month:'long',year:'numeric'})}</div>` : ''}
+    </div>` : ''}
+    <div class="rc-sig-area">
+      <div class="rc-sig-block" style="text-align:center">
+        <div class="rc-stamp-wrap" style="margin-bottom:4px">
+          <img src="${STAMP_SRC}" class="rc-stamp-img" alt="Official Stamp" onerror="this.style.visibility='hidden'">
+        </div>
+        <span class="rc-sig-val" style="font-size:13px;font-family:'Playfair Display',serif;font-style:italic;color:#002060">Eghosa V Sosa</span>
+        <span class="rc-sig-lbl" style="display:block;margin-top:2px">Name &amp; Signature</span>
+      </div>
+      <div class="rc-sig-block">
+        <span class="rc-sig-lbl">Date</span>
+        <span class="rc-sig-val" style="font-size:10px">${dateStr}</span>
+      </div>
+    </div>
+    <div class="rc-fine-print">
+      Jaasiel Education Centre &middot; AI-Powered Result Management System &middot; Idokpa, Benin City, Edo State
+    </div>
   </div>`;
 }
-</script>
+</script>'/'
 </body>
-</html>
+</html> 

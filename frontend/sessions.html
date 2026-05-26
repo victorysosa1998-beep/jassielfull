@@ -6,7 +6,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="./css/style.css">
 </head>
 <body>
 <div class="page-bg"></div>
@@ -19,17 +19,25 @@
   <header class="topbar">
     <div class="topbar-left">
       <button class="menu-toggle" id="menu-toggle"><i class="fas fa-bars"></i></button>
-      <a href="admin-dashboard.html" class="btn btn-ghost btn-sm" style="padding:6px 12px"><i class="fas fa-arrow-left"></i></a>
       <div>
         <div class="page-title">Sessions &amp; Terms</div>
         <div class="breadcrumb"><a href="admin-dashboard.html">Dashboard</a><span class="sep">/</span><span class="text-gold">Sessions</span></div>
       </div>
     </div>
-    <div class="topbar-right" id="topbar-right">
-      <button class="btn btn-primary btn-sm" onclick="Modal.open('modal-new-session')"><i class="fas fa-plus"></i> New Session</button>
-    </div>
+    <div class="topbar-right" id="topbar-right"></div>
   </header>
   <div class="page-body">
+    <!-- Page actions -->
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px">
+      <div>
+        <div style="font-family:var(--font-display);font-size:1.2rem;font-weight:700">Academic Sessions &amp; Terms</div>
+        <div style="font-size:.83rem;color:var(--text-muted);margin-top:3px">Manage school years and activate terms</div>
+      </div>
+      <button class="btn btn-primary" onclick="Modal.open('modal-new-session')" style="gap:8px">
+        <i class="fas fa-plus"></i> Create New Session
+      </button>
+    </div>
+
     <!-- Current Session Banner -->
     <div class="card card-gold mb-3" id="current-banner">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px">
@@ -41,6 +49,16 @@
         <div style="display:flex;gap:10px;flex-wrap:wrap">
           <button class="btn btn-secondary btn-sm" onclick="confirmAdvanceTerm()"><i class="fas fa-fast-forward"></i> Advance to Next Term</button>
         </div>
+      </div>
+    </div>
+
+    <!-- How-to tip -->
+    <div class="alert alert-info mb-3" id="sessions-tip">
+      <i class="fas fa-circle-info" style="flex-shrink:0"></i>
+      <div>
+        <strong>How to create a new session:</strong> Click the <strong>+ New Session</strong> button at the top right.
+        Enter the year range (e.g. <code style="background:rgba(59,130,246,.15);padding:1px 6px;border-radius:4px">2025/2026</code>).
+        Three terms will be created automatically. Then click <strong>Activate</strong> on a term to make it current.
       </div>
     </div>
 
@@ -75,8 +93,8 @@
   </div>
 </div>
 
-<script src="js/core.js"></script>
-<script src="js/ui.js"></script>
+<script src="./js/core.js"></script>
+<script src="./js/ui.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', async () => {
   await window.__rmsBootstrapReady;
@@ -125,7 +143,7 @@ function renderSessionCard(s) {
       </div>
       <div style="display:flex;gap:8px;align-items:center">
         ${s.is_current?'<span class="badge badge-gold"><i class="fas fa-star"></i> Active</span>':'<span class="badge badge-draft">Completed</span>'}
-        <button class="btn btn-ghost btn-sm" onclick="deleteSession(${s.id})"><i class="fas fa-trash"></i></button>
+        <button class="btn btn-ghost btn-sm" onclick="deleteSession(${s.id},'${s.session_name}')" title="Delete session"><i class="fas fa-trash"></i></button>
       </div>
     </div>
     ${terms.length ? `
@@ -152,21 +170,30 @@ async function createSession(e) {
   setLoading(btn, true);
   try {
     await API.sessions.create({ session_name:document.getElementById('new-session-name').value, start_date:document.getElementById('new-session-start').value||null, end_date:document.getElementById('new-session-end').value||null });
-    Toast.success('Created!', 'Academic session created'); Modal.close('modal-new-session'); loadSessions();
+    Toast.success('Created!', 'Academic session created'); Modal.close('modal-new-session');
+    window.SessionLoader&&window.SessionLoader.clearCache(); loadSessions(); loadCurrentSession();
   } catch(err) { Toast.error('Failed', err.message); setLoading(btn, false); }
 }
 
 async function setCurrentTerm(sid, tid, btn) {
   setLoading(btn, true);
-  try { await API.sessions.update(sid, { current_term_id:tid }); Toast.success('Done','Term activated'); loadSessions(); loadCurrentSession(); }
+  try { await API.sessions.update(sid, { current_term_id:tid }); Toast.success('Done','Term activated'); window.SessionLoader&&window.SessionLoader.clearCache(); loadSessions(); loadCurrentSession(); }
   catch(err) { Toast.error('Failed',err.message); setLoading(btn,false); }
 }
 
 function confirmAdvanceTerm() {
   if (!confirm('Advance to the next term? This will update the active term for the whole school.')) return;
-  API.sessions.advance().then(() => { Toast.success('Advanced','Moved to next term'); loadSessions(); loadCurrentSession(); }).catch(err => Toast.error('Failed',err.message));
+  API.sessions.advance().then(() => { Toast.success('Advanced','Moved to next term'); window.SessionLoader&&window.SessionLoader.clearCache(); loadSessions(); loadCurrentSession(); }).catch(err => Toast.error('Failed',err.message));
 }
-function deleteSession(id) { if (confirm('Delete this session?')) API.sessions.update(id,{deleted:true}).then(()=>loadSessions()).catch(err=>Toast.error('Failed',err.message)); }
+async function deleteSession(id, name) {
+  if (!confirm(`Delete session "${name}" and ALL its results permanently? This cannot be undone.`)) return;
+  try {
+    await API.delete('/sessions/' + id);
+    Toast.success('Deleted', 'Session deleted successfully.');
+    window.SessionLoader && window.SessionLoader.clearCache();
+    loadSessions(); loadCurrentSession();
+  } catch(err) { Toast.error('Failed', err.message); }
+}
 </script>
 </body>
 </html>

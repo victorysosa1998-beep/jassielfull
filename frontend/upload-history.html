@@ -6,7 +6,19 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="./css/style.css">
+<style>
+.score-cell-input{width:58px;background:var(--bg-input);border:1px solid var(--border-light);border-radius:6px;
+  padding:4px 6px;color:var(--text-primary);font-size:.83rem;text-align:center;font-family:var(--font-mono);transition:border-color .15s}
+.score-cell-input:focus{border-color:var(--brand-gold);outline:none}
+.row-changed td{background:rgba(201,151,58,.06)!important}
+.check-dialog{background:var(--bg-card);border:1px solid rgba(201,151,58,.25);border-radius:14px;padding:20px;margin-bottom:16px}
+.check-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-light);gap:10px;flex-wrap:wrap}
+.check-row:last-child{border-bottom:none}
+.check-status-ok{color:var(--success);font-size:.8rem;font-weight:600}
+.check-status-empty{color:var(--warning);font-size:.8rem;font-weight:600}
+.check-status-missing{color:var(--danger);font-size:.8rem;font-weight:600}
+</style>
 </head>
 <body>
 <div class="page-bg"></div>
@@ -19,17 +31,17 @@
   <header class="topbar">
     <div class="topbar-left">
       <button class="menu-toggle" id="menu-toggle"><i class="fas fa-bars"></i></button>
-      <a href="subadmin-dashboard.html" class="btn btn-ghost btn-sm" style="padding:6px 12px"><i class="fas fa-arrow-left"></i></a>
-      <div><div class="page-title">My Uploads</div><div class="breadcrumb"><a href="subadmin-dashboard.html">Dashboard</a><span class="sep">/</span><span class="text-gold">Upload History</span></div></div>
+      <div><div class="page-title">Upload History</div><div class="breadcrumb"><a href="subadmin-dashboard.html">Dashboard</a><span class="sep">/</span><span class="text-gold">Upload History</span></div></div>
     </div>
     <div class="topbar-right" id="topbar-right">
-      <a href="ocr-upload.html" class="btn btn-primary btn-sm"><i class="fas fa-robot"></i> New Upload</a>
+      <a href="manual-entry.html" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> New Upload</a>
     </div>
   </header>
   <div class="page-body">
-    <div class="tabs mb-3">
+    <div class="tabs mb-3" id="status-tabs">
       <div class="tab-btn active" onclick="filterStatus('',this)">All</div>
-      <div class="tab-btn" onclick="filterStatus('pending',this)">Pending</div>
+      <div class="tab-btn" onclick="filterStatus('pending',this)">Draft</div>
+      <div class="tab-btn" onclick="filterStatus('submitted',this)">Submitted</div>
       <div class="tab-btn" onclick="filterStatus('approved',this)">Approved</div>
       <div class="tab-btn" onclick="filterStatus('correction_requested',this)">Corrections</div>
       <div class="tab-btn" onclick="filterStatus('rejected',this)">Rejected</div>
@@ -39,131 +51,437 @@
   </div>
 </div>
 </div>
-<script src="js/core.js"></script>
-<script src="js/ui.js"></script>
+
+<!-- ══ Batch View/Edit Modal ══ -->
+<div class="modal-overlay" id="modal-batch">
+  <div class="modal modal-xl">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="modal-batch-title">Batch Details</div>
+        <div class="modal-subtitle" id="modal-batch-sub" style="color:var(--text-muted);font-size:.82rem;margin-top:3px"></div>
+      </div>
+      <button class="modal-close" onclick="Modal.close('modal-batch')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body" id="modal-batch-body" style="max-height:65vh;overflow-y:auto;padding:20px"></div>
+    <div class="modal-footer" id="modal-batch-footer"></div>
+  </div>
+</div>
+
+<!-- ══ Submit Completeness Check Modal ══ -->
+<div class="modal-overlay" id="modal-check">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title"><i class="fas fa-clipboard-check" style="color:var(--brand-gold);margin-right:8px"></i>Before You Submit</div>
+      <button class="modal-close" onclick="Modal.close('modal-check')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body" id="modal-check-body" style="padding:20px"></div>
+    <div class="modal-footer" id="modal-check-footer"></div>
+  </div>
+</div>
+
+<script src="./js/core.js"></script>
+<script src="./js/ui.js"></script>
 <script>
 let currentStatus = '', currentPage = 1;
+let _currentBatchData = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
   await window.__rmsBootstrapReady;
-  initPage(['sub_admin','admin','super_admin'], 'subadmin');
-  loadUploads(1);
+  initPage(['super_admin','admin','sub_admin'], 'subadmin');
+  loadUploads('', 1);
 });
 
 function filterStatus(status, btn) {
   currentStatus = status; currentPage = 1;
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('#status-tabs .tab-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  loadUploads(1);
+  loadUploads(status, 1);
 }
 
-async function loadUploads(page=1) {
-  currentPage = page;
+async function loadUploads(status, page) {
+  if (page) currentPage = page;
   const container = document.getElementById('uploads-list');
-  showSkeleton(container, 4, '90px', '14px');
+  showSkeleton(container, 4, '110px', '14px');
   try {
-    const data = await API.results.myUploads({ page, per_page:30, status: currentStatus||undefined });
+    const params = { per_page: 20, page: currentPage };
+    if (status) params.status = status;
+    const data = await API.results.myUploads(params);
     const items = data.items || [];
-
     if (!items.length) {
       container.innerHTML = `<div class="card" style="text-align:center;padding:48px;color:var(--text-muted)">
-        <i class="fas fa-inbox" style="font-size:2rem;display:block;margin-bottom:12px;opacity:.4"></i>
-        No uploads found. <a href="manual-entry.html" style="color:var(--brand-gold)">Upload results</a>
+        <i class="fas fa-inbox" style="font-size:2.5rem;display:block;margin-bottom:12px;opacity:.4"></i>
+        No ${status ? status.replace('_',' ') : ''} uploads yet.
+        <br><a href="manual-entry.html" style="color:var(--brand-gold);margin-top:8px;display:inline-block"><i class="fas fa-plus"></i> Upload results</a>
       </div>`;
-      document.getElementById('uploads-pagination').innerHTML = '';
-      return;
+      document.getElementById('uploads-pagination').innerHTML = ''; return;
     }
 
-    // Group by class+term for Submit to Admin button
+    const statusMap   = { pending:'badge-draft', submitted:'badge-pending', approved:'badge-approved',
+      rejected:'badge-rejected', correction_requested:'badge-correction', locked:'badge-locked', published:'badge-gold' };
+    const statusLabel = { pending:'Draft', submitted:'Submitted', approved:'Approved',
+      rejected:'Rejected', correction_requested:'Correction Needed', locked:'Locked', published:'Published' };
+
+    // Group by class+term
     const groups = {};
     for (const b of items) {
-      const key = `${b.class_id||b.class_name}__${b.term_id||b.term_name}`;
+      const key = `${b.class_id}_${b.term_id}`;
       if (!groups[key]) groups[key] = {
         class_name: b.class_name, class_id: b.class_id,
-        term_name:  b.term_name,  term_id:  b.term_id,
-        session_id: b.session_id, batches:  []
+        term_name: b.term_name,   term_id: b.term_id,
+        session_name: b.session_name, session_id: b.session_id,
+        batches: []
       };
       groups[key].batches.push(b);
     }
-
-    const statusMap = {
-      pending:'badge-draft', submitted:'badge-pending', approved:'badge-approved',
-      rejected:'badge-rejected', correction_requested:'badge-correction',
-      locked:'badge-locked', published:'badge-gold'
-    };
 
     container.innerHTML = Object.values(groups).map(group => {
       const allPending   = group.batches.every(b => b.status === 'pending');
       const anyLocked    = group.batches.some(b => ['locked','published'].includes(b.status));
       const anySubmitted = group.batches.some(b => b.status === 'submitted');
-      const anyCorrReq   = group.batches.some(b => b.status === 'correction_requested');
-      const pendingCount = group.batches.filter(b => b.status === 'pending').length;
+      const anyApproved  = group.batches.some(b => b.status === 'approved');
+      const anyEditable  = group.batches.some(b => ['pending','submitted'].includes(b.status));
+      const canSubmit    = group.batches.some(b => b.status === 'pending') && !anyLocked && !anyApproved;
 
       return `<div class="card mb-3">
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px">
           <div>
             <div style="font-weight:700;font-size:1rem">${group.class_name}</div>
-            <div style="font-size:.78rem;color:var(--text-muted)">${group.term_name} · ${group.batches.length} subject(s)</div>
+            <div style="font-size:.78rem;color:var(--text-muted)">${group.session_name||''} · ${group.term_name} · ${group.batches.length} subject(s)</div>
           </div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
             ${anyLocked
-              ? '<span class="badge badge-locked"><i class="fas fa-lock"></i> Locked by Admin — No edits allowed</span>'
-              : anySubmitted && !anyCorrReq
-                ? '<span class="badge badge-pending"><i class="fas fa-paper-plane"></i> Submitted — Awaiting Admin Review</span>'
-                : pendingCount > 0
-                  ? `<button class="btn btn-primary btn-sm" onclick="submitToAdmin(${group.class_id},${group.term_id},${group.session_id},this)">
-                       <i class="fas fa-paper-plane"></i> Submit ${pendingCount} Subject(s) to Admin
-                     </button>`
+              ? '<span class="badge badge-locked"><i class="fas fa-lock"></i> Locked by Admin</span>'
+              : anyApproved
+                ? '<span class="badge badge-approved"><i class="fas fa-check"></i> Approved</span>'
+                : anySubmitted
+                  ? '<span class="badge badge-pending"><i class="fas fa-paper-plane"></i> Awaiting Review</span>'
                   : ''}
+            ${canSubmit
+              ? `<button class="btn btn-primary btn-sm" onclick="checkBeforeSubmit(${group.class_id},${group.term_id},${group.session_id},this)">
+                   <i class="fas fa-paper-plane"></i> Submit to Admin
+                 </button>`
+              : ''}
           </div>
         </div>
         <div class="table-wrapper">
-          <table class="table" style="font-size:.83rem">
+          <table class="table" style="font-size:.85rem">
             <thead><tr>
-              <th>Subject</th><th>Students</th><th>Avg</th><th>Status</th>
-              <th>Uploaded</th><th>Note</th><th>Actions</th>
+              <th>Subject</th>
+              <th style="text-align:center">Students</th>
+              <th style="text-align:center">Avg</th>
+              <th>Status</th>
+              <th>Uploaded</th>
+              <th>Note</th>
+              <th>Action</th>
             </tr></thead>
             <tbody>
-              ${group.batches.map(b => `<tr>
-                <td><strong>${b.subject_name}</strong></td>
-                <td>${b.students||0}</td>
-                <td>${b.avg_score||'—'}</td>
-                <td><span class="badge ${statusMap[b.status]||'badge-draft'}">${b.status.replace('_',' ')}</span></td>
-                <td style="color:var(--text-muted);font-size:.78rem">${Fmt.timeAgo(b.uploaded_at)}</td>
-                <td style="font-size:.78rem;color:${b.status==='correction_requested'?'var(--danger)':'var(--text-muted)'}">
-                  ${b.correction_comment||'—'}
-                </td>
-                <td>
-                  ${b.status==='correction_requested'
-                    ? `<a href="manual-entry.html?batch=${b.id}" class="btn btn-sm btn-warning"><i class="fas fa-pen"></i> Fix</a>`
-                    : b.status==='pending'
-                      ? `<a href="manual-entry.html?batch=${b.id}" class="btn btn-sm btn-ghost"><i class="fas fa-pen"></i> Edit</a>`
-                      : '—'}
-                </td>
-              </tr>`).join('')}
+              ${group.batches.map(b => {
+                const editable = ['pending','submitted'].includes(b.status);
+                return `<tr>
+                  <td><strong>${b.subject_name||'—'}</strong></td>
+                  <td style="text-align:center;font-family:var(--font-mono)">${b.students||0}</td>
+                  <td style="text-align:center;font-family:var(--font-mono)">${b.avg_score!=null?b.avg_score:'—'}</td>
+                  <td><span class="badge ${statusMap[b.status]||'badge-draft'}">${statusLabel[b.status]||b.status}</span></td>
+                  <td style="color:var(--text-muted);font-size:.78rem">${Fmt.timeAgo(b.uploaded_at)}</td>
+                  <td style="color:${b.status==='correction_requested'?'var(--danger)':'var(--text-muted)'};font-size:.78rem;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+                    ${b.correction_comment||b.admin_note||'—'}
+                  </td>
+                  <td style="display:flex;gap:6px;flex-wrap:wrap">
+                    <button class="btn btn-ghost btn-sm" onclick="viewBatch(${b.id},false)">
+                      <i class="fas fa-eye"></i> View
+                    </button>
+                    ${editable
+                      ? `<button class="btn btn-secondary btn-sm" onclick="viewBatch(${b.id},true)">
+                           <i class="fas fa-pencil"></i> Edit
+                         </button>`
+                      : ''}
+                  </td>
+                </tr>`;
+              }).join('')}
             </tbody>
           </table>
         </div>
       </div>`;
     }).join('');
 
-    renderPagination(document.getElementById('uploads-pagination'),
-      { page, total: data.total||items.length, perPage:30, onChange:'loadUploads' });
-
+    renderPagination(document.getElementById('uploads-pagination'), {
+      page: currentPage, total: data.total || items.length, perPage: 20,
+      onChange: `(p)=>loadUploads('${status}',p)`
+    });
   } catch(err) {
-    document.getElementById('uploads-list').innerHTML =
-      `<div class="alert alert-danger"><i class="fas fa-circle-exclamation"></i> ${err.message||'Failed to load'}</div>`;
+    container.innerHTML = `<div class="alert alert-danger"><i class="fas fa-circle-exclamation"></i> ${err.message||'Failed'}</div>`;
   }
 }
 
-async function submitToAdmin(classId, termId, sessionId, btn) {
-  if (!confirm('Submit ALL draft subjects for this class to admin for approval?\n\nYou will not be able to edit them until admin responds.')) return;
+/* ══ View / Edit Batch Modal ══ */
+async function viewBatch(id, forceEdit) {
+  _currentBatchData = null;
+  Modal.open('modal-batch');
+  document.getElementById('modal-batch-body').innerHTML =
+    '<div class="skeleton" style="height:300px;border-radius:12px"></div>';
+  document.getElementById('modal-batch-footer').innerHTML = '';
+  document.getElementById('modal-batch-title').textContent = 'Loading…';
+  document.getElementById('modal-batch-sub').textContent  = '';
+
+  try {
+    const data = await API.results.batchDetail(id);
+    _currentBatchData = data;
+
+    const editable = forceEdit === true || ['pending','submitted'].includes(data.status);
+    const isLocked = ['approved','locked','published'].includes(data.status);
+    const scores   = data.scores || [];
+    const hasBreak = scores.some(s => s.first_test != null || s.second_test != null);
+
+    document.getElementById('modal-batch-title').textContent =
+      `${data.class_name} — ${data.subject_name}`;
+    document.getElementById('modal-batch-sub').textContent =
+      `${data.session_name} · ${data.term_name} · ${scores.length} students · ` +
+      (isLocked ? '🔒 Locked' : editable ? '✏️ Editable' : `Status: ${data.status}`);
+
+    const headerCols = `
+      <th>#</th><th>Student</th>
+      ${hasBreak ? '<th style="text-align:center">1st Test<br><small>/20</small></th>' : ''}
+      ${hasBreak ? '<th style="text-align:center">2nd Test<br><small>/20</small></th>' : ''}
+      <th style="text-align:center">CA<br><small>/40</small></th>
+      <th style="text-align:center">Exam<br><small>/60</small></th>
+      <th style="text-align:center">Total</th>
+      <th style="text-align:center">Grade</th>`;
+
+    const rows = scores.map((s, i) => {
+      const gr = Fmt.grade(s.total_score || 0);
+      const gc = Fmt.gradeColor(gr.g);
+      const badge = `<span style="display:inline-flex;align-items:center;justify-content:center;
+        width:26px;height:26px;border-radius:6px;font-weight:700;font-size:.78rem;
+        background:${gc}22;color:${gc};border:1px solid ${gc}44">${gr.g}</span>`;
+
+      if (editable) {
+        return `<tr id="brow-${i}" data-idx="${i}">
+          <td style="color:var(--text-muted)">${i+1}</td>
+          <td style="font-weight:600;font-size:.85rem">${Security.sanitize(s.full_name||s.student_name||'—')}</td>
+          ${hasBreak ? `<td><input class="score-cell-input" id="bt1-${i}" type="number" min="0" max="20" step="0.5"
+              value="${s.first_test??''}" placeholder="—" oninput="recalcRow(${i},${hasBreak})"></td>` : ''}
+          ${hasBreak ? `<td><input class="score-cell-input" id="bt2-${i}" type="number" min="0" max="20" step="0.5"
+              value="${s.second_test??''}" placeholder="—" oninput="recalcRow(${i},${hasBreak})"></td>` : ''}
+          <td><input class="score-cell-input" id="bca-${i}" type="number" min="0" max="40" step="0.5"
+              value="${s.ca_score??''}" placeholder="—"
+              ${hasBreak ? 'readonly style="opacity:.5;cursor:not-allowed;background:var(--bg-input)"' : `oninput="recalcRow(${i},false)"`}></td>
+          <td><input class="score-cell-input" id="bex-${i}" type="number" min="0" max="60" step="0.5"
+              value="${s.exam_score??''}" placeholder="—" oninput="recalcRow(${i},${hasBreak})"></td>
+          <td style="text-align:center;font-family:var(--font-mono);font-weight:700" id="btot-${i}">${s.total_score??'—'}</td>
+          <td style="text-align:center" id="bgrd-${i}">${badge}</td>
+        </tr>`;
+      } else {
+        return `<tr>
+          <td style="color:var(--text-muted)">${i+1}</td>
+          <td style="font-weight:600;font-size:.85rem">${Security.sanitize(s.full_name||s.student_name||'—')}</td>
+          ${hasBreak ? `<td style="text-align:center;font-family:var(--font-mono)">${s.first_test??'—'}</td>` : ''}
+          ${hasBreak ? `<td style="text-align:center;font-family:var(--font-mono)">${s.second_test??'—'}</td>` : ''}
+          <td style="text-align:center;font-family:var(--font-mono)">${s.ca_score??'—'}</td>
+          <td style="text-align:center;font-family:var(--font-mono)">${s.exam_score??'—'}</td>
+          <td style="text-align:center;font-family:var(--font-mono);font-weight:700">${s.total_score??'—'}</td>
+          <td style="text-align:center">${badge}</td>
+        </tr>`;
+      }
+    }).join('');
+
+    document.getElementById('modal-batch-body').innerHTML = `
+      ${data.admin_note||data.correction_comment
+        ? `<div class="alert alert-warning mb-3">
+             <i class="fas fa-comment"></i>
+             <strong>Admin Note:</strong> ${Security.sanitize(data.admin_note||data.correction_comment)}
+           </div>` : ''}
+      ${editable
+        ? `<div class="ai-card mb-3" style="display:flex;align-items:center;gap:10px;padding:12px 16px">
+             <i class="fas fa-pencil" style="color:var(--brand-gold);font-size:1.1rem"></i>
+             <span style="font-size:.83rem;color:var(--text-secondary)">
+               Edit any score below — totals update live. Click <strong>Save Changes</strong> when done.
+             </span>
+           </div>` : ''}
+      <div style="overflow-x:auto">
+        <table class="table" style="font-size:.84rem" id="batch-edit-table">
+          <thead><tr>${headerCols}</tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+
+    document.getElementById('modal-batch-footer').innerHTML = editable
+      ? `<button class="btn btn-ghost" onclick="Modal.close('modal-batch')">Cancel</button>
+         <button class="btn btn-primary" id="save-batch-btn" onclick="saveBatchEdits(${id})">
+           <i class="fas fa-save"></i> Save Changes
+         </button>`
+      : `<button class="btn btn-ghost" onclick="Modal.close('modal-batch')">Close</button>`;
+
+  } catch(err) {
+    document.getElementById('modal-batch-body').innerHTML =
+      `<div class="alert alert-danger"><i class="fas fa-circle-exclamation"></i> ${err.message}</div>`;
+  }
+}
+
+/* ── Live recalc ── */
+function recalcRow(i, hasBreak) {
+  const t1   = parseFloat(document.getElementById('bt1-'+i)?.value) || 0;
+  const t2   = parseFloat(document.getElementById('bt2-'+i)?.value) || 0;
+  const ca   = hasBreak ? t1 + t2 : (parseFloat(document.getElementById('bca-'+i)?.value) || 0);
+  const exam = parseFloat(document.getElementById('bex-'+i)?.value) || 0;
+  if (hasBreak) { const caEl = document.getElementById('bca-'+i); if (caEl) caEl.value = ca || ''; }
+  const total = ca + exam;
+  const gr = Fmt.grade(total);
+  const gc = Fmt.gradeColor(gr.g);
+  const totEl = document.getElementById('btot-'+i);
+  const grdEl = document.getElementById('bgrd-'+i);
+  if (totEl) totEl.textContent = total || '—';
+  if (grdEl) grdEl.innerHTML = `<span style="display:inline-flex;align-items:center;justify-content:center;
+    width:26px;height:26px;border-radius:6px;font-weight:700;font-size:.78rem;
+    background:${gc}22;color:${gc};border:1px solid ${gc}44">${gr.g}</span>`;
+  const tr = document.getElementById('brow-'+i);
+  if (tr) tr.classList.add('row-changed');
+}
+
+/* ── Save edits ── */
+async function saveBatchEdits(batchId) {
+  const data = _currentBatchData; if (!data) return;
+  const scores   = data.scores || [];
+  const hasBreak = scores.some(s => s.first_test != null || s.second_test != null);
+  const btn = document.getElementById('save-batch-btn');
+  setLoading(btn, true, 'Saving…');
+  try {
+    const updated = scores.map((s, i) => {
+      const t1   = parseFloat(document.getElementById('bt1-'+i)?.value) || null;
+      const t2   = parseFloat(document.getElementById('bt2-'+i)?.value) || null;
+      const exam = parseFloat(document.getElementById('bex-'+i)?.value) || null;
+      const ca   = hasBreak ? ((t1||0)+(t2||0))||null
+                            : parseFloat(document.getElementById('bca-'+i)?.value)||null;
+      return {
+        student_id:  s.student_id || s.id,
+        first_test:  hasBreak ? t1 : null,
+        second_test: hasBreak ? t2 : null,
+        ca_score:    ca,
+        exam_score:  exam,
+        total_score: ((ca||0)+(exam||0)) || null,
+      };
+    }).filter(s => s.student_id);
+
+    await API.results.upload({
+      class_name:  data.class_name,
+      subject_id:  data.subject_id,
+      session_id:  data.session_id,
+      term_id:     data.term_id,
+      source:      'edit',
+      scores:      updated,
+    });
+    Toast.success('Saved!', 'Scores updated. Admin will re-approve if previously submitted.');
+    Modal.close('modal-batch');
+    loadUploads(currentStatus, currentPage);
+  } catch(err) {
+    Toast.error('Save Failed', err.message);
+    setLoading(btn, false);
+  }
+}
+
+/* ══ Completeness check before submit ══ */
+async function checkBeforeSubmit(classId, termId, sessionId, btn) {
+  setLoading(btn, true, 'Checking…');
+  try {
+    /* Get all subjects this class should have */
+    const [subjectsData, uploadsData] = await Promise.all([
+      API.get(`/classes/${classId}/subjects`),
+      API.results.myUploads({ class_id: classId, term_id: termId, session_id: sessionId, per_page: 50 })
+    ]);
+
+    const allSubjects = subjectsData.items || subjectsData || [];
+    const uploaded    = (uploadsData.items || []).filter(b => b.class_id === classId && b.term_id === termId);
+    const uploadedIds = new Set(uploaded.map(b => b.subject_id));
+
+    // Build check rows
+    const rows = allSubjects.map(sub => {
+      const batch = uploaded.find(b => b.subject_id === sub.id);
+      let statusHtml, action = '';
+      if (!batch) {
+        statusHtml = `<span class="check-status-missing"><i class="fas fa-circle-xmark"></i> Not uploaded</span>`;
+        action = `<a href="manual-entry.html?class_id=${classId}&subject_id=${sub.id}" class="btn btn-ghost btn-sm">
+                    <i class="fas fa-upload"></i> Upload
+                  </a>`;
+      } else if (batch.status === 'pending') {
+        statusHtml = `<span class="check-status-empty"><i class="fas fa-clock"></i> Draft — not submitted</span>`;
+        action = `<button class="btn btn-ghost btn-sm" onclick="Modal.close('modal-check');viewBatch(${batch.id},true)">
+                    <i class="fas fa-pencil"></i> Edit
+                  </button>`;
+      } else if (batch.status === 'submitted') {
+        statusHtml = `<span class="check-status-ok"><i class="fas fa-paper-plane"></i> Submitted</span>`;
+      } else if (['approved','locked','published'].includes(batch.status)) {
+        statusHtml = `<span class="check-status-ok"><i class="fas fa-check-circle"></i> ${batch.status}</span>`;
+      } else {
+        statusHtml = `<span class="badge badge-draft">${batch.status}</span>`;
+      }
+      return { sub, batch, statusHtml, action, missing: !batch, isDraft: batch?.status === 'pending' };
+    });
+
+    const missingCount = rows.filter(r => r.missing).length;
+    const draftCount   = rows.filter(r => r.isDraft).length;
+    const allGood      = missingCount === 0 && draftCount === 0;
+
+    document.getElementById('modal-check-body').innerHTML = `
+      ${missingCount > 0 || draftCount > 0
+        ? `<div class="alert alert-warning mb-3">
+             <i class="fas fa-triangle-exclamation"></i>
+             <strong>${missingCount > 0 ? `${missingCount} subject(s) not yet uploaded.` : ''}
+             ${draftCount > 0 ? `${draftCount} subject(s) still in draft.` : ''}</strong>
+             You can still submit what's ready, mark missing subjects as blank, or go back and fill them.
+           </div>`
+        : `<div class="alert alert-success mb-3">
+             <i class="fas fa-check-circle"></i>
+             <strong>All ${rows.length} subjects are ready!</strong> Safe to submit to admin.
+           </div>`}
+      <div class="check-dialog">
+        ${rows.map(r => `
+          <div class="check-row">
+            <div style="font-weight:600;font-size:.88rem;flex:1">${r.sub.name||r.sub.subject_name}</div>
+            <div>${r.statusHtml}</div>
+            <div>${r.action}</div>
+          </div>`).join('')}
+      </div>`;
+
+    document.getElementById('modal-check-footer').innerHTML = `
+      <button class="btn btn-ghost" onclick="Modal.close('modal-check')">
+        <i class="fas fa-arrow-left"></i> Go Back &amp; Edit
+      </button>
+      ${missingCount > 0
+        ? `<button class="btn btn-secondary" onclick="markMissingBlank(${classId},${termId},${sessionId})" id="mark-blank-btn">
+             <i class="fas fa-minus-circle"></i> Mark Missing as Blank
+           </button>` : ''}
+      <button class="btn btn-primary" id="confirm-submit-btn"
+        onclick="doSubmitToAdmin(${classId},${termId},${sessionId})">
+        <i class="fas fa-paper-plane"></i>
+        ${allGood ? 'Submit to Admin' : 'Submit What\'s Ready'}
+      </button>`;
+
+    setLoading(btn, false);
+    Modal.open('modal-check');
+  } catch(err) {
+    setLoading(btn, false);
+    Toast.error('Check failed', err.message);
+  }
+}
+
+async function markMissingBlank(classId, termId, sessionId) {
+  if (!confirm('Mark all missing subjects as "blank" (no results)? This lets you submit without them.')) return;
+  Toast.info('Coming soon', 'This will create empty placeholder batches for missing subjects.');
+  // TODO: POST /results/blank-subject for each missing subject
+}
+
+async function doSubmitToAdmin(classId, termId, sessionId) {
+  const btn = document.getElementById('confirm-submit-btn');
   setLoading(btn, true, 'Submitting…');
   try {
     const data = await API.results.submitClass({ class_id: classId, term_id: termId, session_id: sessionId });
-    Toast.success('Submitted!', data.message);
-    loadUploads(currentPage);
-  } catch(err) { Toast.error('Failed', err.message); setLoading(btn, false); }
+    Toast.success('Submitted!', data.message || 'Results sent to admin for review.');
+    Modal.close('modal-check');
+    loadUploads(currentStatus, 1);
+  } catch(err) {
+    Toast.error('Submit failed', err.message);
+    setLoading(btn, false);
+  }
 }
 </script>
 </body>
+</html>

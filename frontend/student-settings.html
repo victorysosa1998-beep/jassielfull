@@ -6,7 +6,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="./css/style.css">
 </head>
 <body>
 <div class="page-bg"></div>
@@ -19,7 +19,6 @@
   <header class="topbar">
     <div class="topbar-left">
       <button class="menu-toggle" id="menu-toggle"><i class="fas fa-bars"></i></button>
-      <a href="student-dashboard.html" class="btn btn-ghost btn-sm" style="padding:6px 12px"><i class="fas fa-arrow-left"></i></a>
       <div><div class="page-title">Change Password</div><div class="breadcrumb"><a href="student-dashboard.html">Dashboard</a><span class="sep">/</span><span class="text-gold">Change Password</span></div></div>
     </div>
     <div class="topbar-right" id="topbar-right"></div>
@@ -46,11 +45,11 @@
   </div>
 </div>
 </div>
-<script src="js/core.js"></script>
-<script src="js/ui.js"></script>
+<script src="./js/core.js"></script>
+<script src="./js/ui.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded',async()=>{await window.__rmsBootstrapReady;initPage('student','student');});
-async function changePassword(e){e.preventDefault();if(!Validator.validate(document.getElementById('pwd-form')))return;const btn=document.getElementById('change-btn');setLoading(btn,true,'Changing…');try{await API.auth.changePassword({current_password:document.getElementById('pwd-current').value,new_password:document.getElementById('pwd-new').value});Toast.success('Password Changed!','Your new password is active');document.getElementById('pwd-form').reset();}catch(err){Toast.error('Failed',err.message);}setLoading(btn,false);}
+async function changePassword(e){e.preventDefault();if(!Validator.validate(document.getElementById('pwd-form')))return;const btn=document.getElementById('change-btn');setLoading(btn,true,'Changing…');try{await API.students.myChangePwd({current_password:document.getElementById('pwd-current').value,new_password:document.getElementById('pwd-new').value});Toast.success('Password Changed!','Your new password is active');document.getElementById('pwd-form').reset();}catch(err){Toast.error('Failed',err.message);}setLoading(btn,false);}
 </script>
 </body>
 </html>

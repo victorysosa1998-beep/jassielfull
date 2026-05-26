@@ -1,86 +1,476 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=780, initial-scale=0.45, minimum-scale=0.3, maximum-scale=5, user-scalable=yes">
 <title>Report Card — Jaasiel Education Centre</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400&family=Source+Serif+4:ital,wght@0,300;0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="./css/style.css">
 <style>
-/* ── Report Card — matches Jaasiel physical format ── */
-.report-card{background:#fff;color:#111;max-width:800px;margin:0 auto;border:2px solid #0B1A35;font-family:'DM Sans',sans-serif;font-size:.82rem}
-.rc-header{background:#0B1A35;padding:16px 24px;display:flex;align-items:center;gap:16px;position:relative}
-.rc-header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#9A6E20,#C9973A,#E8BA6A,#C9973A,#9A6E20)}
-.rc-logo{width:70px;height:70px;border-radius:50%;object-fit:contain;background:#0B1A35;border:2px solid #C9973A}
-.rc-school{flex:1;text-align:center}
-.rc-school-name{font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:900;color:#C9973A;letter-spacing:.03em}
-.rc-school-addr{font-size:.72rem;color:rgba(255,255,255,.7);margin:3px 0}
-.rc-form-title{font-size:.9rem;font-weight:700;color:#fff;border:1px solid rgba(255,255,255,.4);display:inline-block;padding:3px 20px;border-radius:3px;margin-top:4px}
-.rc-class-type{font-size:1rem;font-weight:900;color:#C9973A;margin-top:2px;text-transform:uppercase;letter-spacing:.08em}
-
-.rc-info-row{background:#f5f5f5;padding:10px 16px;border-bottom:1px solid #ccc;display:grid;grid-template-columns:1fr 1fr;gap:4px 24px}
-.rc-info-row.three{grid-template-columns:1fr 1fr 1fr}
-.rc-field{display:flex;align-items:baseline;gap:6px;font-size:.8rem}
-.rc-field-label{color:#555;font-size:.75rem;white-space:nowrap}
-.rc-field-value{font-weight:700;border-bottom:1px solid #999;flex:1;min-width:60px;padding-bottom:1px}
-
-/* SCORES TABLE */
-.rc-table-wrap{padding:0}
-table.rc-main{width:100%;border-collapse:collapse;font-size:.78rem}
-table.rc-main th,table.rc-main td{border:1px solid #999;padding:4px 6px}
-table.rc-main th{background:#e8e8e8;font-weight:700;text-align:center;font-size:.72rem;text-transform:uppercase}
-table.rc-main td.subj{font-weight:600;text-align:left}
-table.rc-main td.num{text-align:center;font-family:'DM Mono',monospace}
-.grade-A{color:#15803d;font-weight:700} .grade-B{color:#1d4ed8;font-weight:700}
-.grade-C{color:#b45309;font-weight:700} .grade-D{color:#c2410c;font-weight:700}
-.grade-E{color:#dc2626;font-weight:700} .grade-F{color:#dc2626;font-weight:700}
-
-/* AFFECTIVE + PSYCH */
-.rc-sides{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid #ccc}
-.rc-side{padding:8px 12px}
-.rc-side h4{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;background:#e8e8e8;margin:-8px -12px 8px;padding:5px 12px;border-bottom:1px solid #ccc}
-.rc-trait{display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px dotted #ddd;font-size:.75rem}
-.rc-ratings{display:flex;gap:4px}
-.rc-rating-box{width:18px;height:18px;border:1px solid #999;display:flex;align-items:center;justify-content:center;font-size:.62rem;font-weight:700}
-.rc-rating-box.filled{background:#0B1A35;color:#fff;border-color:#0B1A35}
-
-/* SUMMARY */
-.rc-summary{padding:10px 16px;border-top:2px solid #0B1A35;display:grid;grid-template-columns:1fr 1fr;gap:8px 24px;background:#f9f9f9}
-.rc-sum-field{display:flex;gap:6px;font-size:.8rem;align-items:baseline}
-.rc-sum-label{color:#555;font-size:.74rem;white-space:nowrap}
-.rc-sum-value{font-weight:700;border-bottom:1px solid #999;flex:1;padding-bottom:1px}
-
-/* COMMENTS */
-.rc-comments{padding:10px 16px;border-top:1px solid #ccc}
-.rc-comment-row{margin-bottom:8px;font-size:.8rem}
-.rc-comment-label{font-weight:700;font-size:.74rem;margin-bottom:3px;color:#333}
-.rc-comment-line{border-bottom:1px solid #999;min-height:20px;padding-bottom:2px;color:#333}
-
-/* SIGNATURES */
-.rc-sigs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;padding:10px 16px;border-top:1px solid #ccc}
-.rc-sig{text-align:center}
-.rc-sig-line{border-top:2px solid #555;margin-top:28px;padding-top:4px;font-size:.72rem;color:#555}
-
-/* KEYS */
-.rc-keys{padding:8px 16px;background:#f0f0f0;border-top:1px solid #ccc;display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:.7rem}
-.rc-keys-col h5{font-weight:700;font-size:.7rem;text-transform:uppercase;margin-bottom:4px}
-.rc-key-row{display:flex;gap:8px}
-.rc-key-range{color:#555;width:60px}
-.rc-key-grade{font-weight:700;width:20px}
-
-/* Print */
-@media print{
-  body{background:#fff!important}
-  .page-bg,.sidebar,.topbar,.no-print,.sidebar-overlay{display:none!important}
-  .main-content{margin:0!important}
-  .page-body{padding:0!important}
-  .report-card{max-width:100%;border:2px solid #0B1A35}
+.rc-page {
+  background: #fff;
+  color: #1a1a2e;
+  width: 780px;
+  min-width: 780px;
+  margin: 0 auto;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10.5px;
+  border: 3px double #002060;
+  position: relative;
 }
-@media(max-width:600px){
-  .rc-sides{grid-template-columns:1fr}
-  .rc-sigs{grid-template-columns:1fr 1fr}
-  .rc-header{flex-direction:column;text-align:center;padding:12px}
+.rc-page::before {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border: 1px solid rgba(0,32,96,.15);
+  pointer-events: none;
+  z-index: 0;
+}
+.rc-head {
+  padding: 0;
+  border-bottom: 3px solid #002060;
+  position: relative;
+  z-index: 1;
+  background: linear-gradient(180deg, #f0f4ff 0%, #fff 100%);
+}
+.rc-head-top {
+  background: linear-gradient(135deg, #002060 0%, #0a3d8f 50%, #1a56c8 100%);
+  height: 7px;
+}
+.rc-head-inner {
+  display: flex;
+  align-items: center;
+  padding: 12px 18px 10px;
+  gap: 14px;
+}
+.rc-logo {
+  width: 72px;
+  height: 72px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(0,32,96,.2);
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,32,96,.15);
+  background: #fff;
+}
+.rc-logo img { width: 100%; height: 100%; object-fit: contain; }
+.rc-school-info { flex: 1; text-align: center; }
+.rc-school-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 24px;
+  font-weight: 900;
+  color: #002060;
+  letter-spacing: .5px;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+.rc-school-sub { font-size: 9px; color: #444; margin: 2px 0; font-style: italic; }
+.rc-school-contact { font-size: 8.5px; color: #1a56c8; margin: 2px 0; }
+.rc-motto {
+  font-family: 'Playfair Display', serif;
+  font-size: 10px;
+  font-weight: 700;
+  color: #b8860b;
+  margin-top: 3px;
+  text-transform: uppercase;
+  letter-spacing: .8px;
+}
+.rc-photo-box {
+  width: 72px;
+  height: 85px;
+  border: 1.5px solid #002060;
+  background: #f8f9ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .6rem;
+  color: #999;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 4px;
+}
+.rc-photo-box img { width: 100%; height: 100%; object-fit: cover; }
+.rc-title-bar {
+  background: linear-gradient(135deg, #002060, #1a56c8);
+  color: #ffd700;
+  text-align: center;
+  padding: 6px;
+  font-family: 'Playfair Display', serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  border-bottom: 2px solid #002060;
+  position: relative;
+  z-index: 1;
+}
+.rc-title-bar::before, .rc-title-bar::after {
+  content: '✦';
+  position: absolute;
+  top: 50%; transform: translateY(-50%);
+  font-size: 10px;
+  color: rgba(255,215,0,.6);
+}
+.rc-title-bar::before { left: 16px; }
+.rc-title-bar::after  { right: 16px; }
+.rc-info-section {
+  border-bottom: 1.5px solid #002060;
+  position: relative;
+  z-index: 1;
+}
+.rc-row {
+  display: flex;
+  border-bottom: 1px solid #c5d0e8;
+}
+.rc-row:last-child { border-bottom: none; }
+.rc-cell {
+  padding: 3px 8px;
+  border-right: 1px solid #c5d0e8;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 22px;
+  flex: 1;
+}
+.rc-cell:last-child { border-right: none; }
+.rc-cell.double { flex: 2; }
+.rc-cell.triple { flex: 3; }
+.rc-lbl {
+  font-size: 8.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #002060;
+  white-space: nowrap;
+  flex-shrink: 0;
+  letter-spacing: .3px;
+}
+.rc-val {
+  font-family: 'Source Serif 4', serif;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #000;
+  border-bottom: 1px solid #000;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+  min-width: 40px;
+  padding-bottom: 0;
+}
+.rc-stats-row {
+  display: flex;
+  background: linear-gradient(135deg, #f0f4ff, #e8eeff);
+  border-bottom: 2px solid #002060;
+  position: relative;
+  z-index: 1;
+}
+.rc-stat-cell {
+  flex: 1;
+  padding: 5px 8px;
+  border-right: 1px solid #c5d0e8;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.rc-stat-cell:last-child { border-right: none; }
+.rc-stat-val {
+  font-family: 'Playfair Display', serif;
+  font-size: 14px;
+  font-weight: 900;
+  color: #002060;
+}
+.rc-section-head {
+  background: linear-gradient(135deg, #002060, #1a56c8);
+  color: #ffd700;
+  text-align: center;
+  padding: 4px;
+  font-family: 'Playfair Display', serif;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  position: relative;
+  z-index: 1;
+}
+.rc-scores-wrapper {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.rc-scores {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10px;
+  position: relative;
+  z-index: 1;
+}
+.rc-scores thead th {
+  background: linear-gradient(180deg, #1a3a8f, #002060);
+  color: #ffd700;
+  padding: 5px 6px;
+  text-align: center;
+  border: 1px solid #002060;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 8.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .3px;
+}
+.rc-scores thead th.left { text-align: left; }
+.rc-scores tbody td {
+  padding: 3.5px 6px;
+  border: 1px solid #dde3f0;
+  text-align: center;
+  font-size: 10px;
+  vertical-align: middle;
+}
+.rc-scores tbody td.left {
+  text-align: left;
+  font-family: 'Source Serif 4', serif;
+  font-weight: 600;
+  font-size: 10.5px;
+}
+.rc-scores tbody tr:nth-child(even) td { background: #f5f8ff; }
+.rc-scores tbody tr:hover td { background: #eef2ff; }
+.rc-scores tfoot td {
+  background: linear-gradient(135deg, #002060, #1a3a8f);
+  color: #ffd700;
+  font-weight: 700;
+  padding: 5px 6px;
+  border: 1px solid #002060;
+  text-align: center;
+  font-family: 'Playfair Display', serif;
+  font-size: 11px;
+}
+.rc-scores tfoot td.left { text-align: right; color: rgba(255,215,0,.8); font-size: 9px; font-family: 'DM Sans'; text-transform: uppercase; letter-spacing: .5px; }
+.grade-A { color: #15803d; font-weight: 800; }
+.grade-B { color: #1d4ed8; font-weight: 800; }
+.grade-C { color: #b45309; font-weight: 800; }
+.grade-D { color: #ea580c; font-weight: 800; }
+.grade-E { color: #dc2626; font-weight: 800; }
+.grade-F { color: #b91c1c; font-weight: 800; }
+.rc-lower {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr 1fr;
+  border-top: 2px solid #002060;
+  position: relative;
+  z-index: 1;
+}
+.rc-lower-col {
+  border-right: 1px solid #c5d0e8;
+}
+.rc-lower-col:last-child { border-right: none; }
+.rc-lower-head {
+  background: linear-gradient(135deg, #002060, #1a3a8f);
+  color: #ffd700;
+  padding: 4px 8px;
+  font-family: 'Playfair Display', serif;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  text-align: center;
+}
+.rc-lower-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 9.5px;
+}
+.rc-lower-table td {
+  padding: 2.5px 7px;
+  border-bottom: 1px solid #eee;
+}
+.rc-lower-table tr:nth-child(even) td { background: #f8faff; }
+.rc-keys-head {
+  font-size: 8.5px;
+  font-weight: 700;
+  color: #c00;
+  text-align: center;
+  padding: 3px;
+  background: #fff8f8;
+  border-bottom: 1px solid #fcc;
+  font-family: 'DM Sans', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+.rc-keys-row {
+  padding: 2px 7px;
+  font-size: 9px;
+  border-bottom: 1px solid #f0f0f0;
+  line-height: 1.4;
+}
+.rc-bill-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 2.5px 7px;
+  border-bottom: 1px solid #eee;
+  font-size: 9.5px;
+}
+.rc-bill-row.total {
+  font-weight: 700;
+  border-top: 1.5px solid #002060;
+  background: linear-gradient(135deg, #f0f4ff, #e8eeff);
+  font-size: 10px;
+}
+.rc-footer {
+  border-top: 2px solid #002060;
+  padding: 8px 14px;
+  position: relative;
+  z-index: 1;
+  background: #fafbff;
+}
+.rc-comment-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  margin-bottom: 5px;
+}
+.rc-comment-lbl {
+  font-size: 8.5px;
+  font-weight: 700;
+  color: #002060;
+  text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
+  letter-spacing: .3px;
+}
+.rc-comment-line {
+  flex: 1;
+  border-bottom: 1px solid #666;
+  font-family: 'Source Serif 4', serif;
+  font-size: 10px;
+  padding-bottom: 1px;
+  min-width: 80px;
+  line-height: 1.3;
+  color: #222;
+}
+.rc-next-bar {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  padding: 5px 14px;
+  background: linear-gradient(135deg, #fffde7, #fff9c4);
+  border-top: 1px solid #f0c000;
+  border-bottom: 1px solid #f0c000;
+  position: relative;
+  z-index: 1;
+}
+.rc-next-item { display: flex; align-items: center; gap: 5px; }
+.rc-next-lbl { font-size: 8.5px; font-weight: 700; color: #7a6000; text-transform: uppercase; }
+.rc-next-val { font-family: 'Source Serif 4', serif; font-size: 10.5px; font-weight: 700; color: #3a2c00; }
+.rc-sig-area {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 8px 14px 6px;
+  gap: 16px;
+  border-top: 1px solid #c5d0e8;
+  background: #fafbff;
+  position: relative;
+  z-index: 1;
+}
+.rc-sig-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  flex: 1;
+}
+.rc-sig-lbl {
+  font-size: 8px;
+  font-weight: 700;
+  color: #002060;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+}
+.rc-sig-val {
+  font-family: 'Playfair Display', serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: #002060;
+  border-bottom: 1px solid #002060;
+  min-width: 140px;
+  text-align: center;
+  padding-bottom: 1px;
+  font-style: italic;
+}
+.rc-stamp-wrap { width: 100px; height: 100px; flex-shrink: 0; }
+.rc-stamp-img { width: 100px; height: 100px; object-fit: contain; mix-blend-mode: multiply; opacity: .85; }
+.rc-fine-print {
+  text-align: center;
+  padding: 3px;
+  font-size: 7.5px;
+  color: #aaa;
+  border-top: 1px solid #dde;
+  background: #fafbff;
+  position: relative;
+  z-index: 1;
+}
+
+/* Back banner */
+.rc-back-banner {
+  background: linear-gradient(135deg,rgba(201,151,58,.10),rgba(28,53,100,.15));
+  border: 1px solid rgba(201,151,58,.25);
+  border-radius: 12px;
+  padding: 12px 18px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.rc-back-banner-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: .95rem;
+  color: var(--brand-gold);
+}
+.rc-back-banner-sub {
+  font-size: .78rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+@media screen {
+  .rc-page {
+    box-shadow: 0 12px 60px rgba(0,32,96,.2), 0 2px 8px rgba(0,0,0,.08);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+}
+@media (max-width: 820px) {
+  .page-body { padding: 8px 0 16px !important; }
+  .topbar { padding: 0 10px; height: 60px; gap: 8px; }
+  .topbar-left { gap: 6px; }
+  .topbar-right {
+    flex-wrap: nowrap;
+    gap: 4px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    flex-shrink: 0;
+    max-width: calc(100% - 140px);
+  }
+  .topbar-right .filter-select {
+    font-size: .72rem;
+    min-width: 100px;
+    max-width: 130px;
+    flex-shrink: 0;
+  }
+  .breadcrumb { display: none; }
+  .session-pill { display: none; }
+  .page-title { font-size: .85rem; max-width: 130px; }
+}
+@media print {
+  body { background: #fff !important; }
+  .page-bg, .sidebar, .topbar, .toast-container, .page-loader, .btn, .no-print, .rc-back-banner { display: none !important; }
+  .main-content { margin-left: 0 !important; }
+  .rc-page { box-shadow: none; border: 3px double #002060; max-width: 100%; width: 100%; min-width: unset; border-radius: 0; }
+  .page-body { padding: 0 !important; }
 }
 </style>
 </head>
@@ -95,234 +485,423 @@ table.rc-main td.num{text-align:center;font-family:'DM Mono',monospace}
   <header class="topbar no-print">
     <div class="topbar-left">
       <button class="menu-toggle" id="menu-toggle"><i class="fas fa-bars"></i></button>
-      <a href="student-dashboard.html" class="btn btn-ghost btn-sm" style="padding:6px 12px"><i class="fas fa-arrow-left"></i></a>
       <div>
         <div class="page-title">Report Card</div>
-        <div class="breadcrumb"><a href="student-dashboard.html">Dashboard</a><span class="sep">/</span><span class="text-gold">Report Card</span></div>
+        <div class="breadcrumb">
+          <a href="student-dashboard.html">Dashboard</a>
+          <span class="sep">/</span>
+          <a href="my-results.html">Results</a>
+          <span class="sep">/</span>
+          <span class="text-gold">Report Card</span>
+        </div>
       </div>
     </div>
-    <div class="topbar-right no-print" style="gap:8px;flex-wrap:wrap">
-      <select class="filter-select" id="term-sel" onchange="loadCard()" style="font-size:.82rem;max-width:180px">
-        <option value="">Current Term</option>
-      </select>
-      <button class="btn btn-ghost btn-sm" onclick="window.location='transcript.html'"><i class="fas fa-scroll"></i> Transcript</button>
-      <button class="btn btn-primary btn-sm" onclick="window.print()"><i class="fas fa-print"></i> Print</button>
+    <div class="topbar-right no-print" style="display:flex;gap:8px;align-items:center;">
+      <button class="btn btn-secondary btn-sm" id="btn-back" onclick="goBack()" style="display:none">
+        <i class="fas fa-arrow-left"></i> <span class="no-mobile">Back to Results</span>
+      </button>
+      <select class="filter-select" id="session-sel" style="font-size:.82rem;min-width:0;flex:1;max-width:150px"></select>
+      <select class="filter-select" id="term-sel" style="font-size:.82rem;min-width:0;flex:1;max-width:130px"></select>
+      <button class="btn btn-primary btn-sm" onclick="window.print()"><i class="fas fa-print"></i> <span class="no-mobile">Print</span></button>
     </div>
   </header>
-  <div class="page-body">
+  <div class="page-body" style="padding:16px">
+
+    <!-- Back / context banner — shown only when arrived from my-results -->
+    <div class="rc-back-banner no-print" id="back-banner" style="display:none">
+      <div>
+        <div class="rc-back-banner-title" id="banner-title">Report Card</div>
+        <div class="rc-back-banner-sub">Viewing specific term result. Use the dropdowns above to switch, or go back to see all results.</div>
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="goBack()">
+        <i class="fas fa-arrow-left"></i> Back to My Results
+      </button>
+    </div>
+
     <div id="card-container">
-      <div class="report-card"><div style="padding:60px;text-align:center;color:#999"><div style="font-size:2rem;margin-bottom:12px">🎓</div>Loading report card…</div></div>
+      <div class="rc-page" style="padding:40px;text-align:center;color:#666"><div style="font-size:2rem;margin-bottom:12px">🎓</div>Loading report card…</div>
     </div>
   </div>
 </div>
 </div>
-<script src="js/core.js"></script>
-<script src="js/ui.js"></script>
+
+<script src="./js/core.js"></script>
+<script src="./js/ui.js"></script>
 <script>
+const LOGO_SRC  = './images/logo.png';
+const STAMP_SRC = 'images/schoolstamp.png';
+
+/* ── Read URL params (set when navigating from my-results.html) ── */
+const _urlParams    = new URLSearchParams(window.location.search);
+const _paramSession = _urlParams.get('session_id');
+const _paramTerm    = _urlParams.get('term_id');
+
+/* ── Back navigation ── */
+function goBack() {
+  if (document.referrer && document.referrer.includes('my-results')) {
+    history.back();
+  } else {
+    window.location.href = 'my-results.html';
+  }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   await window.__rmsBootstrapReady;
   initPage('student', 'student');
-  await loadTermOptions();
+
+  /* Show back button + banner only when URL has session/term params */
+  if (_paramSession || _paramTerm) {
+    const backBtn = document.getElementById('btn-back');
+    if (backBtn) backBtn.style.display = '';
+    const banner = document.getElementById('back-banner');
+    if (banner) banner.style.display = '';
+  }
+
+  await loadSessions();
   loadCard();
 });
 
-async function loadTermOptions() {
+/* ── Populate session + term dropdowns ── */
+async function loadSessions() {
   try {
-    const data = await API.sessions.list();
-    const sel = document.getElementById('term-sel');
-    sel.innerHTML = '<option value="">Current Term</option>';
-    (data.items||[]).forEach(s => {
-      (s.terms||[]).forEach(t => {
-        const o = document.createElement('option');
-        o.value = `${s.id}_${t.id}`;
-        o.textContent = `${s.session_name} — ${t.term_name}`;
-        sel.appendChild(o);
-      });
+    const data = await API.students.mySessions();
+    const sessions = data.items || [];
+    const sessSel  = document.getElementById('session-sel');
+    const termSel  = document.getElementById('term-sel');
+
+    sessSel.innerHTML = '<option value="">All Sessions</option>';
+    sessions.forEach(s => {
+      const o = document.createElement('option');
+      o.value = s.id; o.textContent = s.session_name;
+      if (s.is_current) o.selected = true;
+      sessSel.appendChild(o);
     });
-  } catch {}
+
+    const _populateTerms = (sid) => {
+      termSel.innerHTML = '<option value="">All Terms</option>';
+      const sess = sessions.find(s => String(s.id) === String(sid));
+      if (sess && sess.terms) {
+        sess.terms.forEach(t => {
+          const o = document.createElement('option');
+          o.value = t.id; o.textContent = t.term_name;
+          if (t.is_current) o.selected = true;
+          termSel.appendChild(o);
+        });
+      }
+    };
+
+    /* If URL params exist, force-select them */
+    if (_paramSession) {
+      sessSel.value = _paramSession;
+    }
+    _populateTerms(sessSel.value);
+    if (_paramTerm) {
+      termSel.value = _paramTerm;
+    }
+
+    /* Update banner title once we know the session+term names */
+    if (_paramSession || _paramTerm) {
+      const selOpt  = sessSel.options[sessSel.selectedIndex];
+      const termOpt = termSel.options[termSel.selectedIndex];
+      const sName   = selOpt  ? selOpt.textContent  : '';
+      const tName   = termOpt ? termOpt.textContent  : '';
+      const bannerTitle = document.getElementById('banner-title');
+      if (bannerTitle && (sName || tName)) {
+        bannerTitle.textContent = [tName, sName].filter(Boolean).join(' — ');
+      }
+    }
+
+    sessSel.addEventListener('change', () => {
+      _populateTerms(sessSel.value);
+      loadCard();
+    });
+    termSel.addEventListener('change', () => loadCard());
+
+  } catch(e) {
+    const s = document.getElementById('session-sel');
+    if (s) s.innerHTML = '<option value="">Current Session</option>';
+  }
 }
 
+/* ── Load and render the report card ── */
 async function loadCard() {
   const container = document.getElementById('card-container');
-  container.innerHTML = '<div class="report-card"><div style="padding:60px;text-align:center;color:#999"><div class="loader-ring" style="margin:0 auto;width:32px;height:32px;border-width:3px"></div></div></div>';
+  container.innerHTML = '<div class="rc-page" style="padding:40px;text-align:center;color:#666"><div style="font-size:2rem;margin-bottom:12px">🎓</div>Loading…</div>';
   try {
-    const sel = document.getElementById('term-sel').value;
     const params = {};
-    if (sel) {
-      const [sid, tid] = sel.split('_');
-      params.session_id = sid;
+    const sid = document.getElementById('session-sel').value;
+    const tid = document.getElementById('term-sel').value;
+    if (sid) params.session_id = sid;
+    if (tid) params.term_id    = tid;
+    const data    = await API.students.myResults(params);
+    const results = data.results || [];
+    if (!results.length) {
+      container.innerHTML = `<div class="rc-page" style="padding:60px;text-align:center;color:#666">
+        <div style="font-size:3rem;margin-bottom:16px">📭</div>
+        <div style="font-size:1.1rem;font-weight:700;color:#002060;margin-bottom:8px">No Results Available Yet</div>
+        <div style="font-size:.85rem;color:#888">Results for the selected session/term have not been published yet.<br>Please select a different session/term or check back later.</div>
+        <button onclick="goBack()" style="margin-top:20px;padding:10px 20px;border-radius:8px;border:1.5px solid #002060;background:#fff;color:#002060;font-weight:700;cursor:pointer;font-family:inherit">
+          <i class="fas fa-arrow-left" style="margin-right:6px"></i>Back to My Results
+        </button>
+      </div>`;
+      return;
     }
-    const [studentData, resultData] = await Promise.all([
-      API.students.myProfile(),
-      API.students.myResults(params)
-    ]);
-    renderCard(studentData, resultData, resultData.results || []);
-  } catch(err) {
-    container.innerHTML = `<div class="report-card"><div style="padding:40px;text-align:center;color:#c00"><i class="fas fa-exclamation-circle"></i> ${err.message||'Failed to load. Please try again.'}</div></div>`;
+    renderCard(data, results);
+  } catch(e) {
+    container.innerHTML = `<div class="rc-page" style="padding:60px;text-align:center;color:#666">
+      <div style="font-size:3rem;margin-bottom:16px">📭</div>
+      <div style="font-size:1.1rem;font-weight:700;color:#002060;margin-bottom:8px">No Results Available Yet</div>
+      <div style="font-size:.85rem;color:#888">Results for the selected session/term have not been published yet.<br>Please check back later or contact your school admin.</div>
+      <button onclick="goBack()" style="margin-top:20px;padding:10px 20px;border-radius:8px;border:1.5px solid #002060;background:#fff;color:#002060;font-weight:700;cursor:pointer;font-family:inherit">
+        <i class="fas fa-arrow-left" style="margin-right:6px"></i>Back to My Results
+      </button>
+    </div>`;
   }
 }
 
-function renderCard(student, meta, results) {
-  const totals  = results.map(r => r.total_score || 0);
-  const totalScore = totals.reduce((a,b) => a+b, 0);
-  const avg     = totals.length ? totalScore / totals.length : 0;
-  const avgGr   = Fmt.grade(avg);
-  const isSSClass = (student.class_name||'').toUpperCase().startsWith('SS');
-  const passResult = avg >= 40 ? 'PASS' : 'FAIL';
+/* ── Grade helper ── */
+function gradeInfo(score) {
+  const s = parseFloat(score);
+  if (s >= 70) return {g:'A', r:'Distinction', c:'grade-A'};
+  if (s >= 60) return {g:'B', r:'Credit',      c:'grade-B'};
+  if (s >= 50) return {g:'C', r:'Good',        c:'grade-C'};
+  if (s >= 45) return {g:'D', r:'Fair',        c:'grade-D'};
+  if (s >= 40) return {g:'E', r:'Pass',        c:'grade-E'};
+  return              {g:'F', r:'Fail',        c:'grade-F'};
+}
 
-  // Affective domain ratings (from results or defaults)
-  const affective = [
-    'PUNCTUALITY','CLASS ATTENDANCE','SENSE OF RESPONSIBILITY',
-    'HONESTY','ATTENTIVENESS','LEADERSHIP','OBEDIENCE','PARTICIPATION AT WORK'
-  ];
-  const psychomotor = ['HANDWRITING','FLUENCY','GAMES AND SPORT','INTELLIGENCE QUOTIENT'];
-  const ratings = [5,4,3,2,1];
+/* ── Subject total computation ── */
+function computeSubjectTotal(r) {
+  const hasExam  = r.exam_score  != null && r.exam_score  !== '';
+  const hasFirst = r.first_test  != null && r.first_test  !== '';
+  const hasSec   = r.second_test != null && r.second_test !== '';
+  const hasCA    = r.ca_score    != null && r.ca_score    !== '';
+  const hasTotal = r.total_score != null && r.total_score !== '';
 
-  function ratingRow(trait, score=4) {
-    return `<div class="rc-trait">
-      <span>${trait}</span>
-      <div class="rc-ratings">
-        ${ratings.map(r => `<div class="rc-rating-box ${r===score?'filled':''}">${r}</div>`).join('')}
-      </div>
-    </div>`;
+  if (hasTotal) return parseFloat(r.total_score);
+  if (!hasExam) return null;
+
+  const exam = parseFloat(r.exam_score) || 0;
+
+  if (hasFirst || hasSec) {
+    const t1 = hasFirst ? (parseFloat(r.first_test)  || 0) : 0;
+    const t2 = hasSec   ? (parseFloat(r.second_test) || 0) : 0;
+    return t1 + t2 + exam;
   }
 
+  if (hasCA) return (parseFloat(r.ca_score) || 0) + exam;
+
+  return exam;
+}
+
+/* ── Render the full report card HTML ── */
+function renderCard(data, results) {
+  if (!results || !results.length) results = data.results || [];
+
+  const scored       = results.filter(r => computeSubjectTotal(r) !== null);
+  const subjectTotals= scored.map(r => computeSubjectTotal(r));
+  const overallTotal = subjectTotals.reduce((a,b) => a + b, 0);
+  const scoredCount  = scored.length;
+  const obtainable   = results.length * 100;
+  const avg          = scoredCount ? overallTotal / scoredCount : 0;
+
+  const timesOpen  = results.length ? Math.max(...results.map(r => r.attendance || 0)) : 0;
+  const teacherCmt = results.find(r => r.teacher_comment)?.teacher_comment || 'Eager to learn and always ready to improve. Keep up the good work!';
+  const adminCmt   = results.find(r => r.admin_comment)?.admin_comment   || 'Good performance. Aim higher next term!';
+  const hasBreak   = scored.some(r =>
+    (r.first_test  != null && r.first_test  !== '') ||
+    (r.second_test != null && r.second_test !== '')
+  );
+  const gl      = gradeInfo(avg);
+  const today   = new Date();
+  const dateStr = today.toLocaleDateString('en-NG', {day:'2-digit', month:'long', year:'numeric'});
+
   document.getElementById('card-container').innerHTML = `
-  <div class="report-card">
-    <!-- HEADER -->
-    <div class="rc-header">
-      <img class="rc-logo" src="images/logo.png" alt="Jaasiel Logo" onerror="this.style.display='none'">
-      <div class="rc-school">
-        <div class="rc-school-name">JAASIEL EDUCATION CENTRE</div>
-        <div class="rc-school-addr">By Oxygen House, Off Ovbieko Rod, Idokpa, Benin City</div>
-        <div class="rc-form-title">INDIVIDUAL STUDENT ASSESSMENT FORM</div>
-        <div class="rc-class-type">${isSSClass ? 'SENIOR SECONDARY CLASS' : 'BASIC CLASS'}</div>
-      </div>
-      <img class="rc-logo" src="images/logo.png" alt="" onerror="this.style.display='none'">
-    </div>
-
-    <!-- TERM & YEAR -->
-    <div class="rc-info-row three">
-      <div class="rc-field"><span class="rc-field-label">TERM:</span><span class="rc-field-value">${meta.term_name||'—'}</span></div>
-      <div class="rc-field"><span class="rc-field-label">EXAMINATION RESULT</span><span class="rc-field-value"></span></div>
-      <div class="rc-field"><span class="rc-field-label">YEAR:</span><span class="rc-field-value">${(meta.session_name||'—').split('/')[0]}</span></div>
-    </div>
-    <div class="rc-info-row three">
-      <div class="rc-field"><span class="rc-field-label">NAME:</span><span class="rc-field-value">${student.full_name||'—'}</span></div>
-      <div class="rc-field"><span class="rc-field-label">SEX:</span><span class="rc-field-value">${(student.gender||'').charAt(0).toUpperCase()}</span></div>
-      <div class="rc-field"><span class="rc-field-label">CLASS:</span><span class="rc-field-value">${student.class_name||'—'}</span></div>
-    </div>
-    <div class="rc-info-row three">
-      <div class="rc-field"><span class="rc-field-label">ATTENDANCE:</span><span class="rc-field-value">—</span></div>
-      <div class="rc-field"><span class="rc-field-label">AGE:</span><span class="rc-field-value">—</span></div>
-      <div class="rc-field"><span class="rc-field-label">NO. IN CLASS:</span><span class="rc-field-value">${meta.total_students||'—'}</span></div>
-    </div>
-    <div class="rc-info-row">
-      <div class="rc-field"><span class="rc-field-label">NO. OF TIMES SCHOOL OPENED:</span><span class="rc-field-value">—</span></div>
-      <div class="rc-field"><span class="rc-field-label">NO. OF TIMES ABSENT:</span><span class="rc-field-value">—</span></div>
-    </div>
-
-    <!-- SCORES TABLE -->
-    <div class="rc-table-wrap">
-      <table class="rc-main">
-        <thead>
-          <tr>
-            <th rowspan="2" style="width:30%">SUBJECTS</th>
-            <th colspan="2">TEST RATIO</th>
-            <th rowspan="2">EX AM<br>60%</th>
-            <th rowspan="2">TOTAL SCORE<br>100%</th>
-            <th rowspan="2">FINAL GRADE</th>
-            <th rowspan="2">SIG N.</th>
-            <th rowspan="2" style="width:22%;font-size:.65rem">AFFECTIVE DOMAIN<br>(BEHAVIOUR)<br>RATINGS</th>
-          </tr>
-          <tr>
-            <th>1ST<br>20%</th>
-            <th>2ND<br>20%</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${results.map((r, i) => {
-            const gr = Fmt.grade(r.total_score||0);
-            const ca1 = r.ca_score != null ? Math.round(r.ca_score/2) : '—';
-            const ca2 = r.ca_score != null ? Math.ceil(r.ca_score/2) : '—';
-            const affRow = i < affective.length
-              ? `<div class="rc-trait" style="border-bottom:1px dotted #ddd;padding:2px 0;font-size:.68rem;display:flex;justify-content:space-between">
-                  <span>${affective[i]}</span>
-                  <div style="display:flex;gap:2px">${ratings.map(rv=>`<div style="width:14px;height:14px;border:1px solid #999;display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700;${rv===4?'background:#0B1A35;color:#fff;border-color:#0B1A35':''}">${rv}</div>`).join('')}</div>
-                </div>`
-              : '';
-            return `<tr>
-              <td class="subj">${r.subject_name||'—'}</td>
-              <td class="num">${ca1}</td>
-              <td class="num">${ca2}</td>
-              <td class="num">${r.exam_score??'—'}</td>
-              <td class="num" style="font-weight:700">${r.total_score??'—'}</td>
-              <td class="num grade-${gr.g}">${gr.g}</td>
-              <td class="num"></td>
-              <td style="font-size:.68rem;padding:2px 4px">${affRow}</td>
-            </tr>`;
-          }).join('')}
-          <tr style="background:#e8e8e8;font-weight:700">
-            <td class="subj">TOTAL</td>
-            <td class="num">—</td>
-            <td class="num">—</td>
-            <td class="num">—</td>
-            <td class="num" style="font-size:.9rem">${Math.round(totalScore)}</td>
-            <td class="num grade-${avgGr.g}">${avgGr.g}</td>
-            <td class="num"></td>
-            <td></td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- PSYCHOMOTOR -->
-    <div class="rc-sides">
-      <div class="rc-side">
-        <h4>Psychomotor Domain (Skills/Activities)</h4>
-        ${psychomotor.map(t => ratingRow(t,4)).join('')}
-      </div>
-      <div class="rc-side" style="border-left:1px solid #ccc">
-        <h4>Rating Scale</h4>
-        <div style="font-size:.75rem">5 = Excellent · 4 = Good · 3 = Fair · 2 = Poor · 1 = Very Poor</div>
-        <div style="margin-top:10px;font-size:.75rem">
-          <strong>Grading:</strong><br>
-          80–100 = A+ (Excellent)<br>
-          70–79 = A (Credit)<br>
-          60–69 = B (Very Good)<br>
-          50–59 = C (Good)<br>
-          40–49 = D (Fair)<br>
-          00–39 = E (Fail)
+  <div class="rc-page">
+    <div class="rc-head-top"></div>
+    <div class="rc-head">
+      <div class="rc-head-inner">
+        <div class="rc-logo"><img src="${LOGO_SRC}" alt="Jaasiel Logo"></div>
+        <div class="rc-school-info">
+          <div class="rc-school-name">Jaasiel Education Centre</div>
+          <div class="rc-school-sub">Idokpa, Benin City, Edo State, Nigeria</div>
+          <div class="rc-school-contact">📧 admin@jaasiel.edu.ng &nbsp;|&nbsp; 📞 +234 703 630 4408</div>
+          <div class="rc-motto">✦ Adequate Knowledge is a Virtue ✦</div>
+        </div>
+        <div class="rc-photo-box">
+          ${data.photo_url
+            ? `<img src="${data.photo_url.startsWith('http')||data.photo_url.startsWith('/') ? data.photo_url : '/uploads/'+data.photo_url}" alt="Student Photo" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+            : ''}
+          <div style="text-align:center;padding:4px;font-size:8px;color:#999;line-height:1.4;${data.photo_url?'display:none':''}">PASSPORT<br>PHOTO</div>
         </div>
       </div>
     </div>
 
-    <!-- SUMMARY -->
-    <div class="rc-summary">
-      <div class="rc-sum-field"><span class="rc-sum-label">AVERAGE PERCENTAGE:</span><span class="rc-sum-value">${avg.toFixed(1)}%</span></div>
-      <div class="rc-sum-field"><span class="rc-sum-label">TOTAL SCORE:</span><span class="rc-sum-value">${Math.round(totalScore)}&nbsp;&nbsp;OUT OF: ${results.length * 100}</span></div>
-      <div class="rc-sum-field"><span class="rc-sum-label">RESULT (Pass/Fail):</span><span class="rc-sum-value" style="color:${passResult==='PASS'?'#15803d':'#dc2626'}">${passResult}</span></div>
-      <div class="rc-sum-field"><span class="rc-sum-label">POSITION:</span><span class="rc-sum-value">${isSSClass ? 'N/A (SS Class)' : (meta.position ? Fmt.ordinal(meta.position) + ' of ' + (meta.total_students||'—') : '—')}</span></div>
-    </div>
+    <div class="rc-title-bar">${data.term_name || 'Term'} Report Sheet &mdash; Academic Session ${data.session_name || ''}</div>
 
-    <!-- COMMENTS -->
-    <div class="rc-comments">
-      <div class="rc-comment-row"><div class="rc-comment-label">CLASS TEACHER'S REPORT:</div><div class="rc-comment-line">&nbsp;</div></div>
-      <div class="rc-comment-row"><div class="rc-comment-label">PUPIL'S CONDUCT:</div><div class="rc-comment-line">&nbsp;</div></div>
-    </div>
-
-    <!-- SIGNATURES -->
-    <div class="rc-sigs">
-      <div class="rc-sig"><div class="rc-sig-line">Class Teacher's Signature</div></div>
-      <div class="rc-sig">
-        <img src="images/logo.png" style="width:50px;height:50px;border-radius:50%;object-fit:contain" alt="" onerror="this.style.display='none'">
-        <div class="rc-sig-line">Official Stamp</div>
+    <div class="rc-info-section">
+      <div class="rc-row">
+        <div class="rc-cell triple"><span class="rc-lbl">Name:</span><span class="rc-val">${data.full_name||'—'}</span></div>
+        <div class="rc-cell"><span class="rc-lbl">Class:</span><span class="rc-val">${data.class_name||'—'}</span></div>
+        <div class="rc-cell"><span class="rc-lbl">Gender:</span><span class="rc-val" style="text-transform:capitalize">${data.gender||'—'}</span></div>
+        <div class="rc-cell"><span class="rc-lbl">Term:</span><span class="rc-val">${(data.term_name||'').split(' ')[0]||'—'}</span></div>
       </div>
-      <div class="rc-sig"><div class="rc-sig-line">Principal's Signature</div></div>
+      <div class="rc-row">
+        <div class="rc-cell double"><span class="rc-lbl">Session:</span><span class="rc-val">${data.session_name||'—'}</span></div>
+        <div class="rc-cell"><span class="rc-lbl">No. in Class:</span><span class="rc-val">${data.total_students||'—'}</span></div>
+        <div class="rc-cell double"><span class="rc-lbl">Date of Birth:</span><span class="rc-val">${data.date_of_birth ? new Date(data.date_of_birth).toLocaleDateString('en-GB',{day:'2-digit',month:'2-digit',year:'numeric'}) : '—'}</span></div>
+        <div class="rc-cell"><span class="rc-lbl">Age:</span><span class="rc-val">${data.age != null ? data.age + ' yrs' : '—'}</span></div>
+        <div class="rc-cell"><span class="rc-lbl">Student ID:</span><span class="rc-val" style="font-family:monospace">${data.student_id||'—'}</span></div>
+      </div>
+      <div class="rc-row">
+        <div class="rc-cell double"><span class="rc-lbl">No. of Times School Opened:</span><span class="rc-val">${timesOpen||'—'}</span></div>
+        <div class="rc-cell double"><span class="rc-lbl">No. of Times Present:</span><span class="rc-val">${timesOpen||'—'}</span></div>
+        <div class="rc-cell double"><span class="rc-lbl">No. of Times Absent:</span><span class="rc-val"></span></div>
+      </div>
     </div>
 
-    <div style="padding:8px 16px;border-top:1px solid #ccc;text-align:center;font-size:.72rem;color:#777;background:#f9f9f9">
-      SCHOOL MANAGEMENT REPORT: &nbsp;&nbsp; RESUMPTION DATE: ___________________
+    <div class="rc-stats-row">
+      <div class="rc-stat-cell"><span class="rc-lbl">Total Score:</span><span class="rc-stat-val">${overallTotal} / ${obtainable}</span></div>
+      <div class="rc-stat-cell"><span class="rc-lbl">Average %:</span><span class="rc-stat-val">${avg.toFixed(1)}%</span></div>
+      <div class="rc-stat-cell"><span class="rc-lbl">Subjects Scored:</span><span class="rc-stat-val">${scoredCount}</span></div>
+      <div class="rc-stat-cell"><span class="rc-lbl">Position:</span><span class="rc-stat-val">${Fmt.ordinal(data.position||'—')}</span></div>
+      <div class="rc-stat-cell"><span class="rc-lbl">Grade:</span><span class="rc-stat-val ${gl.c}">${gl.g}</span></div>
+    </div>
+
+    <div class="rc-section-head">Student's Academic Performance</div>
+    <div class="rc-scores-wrapper">
+    <table class="rc-scores">
+      <thead>
+        <tr>
+          <th class="left" style="width:150px">Subject</th>
+          ${hasBreak ? '<th>1st Test<br><span style="font-weight:400;opacity:.8">/20</span></th><th>2nd Test<br><span style="font-weight:400;opacity:.8">/20</span></th>' : ''}
+          <th>Assignment<br><span style="font-weight:400;opacity:.8">/40</span></th>
+          <th>Exam<br><span style="font-weight:400;opacity:.8">/60</span></th>
+          <th>Total<br><span style="font-weight:400;opacity:.8">/100</span></th>
+          <th>Grade</th>
+          <th>Remarks</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${scored.map((r, idx) => {
+          const t1    = (r.first_test  != null && r.first_test  !== '') ? parseFloat(r.first_test)  : null;
+          const t2    = (r.second_test != null && r.second_test !== '') ? parseFloat(r.second_test) : null;
+          const ca    = (r.ca_score    != null && r.ca_score    !== '') ? parseFloat(r.ca_score)    : null;
+          const exam  = (r.exam_score  != null && r.exam_score  !== '') ? parseFloat(r.exam_score)  : null;
+          const total = subjectTotals[idx];
+          const gi    = gradeInfo(total);
+          const showT1  = hasBreak ? (t1   != null ? t1   : '—') : null;
+          const showT2  = hasBreak ? (t2   != null ? t2   : '—') : null;
+          const showCA  = (t1 != null || t2 != null)
+                           ? ((t1||0) + (t2||0))
+                           : (ca != null ? ca : '—');
+          return `<tr>
+            <td class="left">${r.subject_name||'—'}</td>
+            ${hasBreak ? `<td>${showT1}</td><td>${showT2}</td>` : ''}
+            <td>${showCA}</td>
+            <td>${exam != null ? exam : '—'}</td>
+            <td style="font-weight:700;font-size:11px">${total != null ? total : '—'}</td>
+            <td><span class="${gi.c}">${gi.g}</span></td>
+            <td style="font-family:'Source Serif 4',serif;font-weight:600;font-size:10px"><span class="${gi.c}">${gi.r}</span></td>
+          </tr>`;
+        }).join('')}
+        ${results.length > scored.length ? `
+        <tr style="opacity:.45;font-style:italic">
+          <td class="left" colspan="${hasBreak ? 7 : 5}" style="font-size:9px;color:#888;text-align:center">
+            ${results.length - scored.length} subject(s) with no entries not shown
+          </td>
+        </tr>` : ''}
+      </tbody>
+      <tfoot>
+        <tr>
+          <td class="left" colspan="${hasBreak ? 4 : 2}" style="font-size:8.5px">
+            Total: ${overallTotal} ÷ ${scoredCount} subjects = ${avg.toFixed(1)}%
+          </td>
+          <td>${overallTotal}</td>
+          <td><span class="${gl.c}">${gl.g}</span></td>
+          <td><span class="${gl.c}">${gl.r}</span></td>
+        </tr>
+      </tfoot>
+    </table>
+    </div>
+
+    <div class="rc-lower">
+      <div class="rc-lower-col">
+        <div class="rc-lower-head">Domains / Rating</div>
+        <table class="rc-lower-table">
+          <tbody>
+            ${[['Punctuality','4'],['Attendance','5'],['Self-Control','4'],['Neatness','4'],['Responsibility','5'],['Diligence','5'],['Attentiveness','4'],['Legibility','5'],['Accuracy','4'],['Sports & Games','3']].map(([k,v])=>`
+            <tr><td style="font-size:9px">${k}</td><td style="text-align:center;font-weight:700;width:28px;font-family:'Source Serif 4',serif">${v}</td></tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div class="rc-lower-col">
+        <div class="rc-lower-head">Grading Keys</div>
+        <div class="rc-keys-head" style="margin-top:4px">Keys to Grading</div>
+        <div class="rc-keys-row"><strong>70% &amp; Above</strong> — A = Distinction</div>
+        <div class="rc-keys-row"><strong>60% – 69%</strong> — B = Credit</div>
+        <div class="rc-keys-row"><strong>50% – 59%</strong> — C = Good</div>
+        <div class="rc-keys-row"><strong>45% – 49%</strong> — D = Fair</div>
+        <div class="rc-keys-row"><strong>40% – 44%</strong> — E = Pass</div>
+        <div class="rc-keys-row"><strong>Below 40%</strong> — F = Fail</div>
+        <div class="rc-keys-head" style="margin-top:5px">Keys to Rating</div>
+        <div class="rc-keys-row">5 = Excellent &nbsp; 4 = Very Good</div>
+        <div class="rc-keys-row">3 = Good &nbsp; 2 = Poor &nbsp; 1 = Very Poor</div>
+      </div>
+      <div class="rc-lower-col">
+        <div class="rc-lower-head">School Bill</div>
+        <div class="rc-bill-row"><span>Tuition Fee</span><span style="border-bottom:1px solid #999;min-width:60px;text-align:right"></span></div>
+        <div class="rc-bill-row"><span>Equipment</span><span style="border-bottom:1px solid #999;min-width:60px;text-align:right"></span></div>
+        <div class="rc-bill-row"><span>Library</span><span style="border-bottom:1px solid #999;min-width:60px;text-align:right"></span></div>
+        <div class="rc-bill-row"><span>Phonics Fee</span><span style="border-bottom:1px solid #999;min-width:60px;text-align:right"></span></div>
+        <div class="rc-bill-row"><span>Games / Sports</span><span style="border-bottom:1px solid #999;min-width:60px;text-align:right"></span></div>
+        <div class="rc-bill-row"><span>P.T.A Fee</span><span style="border-bottom:1px solid #999;min-width:60px;text-align:right"></span></div>
+        ${data.next_term_fee
+          ? `<div class="rc-bill-row"><span>Next Term Fees</span><span style="font-weight:700">₦${Number(data.next_term_fee).toLocaleString()}</span></div>`
+          : `<div class="rc-bill-row"><span>Next Term Fees</span><span style="border-bottom:1px solid #999;min-width:60px"></span></div>`}
+        <div class="rc-bill-row total">
+          <span>TOTAL ₦</span>
+          <span>${data.next_term_fee ? Number(data.next_term_fee).toLocaleString() : '—'}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="rc-footer">
+      <div class="rc-comment-row">
+        <span class="rc-comment-lbl">Form Teacher's Comment:</span>
+        <span class="rc-comment-line">${teacherCmt}</span>
+      </div>
+      ${adminCmt ? `<div class="rc-comment-row" style="margin-top:5px">
+        <span class="rc-comment-lbl">Principal's Remark:</span>
+        <span class="rc-comment-line">${adminCmt}</span>
+      </div>` : `<div class="rc-comment-row" style="margin-top:5px">
+        <span class="rc-comment-lbl">Principal's Remark:</span>
+        <span class="rc-comment-line"></span>
+      </div>`}
+    </div>
+
+    ${(data.resumption_date || data.next_term_fee) ? `
+    <div class="rc-next-bar">
+      <div class="rc-next-item"><span class="rc-next-lbl">Closing Date:</span><span class="rc-next-val">—</span></div>
+      ${data.resumption_date ? `<div class="rc-next-item"><span class="rc-next-lbl">Resumption Date:</span><span class="rc-next-val">${new Date(data.resumption_date).toLocaleDateString('en-NG',{day:'numeric',month:'long',year:'numeric'})}</span></div>` : ''}
+    </div>` : ''}
+
+    <div class="rc-sig-area">
+      <div class="rc-sig-block" style="text-align:center">
+        <div class="rc-stamp-wrap" style="margin-bottom:4px">
+          <img src="${STAMP_SRC}" class="rc-stamp-img" alt="Official Stamp">
+        </div>
+        <span class="rc-sig-val" style="font-size:13px;font-family:'Playfair Display',serif;font-style:italic;color:#002060">Eghosa V Sosa</span>
+        <span class="rc-sig-lbl" style="display:block;margin-top:2px">Name &amp; Signature</span>
+      </div>
+      <div class="rc-sig-block">
+        <span class="rc-sig-lbl">Date</span>
+        <span class="rc-sig-val" style="font-size:10px">${dateStr}</span>
+      </div>
+    </div>
+
+    <div class="rc-fine-print">
+      Jaasiel Education Centre &middot; AI-Powered Result Management System &middot; Idokpa, Benin City, Edo State
     </div>
   </div>`;
 }

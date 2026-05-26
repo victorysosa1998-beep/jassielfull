@@ -2,11 +2,22 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Bulk Upload — Jaasiel RMS</title>
+<title>Bulk Student Upload — Jaasiel RMS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="./css/style.css">
+<style>
+.preview-table{width:100%;border-collapse:collapse;font-size:.84rem;min-width:700px}
+.preview-table th{padding:9px 12px;background:rgba(255,255,255,.03);border-bottom:1px solid var(--border-light);font-size:.71rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);white-space:nowrap}
+.preview-table td{padding:7px 12px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle}
+.preview-table tr:last-child td{border-bottom:none}
+.preview-table tr:hover td{background:rgba(255,255,255,.02)}
+.edit-cell{background:var(--bg-input);border:1px solid var(--border-light);border-radius:6px;padding:5px 8px;color:var(--text-primary);font-size:.83rem;width:100%;font-family:var(--font-sans);min-width:80px}
+.edit-cell:focus{border-color:var(--brand-gold);outline:none}
+.cred-pill{font-family:var(--font-mono);font-size:.75rem;background:rgba(201,151,58,.08);border:1px solid rgba(201,151,58,.2);border-radius:6px;padding:2px 7px;color:var(--brand-gold);white-space:nowrap}
+.row-warn{background:rgba(245,158,11,.05);border-left:3px solid var(--warning)}
+</style>
 </head>
 <body>
 <div class="page-bg"></div>
@@ -19,7 +30,6 @@
   <header class="topbar">
     <div class="topbar-left">
       <button class="menu-toggle" id="menu-toggle"><i class="fas fa-bars"></i></button>
-      <a href="students.html" class="btn btn-ghost btn-sm" style="padding:6px 12px"><i class="fas fa-arrow-left"></i></a>
       <div>
         <div class="page-title">Bulk Student Upload</div>
         <div class="breadcrumb"><a href="students.html">Students</a><span class="sep">/</span><span class="text-gold">Bulk Upload</span></div>
@@ -27,108 +37,420 @@
     </div>
     <div class="topbar-right" id="topbar-right"></div>
   </header>
+
   <div class="page-body">
     <div class="grid-2" style="gap:24px;align-items:start">
+
+      <!-- LEFT: Upload card -->
       <div>
         <div class="card mb-3">
+          <div style="font-weight:700;margin-bottom:16px">
+            <i class="fas fa-file-arrow-up" style="color:var(--brand-gold);margin-right:8px"></i>Upload Student List
+          </div>
+
           <div class="form-group">
             <label class="form-label">Target Class <span class="required">*</span></label>
-            <select class="form-control" id="bulk-class"><option value="">Select class…</option></select>
+            <select class="form-control" id="bulk-class">
+              <option value="">Select class…</option>
+            </select>
           </div>
+
           <div class="upload-zone" id="bulk-zone">
-            <input type="file" id="bulk-file" accept=".xlsx,.xls,.csv,.pdf,.jpg,.jpeg,.png" class="hidden">
-            <div class="upload-icon"><i class="fas fa-file-arrow-up"></i></div>
-            <div class="upload-title">Upload Student List</div>
-            <div class="upload-sub">AI will extract names, DOBs, genders and create profiles automatically</div>
-            <div class="upload-types"><span class="upload-type-tag">Excel</span><span class="upload-type-tag">CSV</span><span class="upload-type-tag">PDF</span><span class="upload-type-tag">Image</span></div>
+            <input type="file" id="bulk-file"
+              accept=".xlsx,.xls,.csv,.pdf,.jpg,.jpeg,.png,.webp" class="hidden">
+            <div class="upload-icon"><i class="fas fa-robot"></i></div>
+            <div class="upload-title">Drop student list here</div>
+            <div class="upload-sub">
+              Excel, CSV, PDF, or a photo of a handwritten/typed register —
+              jaasiel Assistant will extract all names automatically
+            </div>
+            <div class="upload-types">
+              <span class="upload-type-tag">Excel</span>
+              <span class="upload-type-tag">CSV</span>
+              <span class="upload-type-tag">PDF</span>
+              <span class="upload-type-tag">JPG / PNG</span>
+            </div>
           </div>
-          <div id="bulk-preview" class="hidden mt-3"></div>
+
+          <!-- Progress -->
           <div id="bulk-progress" class="hidden mt-3">
-            <div style="font-size:.88rem;color:var(--text-secondary);margin-bottom:8px" id="bulk-stage">Processing…</div>
-            <div class="progress-bar"><div class="progress-fill" id="bulk-prog-fill" style="width:0%"></div></div>
-          </div>
-          <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap" id="bulk-actions" class="hidden">
-            <button class="btn btn-primary" onclick="confirmBulkUpload()" id="bulk-confirm-btn"><i class="fas fa-user-plus"></i> Create <span id="bulk-count">0</span> Students</button>
-            <button class="btn btn-ghost" onclick="resetBulk()"><i class="fas fa-rotate"></i> Reset</button>
+            <div style="font-size:.88rem;color:var(--text-secondary);margin-bottom:8px"
+                 id="bulk-stage">Processing…</div>
+            <div class="progress-bar">
+              <div class="progress-fill" id="bulk-prog-fill" style="width:0%"></div>
+            </div>
           </div>
         </div>
       </div>
+
+      <!-- RIGHT: How it works + template -->
       <div>
         <div class="card mb-3">
-          <div style="font-weight:700;margin-bottom:16px"><i class="fas fa-circle-info" style="color:var(--brand-gold);margin-right:8px"></i>How It Works</div>
+          <div style="font-weight:700;margin-bottom:16px">
+            <i class="fas fa-circle-info" style="color:var(--brand-gold);margin-right:8px"></i>How It Works
+          </div>
           <div style="display:flex;flex-direction:column;gap:14px;font-size:.85rem">
-            <div style="display:flex;gap:12px"><div style="width:24px;height:24px;border-radius:50%;background:var(--brand-gold);color:var(--bg-dark);display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;flex-shrink:0">1</div><div><strong>Upload your file</strong><br><span style="color:var(--text-muted)">Excel sheet, CSV, or even a photo of a student list</span></div></div>
-            <div style="display:flex;gap:12px"><div style="width:24px;height:24px;border-radius:50%;background:var(--brand-gold);color:var(--bg-dark);display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;flex-shrink:0">2</div><div><strong>AI extracts student data</strong><br><span style="color:var(--text-muted)">Names, dates of birth, gender, parent contacts</span></div></div>
-            <div style="display:flex;gap:12px"><div style="width:24px;height:24px;border-radius:50%;background:var(--brand-gold);color:var(--bg-dark);display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;flex-shrink:0">3</div><div><strong>Review & confirm</strong><br><span style="color:var(--text-muted)">Check extracted data before creating accounts</span></div></div>
-            <div style="display:flex;gap:12px"><div style="width:24px;height:24px;border-radius:50%;background:var(--brand-gold);color:var(--bg-dark);display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;flex-shrink:0">4</div><div><strong>Auto-generate credentials</strong><br><span style="color:var(--text-muted)">Username & password generated from name + DOB</span></div></div>
+            <div style="display:flex;gap:12px">
+              <div style="width:24px;height:24px;border-radius:50%;background:var(--brand-gold);color:var(--bg-dark);display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;flex-shrink:0">1</div>
+              <div><strong>Select a class, then upload your file</strong><br><span style="color:var(--text-muted)">Any format — handwritten register photo, Excel sheet, CSV, or PDF</span></div>
+            </div>
+            <div style="display:flex;gap:12px">
+              <div style="width:24px;height:24px;border-radius:50%;background:var(--brand-gold);color:var(--bg-dark);display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;flex-shrink:0">2</div>
+              <div><strong>jaasiel Assistant reads the names</strong><br><span style="color:var(--text-muted)">Works with numbered lists, tables, headers or no headers — it figures it out</span></div>
+            </div>
+            <div style="display:flex;gap:12px">
+              <div style="width:24px;height:24px;border-radius:50%;background:var(--brand-gold);color:var(--bg-dark);display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;flex-shrink:0">3</div>
+              <div><strong>Review and correct</strong><br><span style="color:var(--text-muted)">Edit any name, DOB or gender directly in the table before saving</span></div>
+            </div>
+            <div style="display:flex;gap:12px">
+              <div style="width:24px;height:24px;border-radius:50%;background:var(--brand-gold);color:var(--bg-dark);display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;flex-shrink:0">4</div>
+              <div><strong>Confirm — accounts created instantly</strong><br><span style="color:var(--text-muted)">Username and default password generated automatically from name + DOB</span></div>
+            </div>
           </div>
         </div>
+
         <div class="card">
-          <div style="font-weight:700;margin-bottom:12px"><i class="fas fa-file-csv" style="color:var(--success);margin-right:8px"></i>Expected Columns (Excel/CSV)</div>
-          <div style="font-size:.82rem;color:var(--text-secondary);font-family:var(--font-mono);background:var(--bg-input);border:1px solid var(--border-light);border-radius:var(--radius-sm);padding:12px;line-height:1.8">
-            First Name | Middle Name | Last Name<br>Date of Birth | Gender<br>Parent Phone | Parent Email
+          <div style="font-weight:700;margin-bottom:12px">
+            <i class="fas fa-file-csv" style="color:var(--success);margin-right:8px"></i>Excel / CSV Column Format
           </div>
-          <a href="#" class="btn btn-ghost btn-sm mt-3" onclick="downloadTemplate()"><i class="fas fa-download"></i> Download Template</a>
+          <div style="font-size:.8rem;color:var(--text-muted);margin-bottom:8px">
+            Columns can be in any order — jaasiel Assistant detects them by name. You can also just have a single "Name" column.
+          </div>
+          <div style="font-family:var(--font-mono);font-size:.78rem;background:var(--bg-input);border:1px solid var(--border-light);border-radius:var(--radius-sm);padding:12px;line-height:2;color:var(--text-secondary)">
+            First Name &nbsp;|&nbsp; Last Name &nbsp;|&nbsp; Date of Birth<br>
+            Gender &nbsp;|&nbsp; Parent Phone &nbsp;|&nbsp; Parent Email
+          </div>
+          <div style="font-size:.78rem;color:var(--text-muted);margin-top:8px">
+            <i class="fas fa-lightbulb" style="color:var(--brand-gold)"></i>
+            For images: just a plain list of names is enough — one name per line.
+          </div>
+          <button class="btn btn-ghost btn-sm mt-3" onclick="downloadTemplate()">
+            <i class="fas fa-download"></i> Download CSV Template
+          </button>
         </div>
       </div>
     </div>
+
+    <!-- ── Preview / Review Section ──────────────────────────────── -->
+    <div id="preview-section" class="hidden mt-3">
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px">
+          <div>
+            <div style="font-family:var(--font-display);font-size:1.1rem;font-weight:700">
+              Review Extracted Students
+            </div>
+            <div style="font-size:.82rem;color:var(--text-muted);margin-top:3px" id="preview-summary"></div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-ghost btn-sm" onclick="resetBulk()">
+              <i class="fas fa-rotate"></i> Start Over
+            </button>
+            <button class="btn btn-primary" id="bulk-confirm-btn" onclick="confirmBulkUpload()">
+              <i class="fas fa-user-plus"></i> Create <span id="bulk-count">0</span> Students
+            </button>
+          </div>
+        </div>
+
+        <div class="alert alert-info mb-3">
+          <i class="fas fa-pencil"></i>
+          <div>
+            Edit any cell directly — click to change names, DOB, or gender before saving.
+            Rows highlighted in <span style="color:var(--warning);font-weight:600">yellow</span> are missing a last name — please check them.
+          </div>
+        </div>
+
+        <div style="overflow-x:auto">
+          <table class="preview-table" id="preview-table">
+            <thead>
+              <tr>
+                <th style="width:28px">#</th>
+                <th>First Name</th>
+                <th>Middle Name</th>
+                <th>Last Name</th>
+                <th>Date of Birth</th>
+                <th>Gender</th>
+                <th>Auto Credentials</th>
+                <th style="width:36px"></th>
+              </tr>
+            </thead>
+            <tbody id="preview-tbody"></tbody>
+          </table>
+        </div>
+
+        <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border-light);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+          <div style="font-size:.8rem;color:var(--text-muted)">
+            <i class="fas fa-key" style="color:var(--brand-gold)"></i>
+            Default password = DDMMYY of date of birth (e.g. born 20 Apr 2012 → <span style="font-family:var(--font-mono)">200412</span>).
+            Students should change it on first login.
+          </div>
+          <button class="btn btn-primary" id="bulk-confirm-btn-2" onclick="confirmBulkUpload()">
+            <i class="fas fa-user-plus"></i> Create <span class="bulk-count-ref">0</span> Students
+          </button>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 </div>
-<script src="js/core.js"></script>
-<script src="js/ui.js"></script>
+
+<script src="./js/core.js"></script>
+<script src="./js/ui.js"></script>
 <script>
 let extractedStudents = [];
+
 document.addEventListener('DOMContentLoaded', async () => {
   await window.__rmsBootstrapReady;
-  initPage(['super_admin','admin','sub_admin'], AuthState.getRole()==='sub_admin'?'subadmin':'admin');
+  initPage(['super_admin','admin','sub_admin'],
+    AuthState.getRole() === 'sub_admin' ? 'subadmin' : 'admin');
   populateClassSelect(document.getElementById('bulk-class'), 'Select class…', false);
-  initUploadZone(document.getElementById('bulk-zone'), document.getElementById('bulk-file'), handleBulkFile);
+  initUploadZone(
+    document.getElementById('bulk-zone'),
+    document.getElementById('bulk-file'),
+    handleBulkFile
+  );
 });
 
+/* ── File upload handler ─────────────────────────────────────── */
 async function handleBulkFile(files) {
-  const file = files[0]; if (!file) return;
+  const file = files[0];
+  if (!file) return;
+
   const cls = document.getElementById('bulk-class').value;
-  if (!cls) { Toast.warning('Select Class','Please select a class first.'); return; }
+  if (!cls) {
+    Toast.warning('Select Class', 'Please select a class before uploading.');
+    return;
+  }
+
+  // Show progress
   document.getElementById('bulk-progress').classList.remove('hidden');
-  document.getElementById('bulk-actions').classList.add('hidden');
-  const stages=[['10','Reading file…'],['30','Parsing student data…'],['60','Extracting fields…'],['80','Generating credentials…'],['100','Done!']];
-  let i=0; const tick=setInterval(()=>{if(i>=stages.length){clearInterval(tick);return;}const[p,l]=stages[i++];document.getElementById('bulk-prog-fill').style.width=p+'%';document.getElementById('bulk-stage').textContent=l;},600);
+  document.getElementById('preview-section').classList.add('hidden');
+
+  const isImage = /image/.test(file.type) || /\.(jpg|jpeg|png|webp|pdf)$/i.test(file.name);
+
+  const stages = isImage
+    ? [[15,'Sending to jaasiel Assistant…'],[40,'jaasiel Assistant is reading the names…'],[70,'Splitting names into first/last…'],[90,'Generating credentials…'],[100,'Done!']]
+    : [[20,'Reading file…'],[50,'Detecting columns…'],[80,'Building student list…'],[100,'Done!']];
+
+  let idx = 0;
+  const tick = setInterval(() => {
+    if (idx >= stages.length) { clearInterval(tick); return; }
+    const [pct, label] = stages[idx++];
+    document.getElementById('bulk-prog-fill').style.width = pct + '%';
+    document.getElementById('bulk-stage').textContent = label;
+  }, isImage ? 1200 : 500);
+
   try {
-    const fd=new FormData(); fd.append('file',file); fd.append('class_name',cls);
-    const data=await API.students.bulkUpload(fd);
-    clearInterval(tick); document.getElementById('bulk-prog-fill').style.width='100%';
-    extractedStudents=data.students||data||[];
-    renderBulkPreview(extractedStudents);
-  } catch {
-    await new Promise(r=>setTimeout(r,3200)); clearInterval(tick); document.getElementById('bulk-prog-fill').style.width='100%';
-    // Demo extraction
-    extractedStudents=[{full_name:'Eghosa Victor Aisosa',dob:'2012-04-20',gender:'Male',username:Fmt.generateUsername('Eghosa','Victor','Aisosa','2012-04-20'),password:Fmt.generatePassword('2012-04-20')},{full_name:'Funke Adebayo Johnson',dob:'2011-09-15',gender:'Female',username:Fmt.generateUsername('Funke','Adebayo','Johnson','2011-09-15'),password:Fmt.generatePassword('2011-09-15')},{full_name:'Chidi Okonkwo Nze',dob:'2012-01-08',gender:'Male',username:Fmt.generateUsername('Chidi','Okonkwo','Nze','2012-01-08'),password:Fmt.generatePassword('2012-01-08')}];
-    renderBulkPreview(extractedStudents);
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('class_name', cls);
+
+    const data = await API.students.bulkUpload(fd);
+    clearInterval(tick);
+    document.getElementById('bulk-prog-fill').style.width = '100%';
+    document.getElementById('bulk-stage').textContent = 'Extraction complete!';
+
+    extractedStudents = data.students || data || [];
+
+    if (!extractedStudents.length) {
+      Toast.error('No Students Found',
+        'The file was processed but no student names were extracted. ' +
+        'Check the file has data, or try a clearer image.');
+      document.getElementById('bulk-progress').classList.add('hidden');
+      return;
+    }
+
+    await new Promise(r => setTimeout(r, 400));
+    renderPreview(extractedStudents);
+
+  } catch(err) {
+    clearInterval(tick);
+    document.getElementById('bulk-prog-fill').style.width = '100%';
+    document.getElementById('bulk-stage').textContent = 'Failed';
+    Toast.error('Upload Failed',
+      err.message || 'Could not extract students. Try a clearer image or use Excel/CSV format.');
+    document.getElementById('bulk-progress').classList.add('hidden');
   }
 }
 
-function renderBulkPreview(students) {
-  document.getElementById('bulk-count').textContent=students.length;
-  document.getElementById('bulk-preview').classList.remove('hidden');
-  document.getElementById('bulk-actions').classList.remove('hidden');
-  document.getElementById('bulk-preview').innerHTML=`<div style="font-weight:700;margin-bottom:12px">${students.length} students extracted — review before creating:</div>
-    <div style="overflow-x:auto"><table class="table" style="min-width:500px"><thead><tr><th>Full Name</th><th>DOB</th><th>Gender</th><th>Username</th><th>Password</th></tr></thead>
-    <tbody>${students.map(s=>`<tr><td><strong>${s.full_name||'—'}</strong></td><td style="font-size:.82rem">${Fmt.date(s.dob)||'—'}</td><td>${s.gender||'—'}</td><td class="font-mono" style="font-size:.82rem">${s.username||'—'}</td><td class="font-mono" style="font-size:.82rem">${s.password||'—'}</td></tr>`).join('')}
-    </tbody></table></div>`;
+/* ── Render editable preview table ───────────────────────────── */
+function renderPreview(students) {
+  const missing = students.filter(s => !s.last_name || s.last_name === s.first_name).length;
+
+  document.getElementById('preview-summary').innerHTML =
+    `<strong>${students.length}</strong> students extracted` +
+    (missing > 0
+      ? ` &nbsp;·&nbsp; <span style="color:var(--warning)"><i class="fas fa-triangle-exclamation"></i> ${missing} need attention (highlighted)</span>`
+      : ' &nbsp;·&nbsp; <span style="color:var(--success)"><i class="fas fa-check-circle"></i> All names look good</span>');
+
+  document.getElementById('bulk-count').textContent          = students.length;
+  document.querySelectorAll('.bulk-count-ref').forEach(el => el.textContent = students.length);
+
+  const tbody = document.getElementById('preview-tbody');
+  tbody.innerHTML = students.map((s, i) => {
+    const warn = !s.last_name || s.last_name === s.first_name;
+    const cred = `${s.username || '—'} / ${s.password || '—'}`;
+    return `<tr id="prow-${i}" class="${warn ? 'row-warn' : ''}">
+      <td style="color:var(--text-muted);font-size:.78rem">${i + 1}</td>
+      <td><input class="edit-cell" id="fn-${i}"  value="${esc(s.first_name  || '')}" placeholder="First name"  oninput="updateCred(${i})"></td>
+      <td><input class="edit-cell" id="mn-${i}"  value="${esc(s.middle_name || '')}" placeholder="—"            oninput="updateCred(${i})"></td>
+      <td><input class="edit-cell" id="ln-${i}"  value="${esc(s.last_name   || '')}" placeholder="Last name"   oninput="updateCred(${i})" style="${warn?'border-color:var(--warning)':''}"></td>
+      <td><input class="edit-cell" id="dob-${i}" value="${esc(s.dob         || s.date_of_birth || '')}" placeholder="DD/MM/YYYY" oninput="updateCred(${i})" style="max-width:110px"></td>
+      <td>
+        <select class="edit-cell" id="gen-${i}" style="max-width:100px">
+          <option value="">—</option>
+          <option value="male"   ${(s.gender||'').toLowerCase()==='male'   ?'selected':''}>Male</option>
+          <option value="female" ${(s.gender||'').toLowerCase()==='female' ?'selected':''}>Female</option>
+        </select>
+      </td>
+      <td><span class="cred-pill" id="cred-${i}" title="username / password">${esc(cred)}</span></td>
+      <td>
+        <button class="btn btn-ghost btn-sm" onclick="removeRow(${i})"
+                title="Remove this student" style="padding:4px 8px;color:var(--danger)">
+          <i class="fas fa-trash"></i>
+        </button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('preview-section').classList.remove('hidden');
+  document.getElementById('bulk-progress').classList.add('hidden');
 }
 
+function esc(str) {
+  return String(str).replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/* ── Live credential update as user edits ────────────────────── */
+function updateCred(i) {
+  const fn  = document.getElementById('fn-'  + i)?.value.trim() || '';
+  const mn  = document.getElementById('mn-'  + i)?.value.trim() || '';
+  const ln  = document.getElementById('ln-'  + i)?.value.trim() || '';
+  const dob = document.getElementById('dob-' + i)?.value.trim() || '';
+
+  // Parse DOB for password generation (DDMMYY)
+  let parsedDob = null;
+  if (dob) {
+    // Try DD/MM/YYYY or YYYY-MM-DD
+    const parts = dob.includes('/') ? dob.split('/') : dob.split('-');
+    if (parts.length === 3) {
+      const day   = parts[0].length === 4 ? parts[2] : parts[0];
+      const month = parts[0].length === 4 ? parts[1] : parts[1];
+      const year  = parts[0].length === 4 ? parts[0] : parts[2];
+      parsedDob = { day: day.padStart(2,'0'), month: month.padStart(2,'0'), year: year.slice(-2) };
+    }
+  }
+
+  const username = (fn + mn + ln).toLowerCase().replace(/[^a-z0-9]/g,'') +
+                   (parsedDob ? parsedDob.year : '');
+  const password = parsedDob
+    ? `${parsedDob.day}${parsedDob.month}${parsedDob.year}`
+    : '123456';
+
+  const credEl = document.getElementById('cred-' + i);
+  if (credEl) credEl.textContent = `${username || '—'} / ${password}`;
+
+  // Update extractedStudents so confirm uses latest values
+  if (extractedStudents[i]) {
+    extractedStudents[i]._fn = fn; extractedStudents[i]._mn = mn;
+    extractedStudents[i]._ln = ln; extractedStudents[i]._dob = dob;
+  }
+
+  // Warn if last name still empty
+  const tr = document.getElementById('prow-' + i);
+  if (tr) tr.className = (!ln ? 'row-warn' : '');
+  const lnEl = document.getElementById('ln-' + i);
+  if (lnEl) lnEl.style.borderColor = !ln ? 'var(--warning)' : '';
+}
+
+/* ── Remove a row ────────────────────────────────────────────── */
+function removeRow(i) {
+  extractedStudents.splice(i, 1);
+  renderPreview(extractedStudents);
+}
+
+/* ── Confirm & create accounts ───────────────────────────────── */
 async function confirmBulkUpload() {
   if (!extractedStudents.length) return;
-  const btn=document.getElementById('bulk-confirm-btn'); setLoading(btn,true,'Creating…');
-  try {
-    await Promise.all(extractedStudents.map(s=>API.students.create({...s,class_name:document.getElementById('bulk-class').value})));
-    Toast.success('Done!',`${extractedStudents.length} students registered successfully`);
-    setTimeout(()=>window.location.href='students.html',1500);
-  } catch(err){Toast.error('Failed',err.message);setLoading(btn,false);}
+
+  const cls = document.getElementById('bulk-class').value;
+
+  // Read live edits from the table
+  const toCreate = extractedStudents.map((s, i) => {
+    const fn  = document.getElementById('fn-'  + i)?.value.trim() || s.first_name  || '';
+    const mn  = document.getElementById('mn-'  + i)?.value.trim() || s.middle_name || '';
+    const ln  = document.getElementById('ln-'  + i)?.value.trim() || s.last_name   || '';
+    const dob = document.getElementById('dob-' + i)?.value.trim() || s.dob || s.date_of_birth || '';
+    const gen = document.getElementById('gen-' + i)?.value        || s.gender || '';
+    const full = `${fn} ${mn} ${ln}`.replace(/\s+/g,' ').trim();
+    return { first_name:fn, middle_name:mn, last_name:ln,
+             full_name:full, date_of_birth:dob||null, gender:gen||null,
+             class_name:cls };
+  }).filter(s => s.first_name || s.full_name); // skip fully blank rows
+
+  if (!toCreate.length) {
+    Toast.warning('Nothing to save', 'All rows are empty.');
+    return;
+  }
+
+  const btn  = document.getElementById('bulk-confirm-btn');
+  const btn2 = document.getElementById('bulk-confirm-btn-2');
+  setLoading(btn,  true, 'Creating…');
+  setLoading(btn2, true, 'Creating…');
+
+  let created = 0, failed = 0;
+  const errors = [];
+
+  // Create one by one so partial success is still saved
+  for (const s of toCreate) {
+    try {
+      await API.students.create(s);
+      created++;
+    } catch(err) {
+      failed++;
+      errors.push(`${s.full_name}: ${err.message}`);
+    }
+  }
+
+  setLoading(btn,  false);
+  setLoading(btn2, false);
+
+  if (created > 0) {
+    Toast.success('Students Created!',
+      `${created} student(s) registered successfully.` +
+      (failed > 0 ? ` ${failed} failed — see console for details.` : ''));
+    if (failed === 0) {
+      setTimeout(() => window.location.href = 'students.html', 1500);
+    } else {
+      console.warn('Failed rows:', errors);
+    }
+  } else {
+    Toast.error('All Failed', errors[0] || 'Could not create students. Check for duplicate usernames.');
+  }
 }
-function resetBulk(){document.getElementById('bulk-file').value='';document.getElementById('bulk-preview').classList.add('hidden');document.getElementById('bulk-actions').classList.add('hidden');document.getElementById('bulk-progress').classList.add('hidden');document.getElementById('bulk-prog-fill').style.width='0%';extractedStudents=[];}
-function downloadTemplate(){const csv='First Name,Middle Name,Last Name,Date of Birth,Gender,Parent Phone,Parent Email\nEghosa,Victor,Aisosa,20/04/2012,Male,+2348000000000,parent@email.com';const b=new Blob([csv],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='student-upload-template.csv';a.click();}
+
+/* ── Reset ───────────────────────────────────────────────────── */
+function resetBulk() {
+  extractedStudents = [];
+  document.getElementById('bulk-file').value = '';
+  document.getElementById('preview-section').classList.add('hidden');
+  document.getElementById('bulk-progress').classList.add('hidden');
+  document.getElementById('bulk-prog-fill').style.width = '0%';
+}
+
+/* ── CSV template download ───────────────────────────────────── */
+function downloadTemplate() {
+  const csv = [
+    'First Name,Middle Name,Last Name,Date of Birth,Gender,Parent Phone,Parent Email',
+    'Eghosa,Victor,Aisosa,20/04/2012,Male,+2348012345678,parent@email.com',
+    'Funke,,Adebayo,15/09/2011,Female,,',
+    'Chidi,Emmanuel,Okonkwo,01/01/2013,Male,,',
+  ].join('\n');
+  const a = document.createElement('a');
+  a.href     = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  a.download = 'jaasiel-student-upload-template.csv';
+  a.click();
+}
 </script>
 </body>
 </html>
