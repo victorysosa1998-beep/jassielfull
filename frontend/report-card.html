@@ -473,6 +473,105 @@
   .rc-page { box-shadow: none; border: 3px double #002060; max-width: 100%; width: 100%; min-width: unset; border-radius: 0; }
   .page-body { padding: 0 !important; }
 }
+
+/* ── Long-press download overlay ── */
+#rc-hold-wrapper {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+#rc-hold-overlay {
+  display: none;
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 32, 96, 0.55);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  z-index: 100;
+  border-radius: 4px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 12px;
+  animation: overlayFadeIn 0.2s ease;
+}
+#rc-hold-overlay.visible {
+  display: flex;
+}
+@keyframes overlayFadeIn {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
+}
+#rc-download-btn {
+  background: linear-gradient(135deg, #ffd700, #f0b800);
+  color: #002060;
+  border: none;
+  border-radius: 50px;
+  padding: 14px 32px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  transition: transform 0.15s, box-shadow 0.15s;
+  letter-spacing: 0.3px;
+}
+#rc-download-btn:hover {
+  transform: scale(1.04);
+  box-shadow: 0 6px 28px rgba(0,0,0,0.4);
+}
+#rc-download-btn i { font-size: 18px; }
+#rc-overlay-hint {
+  color: rgba(255,255,255,0.8);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  text-align: center;
+}
+#rc-hold-progress {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 4px;
+  background: rgba(255, 215, 0, 0);
+  border-radius: 0 0 4px 4px;
+  overflow: hidden;
+  pointer-events: none;
+}
+#rc-hold-progress-bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #ffd700, #f0b800);
+  transition: width linear;
+  border-radius: 0 0 4px 4px;
+}
+#rc-download-toast {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: #002060;
+  color: #ffd700;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 12px 24px;
+  border-radius: 50px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+  z-index: 9999;
+  opacity: 0;
+  transition: opacity 0.3s, transform 0.3s;
+  pointer-events: none;
+  white-space: nowrap;
+}
+#rc-download-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
 </style>
 </head>
 <body>
@@ -519,13 +618,25 @@
       </button>
     </div>
 
-    <div id="card-container">
-      <div class="rc-page" style="padding:40px;text-align:center;color:#666"><div style="font-size:2rem;margin-bottom:12px">🎓</div>Loading report card…</div>
+    <div id="rc-hold-wrapper">
+      <div id="rc-hold-progress"><div id="rc-hold-progress-bar"></div></div>
+      <div id="rc-hold-overlay">
+        <div id="rc-overlay-hint">Report card ready to save</div>
+        <button id="rc-download-btn" onclick="downloadReportCard()">
+          <i class="fas fa-download"></i> Download Image
+        </button>
+        <div style="color:rgba(255,255,255,0.5);font-family:'DM Sans',sans-serif;font-size:11px;margin-top:2px">Tap anywhere else to dismiss</div>
+      </div>
+      <div id="card-container">
+        <div class="rc-page" style="padding:40px;text-align:center;color:#666"><div style="font-size:2rem;margin-bottom:12px">🎓</div>Loading report card…</div>
+      </div>
     </div>
+    <div id="rc-download-toast">✓ Report card saved to your device</div>
   </div>
 </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="./js/core.js"></script>
 <script src="./js/ui.js"></script>
 <script>
@@ -1036,7 +1147,7 @@ function renderCard(data, results) {
         <div class="rc-stamp-wrap" style="margin-bottom:4px">
           <img src="${STAMP_SRC}" class="rc-stamp-img" alt="Official Stamp">
         </div>
-        <span class="rc-sig-val" style="font-size:13px;font-family:'Playfair Display',serif;font-style:italic;color:#002060">Eghosa V Sosa</span>
+        <span class="rc-sig-val" style="font-size:13px;font-family:'Playfair Display',serif;font-style:italic;color:#002060">Jaanwendu Ohaebulam</span>
         <span class="rc-sig-lbl" style="display:block;margin-top:2px">Name &amp; Signature</span>
       </div>
       <div class="rc-sig-block">
@@ -1049,6 +1160,126 @@ function renderCard(data, results) {
       Jaasiel Education Centre &middot; AI-Powered Result Management System &middot; Idokpa, Benin City, Edo State
     </div>
   </div>`;
+}
+</script>
+
+<script>
+/* ── Long-press to reveal download overlay ── */
+(function () {
+  const HOLD_MS   = 600;   // ms to hold before overlay appears
+  const wrapper   = document.getElementById('rc-hold-wrapper');
+  const overlay   = document.getElementById('rc-hold-overlay');
+  const progressBar = document.getElementById('rc-hold-progress-bar');
+  let holdTimer   = null;
+  let progTimer   = null;
+
+  function showOverlay() {
+    overlay.classList.add('visible');
+    progressBar.style.transition = 'none';
+    progressBar.style.width = '0%';
+  }
+
+  function hideOverlay() {
+    overlay.classList.remove('visible');
+    progressBar.style.transition = 'none';
+    progressBar.style.width = '0%';
+  }
+
+  function startHold() {
+    progressBar.style.transition = 'none';
+    progressBar.style.width = '0%';
+    // Force reflow then animate
+    requestAnimationFrame(() => {
+      progressBar.style.transition = `width ${HOLD_MS}ms linear`;
+      progressBar.style.width = '100%';
+    });
+    holdTimer = setTimeout(showOverlay, HOLD_MS);
+  }
+
+  function cancelHold() {
+    clearTimeout(holdTimer);
+    holdTimer = null;
+    progressBar.style.transition = 'width 0.2s ease';
+    progressBar.style.width = '0%';
+  }
+
+  // Touch events (mobile)
+  wrapper.addEventListener('touchstart', (e) => {
+    // Don't trigger if tapping the overlay buttons
+    if (e.target.closest('#rc-hold-overlay')) return;
+    startHold();
+  }, { passive: true });
+
+  wrapper.addEventListener('touchend',    cancelHold, { passive: true });
+  wrapper.addEventListener('touchcancel', cancelHold, { passive: true });
+  wrapper.addEventListener('touchmove',   cancelHold, { passive: true });
+
+  // Mouse events (desktop)
+  wrapper.addEventListener('mousedown', (e) => {
+    if (e.target.closest('#rc-hold-overlay')) return;
+    startHold();
+  });
+  window.addEventListener('mouseup', cancelHold);
+
+  // Dismiss overlay when clicking outside overlay buttons
+  overlay.addEventListener('click', (e) => {
+    if (!e.target.closest('#rc-download-btn')) {
+      hideOverlay();
+    }
+  });
+})();
+
+/* ── Download report card as image ── */
+async function downloadReportCard() {
+  const btn = document.getElementById('rc-download-btn');
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating…';
+  btn.disabled = true;
+
+  try {
+    const card = document.querySelector('#card-container .rc-page');
+    if (!card) throw new Error('Card not found');
+
+    const canvas = await html2canvas(card, {
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#ffffff',
+      logging: false,
+      onclone: (doc) => {
+        // Ensure the cloned page is fully visible
+        const clonedCard = doc.querySelector('#card-container .rc-page');
+        if (clonedCard) {
+          clonedCard.style.boxShadow = 'none';
+          clonedCard.style.borderRadius = '0';
+        }
+      }
+    });
+
+    // Build filename from student name if available
+    const nameEl = card.querySelector('.rc-val');
+    const studentName = nameEl ? nameEl.textContent.trim().replace(/\s+/g, '_') : 'student';
+    const filename = `Report_Card_${studentName}_${Date.now()}.png`;
+
+    const link = document.createElement('a');
+    link.download = filename;
+    link.href = canvas.toDataURL('image/png', 1.0);
+    link.click();
+
+    // Show success toast
+    const toast = document.getElementById('rc-download-toast');
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3000);
+
+    // Close overlay
+    document.getElementById('rc-hold-overlay').classList.remove('visible');
+
+  } catch (err) {
+    console.error('Download failed:', err);
+    alert('Could not generate image. Please try the Print button instead.');
+  } finally {
+    btn.innerHTML = '<i class="fas fa-download"></i> Download Image';
+    btn.disabled = false;
+  }
 }
 </script>
 </body>
