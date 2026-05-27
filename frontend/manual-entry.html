@@ -108,6 +108,8 @@
                 <th id="th-second-test">2nd Test <span style="font-weight:400;color:var(--text-muted)">(max 20)</span></th>
                 <th>Exam Score <span style="font-weight:400;color:var(--text-muted)">(max <span id="exam-max-th">60</span>)</span></th>
                 <th>Total</th><th>Grade</th><th>Remark</th>
+                <th>Days Present</th>
+                <th>Days Absent</th>
                 <th>Teacher's Comment</th>
               </tr>
             </thead>
@@ -136,13 +138,21 @@ document.addEventListener('DOMContentLoaded', async () => {
   populateClassSelect(document.getElementById('sel-class'), 'Select class…', false);
   loadSessions();
 
-  // Auto-calculate days absent when present or opened changes
+  // Auto-calculate days absent when present or opened changes (class-level defaults)
   ['days-school-opened','days-present'].forEach(id => {
     document.getElementById(id)?.addEventListener('input', () => {
       const opened  = parseInt(document.getElementById('days-school-opened')?.value) || 0;
       const present = parseInt(document.getElementById('days-present')?.value);
       if (!isNaN(present) && opened > 0) {
-        document.getElementById('days-absent').value = Math.max(0, opened - present);
+        const absent = Math.max(0, opened - present);
+        document.getElementById('days-absent').value = absent;
+        // Propagate to all student rows that are still blank
+        students.forEach((_,i) => {
+          const dpEl = document.getElementById('dp-'+i);
+          const daEl = document.getElementById('da-'+i);
+          if (dpEl && !dpEl.value) dpEl.value = present;
+          if (daEl && !daEl.value) daEl.value = absent;
+        });
       }
     });
   });
@@ -235,9 +245,14 @@ function toggleNoTestMode() {
 
 function renderScoreGrid(studs, existing) {
   const tbody = document.getElementById('score-tbody');
+  const defaultOpened  = parseInt(document.getElementById('days-school-opened')?.value) || '';
+  const defaultPresent = parseInt(document.getElementById('days-present')?.value) || '';
+  const defaultAbsent  = parseInt(document.getElementById('days-absent')?.value) || '';
   tbody.innerHTML = studs.map((s,i) => {
     const ex = existing[s.id]||existing[s.student_id]||{};
     const ft = ex.first_test??''; const st = ex.second_test??''; const exam = ex.exam_score??'';
+    const dp = ex.days_present ?? defaultPresent;
+    const da = ex.days_absent  ?? defaultAbsent;
     const total = !noTestMode
       ? (ft!==''&&exam!=='' ? (parseFloat(ft)||0)+(parseFloat(st)||0)+(parseFloat(exam)||0) : '')
       : (exam!=='' ? parseFloat(exam)||0 : '');
@@ -254,6 +269,8 @@ function renderScoreGrid(studs, existing) {
       <td class="font-mono" style="font-weight:700" id="total-${i}">${total!==''?total:'—'}</td>
       <td id="grade-${i}">${gr?`<span class="grade-badge" style="background:${Fmt.gradeColor(gr.g)}22;color:${Fmt.gradeColor(gr.g)};border:1px solid ${Fmt.gradeColor(gr.g)}44">${gr.g}</span>`:'—'}</td>
       <td id="remark-${i}" style="font-size:.82rem;color:var(--text-secondary)">${gr?gr.r:'—'}</td>
+      <td><input class="s-input" type="number" id="dp-${i}" min="0" max="365" value="${dp}" placeholder="—" style="width:60px" title="Days Present for this student" oninput="calcAbsent(${i})"></td>
+      <td><input class="s-input" type="number" id="da-${i}" min="0" max="365" value="${da}" placeholder="—" style="width:60px" title="Days Absent for this student"></td>
       <td><input class="s-input" type="text" id="tc-${i}" placeholder="Optional remark…" style="width:130px;text-align:left;font-family:var(--font-sans)"></td>
     </tr>`;
   }).join('');
@@ -276,7 +293,18 @@ function calcRow(idx) {
   document.getElementById('remark-'+idx).textContent = gr?gr.r:'—';
 }
 
-function clearAll() {
+function calcAbsent(idx) {
+  const opened  = parseInt(document.getElementById('days-school-opened')?.value) || 0;
+  const dpEl    = document.getElementById('dp-'+idx);
+  const daEl    = document.getElementById('da-'+idx);
+  if (!dpEl || !daEl) return;
+  const present = parseInt(dpEl.value);
+  if (!isNaN(present) && opened > 0) {
+    daEl.value = Math.max(0, opened - present);
+  }
+}
+
+
   students.forEach((_,i) => {
     const ftEl=document.getElementById('ft-'+i); if(ftEl) ftEl.value='';
     const stEl=document.getElementById('st-'+i); if(stEl) stEl.value='';
@@ -286,7 +314,6 @@ function clearAll() {
     document.getElementById('remark-'+i).textContent='—';
   });
   document.getElementById('validation-panel').classList.add('hidden');
-}
 
 function reviewScores() {
   const cls = document.getElementById('sel-class').value;
@@ -315,13 +342,6 @@ async function _saveDraftAndReview() {
     const rows = _buildRows();
     if (!rows.length) { Toast.warning('No scores','Enter at least one score.'); return; }
 
-    const daysOpened  = parseInt(document.getElementById('days-school-opened')?.value)||null;
-    const daysPresent = parseInt(document.getElementById('days-present')?.value)||null;
-    const daysAbsent  = parseInt(document.getElementById('days-absent')?.value)||null;
-    if (daysOpened)  rows.forEach(r => r.attendance   = daysOpened);
-    if (daysPresent) rows.forEach(r => r.days_present = daysPresent);
-    if (daysAbsent)  rows.forEach(r => r.days_absent  = daysAbsent);
-
     const result = await API.results.upload({
       class_name: document.getElementById('sel-class').value,
       subject_id: document.getElementById('sel-subject').value,
@@ -345,14 +365,20 @@ function _buildRows() {
     const stEl   = document.getElementById('st-'+i);
     const examEl = document.getElementById('exam-'+i);
     const tcEl   = document.getElementById('tc-'+i);
+    const dpEl   = document.getElementById('dp-'+i);
+    const daEl   = document.getElementById('da-'+i);
     const ft   = ftEl   ? parseFloat(ftEl.value)   : NaN;
     const st   = stEl   ? parseFloat(stEl.value)   : NaN;
     const exam = examEl ? parseFloat(examEl.value) : NaN;
     const tc   = tcEl   ? tcEl.value.trim() : '';
+    const dp   = dpEl   ? (parseInt(dpEl.value) || null) : null;
+    const da   = daEl   ? (parseInt(daEl.value) || null) : null;
+    const attendance = parseInt(document.getElementById('days-school-opened')?.value) || null;
+    const baseAttrs = { days_present: dp, days_absent: da, attendance };
     if (noTestMode) {
       if (isNaN(exam)) return null;
       if (exam > TOTAL_MAX) return null;
-      return { student_id: s.id||s.student_id, exam_score: exam, total_score: exam, teacher_comment: tc||null };
+      return { student_id: s.id||s.student_id, exam_score: exam, total_score: exam, teacher_comment: tc||null, ...baseAttrs };
     }
     if ((isNaN(ft) && isNaN(st)) || isNaN(exam)) return null;
     const firstT  = isNaN(ft) ? null : ft;
@@ -360,7 +386,7 @@ function _buildRows() {
     const ca = (firstT||0) + (secondT||0);
     if (ca > 40 || exam > EXAM_MAX) return null;
     return { student_id: s.id||s.student_id, first_test: firstT, second_test: secondT,
-             ca_score: ca, exam_score: exam, total_score: ca+exam, teacher_comment: tc||null };
+             ca_score: ca, exam_score: exam, total_score: ca+exam, teacher_comment: tc||null, ...baseAttrs };
   }).filter(Boolean);
 }
 
@@ -439,13 +465,6 @@ async function submitScores() {
   try {
     const rows = _buildRows();
     if (!rows.length) { Toast.warning('No scores','Enter scores before submitting.'); return; }
-
-    const daysOpened  = parseInt(document.getElementById('days-school-opened')?.value)||null;
-    const daysPresent = parseInt(document.getElementById('days-present')?.value)||null;
-    const daysAbsent  = parseInt(document.getElementById('days-absent')?.value)||null;
-    if (daysOpened)  rows.forEach(r => r.attendance   = daysOpened);
-    if (daysPresent) rows.forEach(r => r.days_present = daysPresent);
-    if (daysAbsent)  rows.forEach(r => r.days_absent  = daysAbsent);
 
     await API.results.upload({
       class_name: document.getElementById('sel-class').value,

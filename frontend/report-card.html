@@ -769,8 +769,10 @@ function renderCard(data, results) {
   /* ── Overall grade based on average ── */
   const gl = gradeInfo(avg);
 
-  /* ── Attendance ── */
-  const timesOpen  = results.length ? Math.max(...results.map(r => r.attendance || 0)) : 0;
+  /* ── Attendance (per-student) ── */
+  const timesOpen    = data.attendance   || (results.length ? Math.max(...results.map(r => r.attendance    || 0)) : 0);
+  const timesPresent = data.days_present || (results.length ? Math.max(...results.map(r => r.days_present  || 0)) : 0) || timesOpen;
+  const timesAbsent  = data.days_absent  || (results.length ? Math.max(...results.map(r => r.days_absent   || 0)) : 0);
 
   /* ─────────────────────────────────────────────────────────────────────────
      AUTO-GENERATED COMMENTS
@@ -901,8 +903,8 @@ function renderCard(data, results) {
       </div>
       <div class="rc-row">
         <div class="rc-cell double"><span class="rc-lbl">No. of Times School Opened:</span><span class="rc-val">${timesOpen || '—'}</span></div>
-        <div class="rc-cell double"><span class="rc-lbl">No. of Times Present:</span><span class="rc-val">${timesOpen || '—'}</span></div>
-        <div class="rc-cell double"><span class="rc-lbl">No. of Times Absent:</span><span class="rc-val"></span></div>
+        <div class="rc-cell double"><span class="rc-lbl">No. of Times Present:</span><span class="rc-val">${timesPresent || '—'}</span></div>
+        <div class="rc-cell double"><span class="rc-lbl">No. of Times Absent:</span><span class="rc-val">${timesAbsent || '—'}</span></div>
       </div>
     </div>
 
@@ -910,7 +912,9 @@ function renderCard(data, results) {
     <div class="rc-stats-row">
       <div class="rc-stat-cell">
         <span class="rc-lbl">Total Score:</span>
-        <span class="rc-stat-val">${overallTotal} / ${obtainable}</span>
+        <span class="rc-stat-val">${overallTotal}</span>
+        <span class="rc-lbl" style="margin-left:2px">Out Of:</span>
+        <span class="rc-stat-val">${obtainable}</span>
       </div>
       <div class="rc-stat-cell">
         <span class="rc-lbl">Average %:</span>
