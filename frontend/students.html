@@ -67,7 +67,7 @@
         <div style="font-family:var(--font-display);font-size:1rem;font-weight:700">Student Records</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <a href="bulk-upload.html" class="btn btn-secondary btn-sm"><i class="fas fa-file-arrow-up"></i> Bulk Upload</a>
-          <button class="btn btn-ghost btn-sm" onclick="exportStudents()"><i class="fas fa-file-csv"></i> Export</button>
+          <button class="btn btn-ghost btn-sm" onclick="exportStudents()" title="Export printable student list with names, class, username &amp; password"><i class="fas fa-file-arrow-down"></i> Export List</button>
           <button class="btn btn-primary btn-sm" onclick="openAddStudent()"><i class="fas fa-user-plus"></i> Add Student</button>
         </div>
       </div>
@@ -778,18 +778,9 @@ function toggleSelectAll(chk) {
 }
 
 async function exportStudents() {
-  Toast.info('Exporting…', 'Preparing CSV');
-  try {
-    const data = await API.students.list({ per_page:1000, class_name:document.getElementById('class-filter').value||undefined });
-    exportCSV((data.items||[]).map(s => ({
-      'Full Name': s.full_name, 'Student ID': s.student_id,
-      'Class': s.class_name, 'Gender': s.gender,
-      'Username': s.username,
-      'Default Password': Fmt.generatePassword(s.date_of_birth)||'',
-      'Parent Phone': s.parent_phone||'', 'Parent Email': s.parent_email||'',
-      'Status': s.is_active?'Active':'Inactive',
-    })), 'students.csv');
-  } catch(err) { Toast.error('Export failed', err.message); }
+  const cls   = document.getElementById('class-filter').value || null;
+  const title = cls ? `${cls} — Student List` : 'All Students';
+  await exportStudentList({ class_name: cls, title });
 }
 </script>
 </body>

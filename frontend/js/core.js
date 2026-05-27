@@ -588,7 +588,7 @@ function validateScore(input, max = 100) {
   input.classList.toggle('over-limit', over); return !over;
 }
 
-/* ── CSV export ── */
+/* ── CSV export (generic) ── */
 function exportCSV(data, filename = 'export.csv') {
   if (!data?.length) { Toast.warning('No data', 'Nothing to export.'); return; }
   const headers = Object.keys(data[0]);
@@ -596,6 +596,128 @@ function exportCSV(data, filename = 'export.csv') {
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
   a.download = filename; a.click(); URL.revokeObjectURL(a.href);
+}
+
+/* ── Student list export — opens a formatted printable table ── */
+async function exportStudentList({ class_name = null, title = 'Student List' } = {}) {
+  Toast.info('Preparing export…', 'Fetching student list, please wait.');
+  try {
+    const params = { per_page: 2000, page: 1 };
+    if (class_name) params.class_name = class_name;
+    const data     = await API.get('/students', params);
+    const students = data.items || [];
+    if (!students.length) { Toast.warning('No students', 'No students found to export.'); return; }
+
+    const session = document.querySelector('[data-global-session]')?.textContent?.trim() || '';
+    const term    = document.querySelector('[data-global-term]')?.textContent?.trim()    || '';
+
+    const rows = students.map((s, i) => {
+      const pwd = s.plain_password || s.temp_password || Fmt.generatePassword(s.date_of_birth) || '—';
+      return `<tr>
+        <td class="num">${i + 1}</td>
+        <td>${_xe(s.full_name)}</td>
+        <td>${_xe(s.class_name || s.class || '—')}</td>
+        <td>${_xe(s.gender ? s.gender.charAt(0).toUpperCase()+s.gender.slice(1) : '—')}</td>
+        <td>${_xe(s.student_id || '—')}</td>
+        <td class="mono">${_xe(s.username || '—')}</td>
+        <td class="mono">${_xe(pwd)}</td>
+        <td>${_xe(s.parent_phone || s.parent_email || '—')}</td>
+      </tr>`;
+    }).join('');
+
+    const male   = students.filter(s => s.gender === 'male').length;
+    const female = students.filter(s => s.gender === 'female').length;
+    const date   = new Date().toLocaleDateString('en-NG', { day:'2-digit', month:'long', year:'numeric' });
+
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>${_xe(title)} — Jaasiel RMS</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;font-size:11.5px;color:#111;background:#fff;padding:20px 24px}
+.school{font-size:17px;font-weight:800;color:#002060;letter-spacing:.3px}
+.subtitle{font-size:12px;color:#555;margin-top:3px}
+.meta{display:flex;flex-wrap:wrap;gap:6px 20px;margin:12px 0 16px;font-size:11px;color:#555}
+.meta strong{color:#111}
+table{width:100%;border-collapse:collapse}
+thead th{background:#002060;color:#ffd700;padding:7px 10px;text-align:left;font-size:10.5px;
+  text-transform:uppercase;letter-spacing:.05em;border:1px solid #001540;white-space:nowrap}
+thead th.num{text-align:center;width:36px}
+tbody td{padding:5.5px 10px;border:1px solid #cdd6ec;vertical-align:middle}
+tbody td.num{text-align:center;color:#aaa;font-size:10px}
+tbody td.mono{font-family:monospace;font-size:11px}
+tbody tr:nth-child(even) td{background:#f3f6ff}
+tbody tr:hover td{background:#e8eeff}
+tfoot td{padding:7px 10px;font-size:10.5px;color:#555;border-top:2px solid #002060;background:#f8f9ff}
+.print-note{margin-top:14px;font-size:10px;color:#999;text-align:center}
+@media print{
+  .print-note{display:none}
+  thead th{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  tbody tr:nth-child(even) td{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+<div class="school">Jaasiel Education Centre — ${_xe(title)}</div>
+<div class="subtitle">Official Student Register</div>
+<div class="meta">
+  ${class_name ? `<span>Class: <strong>${_xe(class_name)}</strong></span>` : ''}
+  ${session    ? `<span>Session: <strong>${_xe(session)}</strong></span>` : ''}
+  ${term       ? `<span>Term: <strong>${_xe(term)}</strong></span>` : ''}
+  <span>Total: <strong>${students.length}</strong></span>
+  <span>Male: <strong>${male}</strong></span>
+  <span>Female: <strong>${female}</strong></span>
+  <span>Generated: <strong>${date}</strong></span>
+</div>
+<table>
+  <thead>
+    <tr>
+      <th class="num">#</th>
+      <th>Full Name</th>
+      <th>Class</th>
+      <th>Gender</th>
+      <th>Student ID</th>
+      <th>Username</th>
+      <th>Password</th>
+      <th>Parent Contact</th>
+    </tr>
+  </thead>
+  <tbody>${rows}</tbody>
+  <tfoot>
+    <tr>
+      <td colspan="8">
+        Total ${students.length} student(s) &nbsp;·&nbsp; Male: ${male} &nbsp;·&nbsp; Female: ${female}
+        &nbsp;·&nbsp; Jaasiel Education Centre RMS &nbsp;·&nbsp; ${date}
+      </td>
+    </tr>
+  </tfoot>
+</table>
+<div class="print-note">Use Ctrl+P / Cmd+P to print, or save as PDF from the print dialog.</div>
+</body>
+</html>`;
+
+    const win = window.open('', '_blank');
+    if (win) {
+      win.document.write(html);
+      win.document.close();
+      win.focus();
+      win.setTimeout(() => win.print(), 700);
+    } else {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
+      a.download = (title || 'students').toLowerCase().replace(/\s+/g, '-') + '.html';
+      a.click(); URL.revokeObjectURL(a.href);
+    }
+    Toast.success('Export ready', `${students.length} students exported.`);
+  } catch(err) {
+    Toast.error('Export failed', err.message || 'Could not fetch student list.');
+  }
+}
+
+function _xe(str) {
+  return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 /* ── Notifications ── */
@@ -885,6 +1007,6 @@ window.JaasielRMS = { CONFIG, Security, TokenManager, AuthState, API, Toast, Mod
 window.Modal = Modal; window.Toast = Toast; window.Sidebar = Sidebar; window.Validator = Validator;
 window.AuthState = AuthState; window.Router = Router; window.Fmt = Fmt; window.TokenManager = TokenManager;
 window.PageLoader = PageLoader; window.setLoading = setLoading; window.togglePwd = togglePwd;
-window.exportCSV = exportCSV; window.loadNotifications = loadNotifications;
+window.exportCSV = exportCSV; window.exportStudentList = exportStudentList; window.loadNotifications = loadNotifications;
 window.showSkeleton = showSkeleton; window.renderPagination = renderPagination; window.API = API;
 window.initUploadZone = initUploadZone; window.initTableSearch = initTableSearch; window.validateScore = validateScore;
