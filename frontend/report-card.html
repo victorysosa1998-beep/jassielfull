@@ -1239,18 +1239,47 @@ async function downloadReportCard() {
     const card = document.querySelector('#card-container .rc-page');
     if (!card) throw new Error('Card not found');
 
+    // Wait for all fonts to finish loading so html2canvas captures correct metrics
+    await document.fonts.ready;
+
+    // Collect all loaded font-face CSS rules as a <style> block to inject into the clone
+    // This ensures html2canvas sees the same fonts without needing external network calls
+    let fontFaceCSS = '';
+    try {
+      for (const sheet of document.styleSheets) {
+        try {
+          for (const rule of sheet.cssRules || []) {
+            if (rule.type === CSSRule.FONT_FACE_RULE) {
+              fontFaceCSS += rule.cssText + '\n';
+            }
+          }
+        } catch (e) { /* cross-origin sheet — skip */ }
+      }
+    } catch (e) { /* ignore */ }
+
+    const CARD_WIDTH = 780;
+
     const canvas = await html2canvas(card, {
       scale: 2,
       useCORS: true,
       allowTaint: true,
       backgroundColor: '#ffffff',
       logging: false,
+      windowWidth: CARD_WIDTH,   // ← fixes layout: capture at the card's design width
+      width: CARD_WIDTH,
       onclone: (doc) => {
-        // Ensure the cloned page is fully visible
+        // Re-inject font-face rules into the cloned document so text renders correctly
+        if (fontFaceCSS) {
+          const style = doc.createElement('style');
+          style.textContent = fontFaceCSS;
+          doc.head.appendChild(style);
+        }
         const clonedCard = doc.querySelector('#card-container .rc-page');
         if (clonedCard) {
           clonedCard.style.boxShadow = 'none';
           clonedCard.style.borderRadius = '0';
+          clonedCard.style.width = CARD_WIDTH + 'px';
+          clonedCard.style.minWidth = CARD_WIDTH + 'px';
         }
       }
     });
