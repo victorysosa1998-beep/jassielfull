@@ -79,10 +79,18 @@
               <input type="checkbox" id="no-test-mode" style="accent-color:var(--brand-gold)" onchange="toggleNoTestMode()">
               <span>No test (enter total/100 directly)</span>
             </label>
-            <div style="display:flex;align-items:center;gap:6px;font-size:.82rem;color:var(--text-secondary)">
+            <div style="display:flex;align-items:center;gap:6px;font-size:.82rem;color:var(--text-secondary);flex-wrap:wrap">
               <label style="font-weight:600;white-space:nowrap">Days School Opened:</label>
               <input type="number" id="days-school-opened" class="form-control" placeholder="e.g. 96" min="1" max="200"
                 style="width:80px;padding:5px 8px;font-size:.82rem;height:auto">
+              <label style="font-weight:600;white-space:nowrap;margin-left:8px">Days Present:</label>
+              <input type="number" id="days-present" class="form-control" placeholder="e.g. 90" min="0" max="200"
+                style="width:80px;padding:5px 8px;font-size:.82rem;height:auto"
+                title="Days the student was present (can be set per student or as a default)">
+              <label style="font-weight:600;white-space:nowrap;margin-left:8px">Days Absent:</label>
+              <input type="number" id="days-absent" class="form-control" placeholder="e.g. 6" min="0" max="200"
+                style="width:80px;padding:5px 8px;font-size:.82rem;height:auto"
+                title="Auto-calculated: Days Opened − Days Present">
             </div>
             <button class="btn btn-ghost btn-sm" onclick="clearAll()"><i class="fas fa-eraser"></i> Clear All</button>
             <button class="btn btn-secondary" id="review-scores-btn" onclick="reviewScores()"><i class="fas fa-eye"></i> Review Scores</button>
@@ -120,12 +128,24 @@
 <script>
 const FIRST_MAX = 20, SECOND_MAX = 20, EXAM_MAX = 60, TOTAL_MAX = 100;
 let students = [], classId = null, noTestMode = false;
+let _lastSavedBatchId = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
   await window.__rmsBootstrapReady;
   initPage('sub_admin', 'subadmin');
   populateClassSelect(document.getElementById('sel-class'), 'Select class…', false);
   loadSessions();
+
+  // Auto-calculate days absent when present or opened changes
+  ['days-school-opened','days-present'].forEach(id => {
+    document.getElementById(id)?.addEventListener('input', () => {
+      const opened  = parseInt(document.getElementById('days-school-opened')?.value) || 0;
+      const present = parseInt(document.getElementById('days-present')?.value);
+      if (!isNaN(present) && opened > 0) {
+        document.getElementById('days-absent').value = Math.max(0, opened - present);
+      }
+    });
+  });
 });
 
 async function loadSessions() {
@@ -274,79 +294,192 @@ function reviewScores() {
   const ses = document.getElementById('sel-session').value;
   const trm = document.getElementById('sel-term').value;
   if (!cls||!sub||!ses||!trm) { Toast.warning('Incomplete','Please select all fields.'); return; }
+
   // Count filled rows
-  let filled = 0, issues = [];
+  let filled = 0;
   students.forEach((s,i) => {
     const examEl = document.getElementById('exam-'+i);
     const exam = examEl ? parseFloat(examEl.value) : NaN;
     if (!isNaN(exam) && exam >= 0) filled++;
-    else if (i < students.length) issues.push(s.full_name);
   });
-  if (filled === 0) { Toast.warning('No scores','Please enter scores before reviewing.'); return; }
-  // Show summary and reveal submit button
-  const missingCount = students.length - filled;
-  let msg = `✅ ${filled} student(s) scored.`;
-  if (missingCount > 0) msg += ` ⚠️ ${missingCount} student(s) have no score entered (will be skipped).`;
-  Toast.info('Ready to Submit', msg);
-  document.getElementById('review-scores-btn').style.display = 'none';
-  document.getElementById('submit-scores-btn').style.display = '';
+  if (filled === 0) { Toast.warning('No scores','Please enter at least one score before reviewing.'); return; }
+
+  // Save as draft first, then show review modal
+  _saveDraftAndReview();
 }
 
-async function submitScores() {
-  const rows = students.map((s,i) => {
-    const ftEl = document.getElementById('ft-'+i);
-    const stEl = document.getElementById('st-'+i);
+async function _saveDraftAndReview() {
+  const btn = document.getElementById('review-scores-btn');
+  setLoading(btn, true, 'Saving draft…');
+  try {
+    const rows = _buildRows();
+    if (!rows.length) { Toast.warning('No scores','Enter at least one score.'); return; }
+
+    const daysOpened  = parseInt(document.getElementById('days-school-opened')?.value)||null;
+    const daysPresent = parseInt(document.getElementById('days-present')?.value)||null;
+    const daysAbsent  = parseInt(document.getElementById('days-absent')?.value)||null;
+    if (daysOpened)  rows.forEach(r => r.attendance   = daysOpened);
+    if (daysPresent) rows.forEach(r => r.days_present = daysPresent);
+    if (daysAbsent)  rows.forEach(r => r.days_absent  = daysAbsent);
+
+    const result = await API.results.upload({
+      class_name: document.getElementById('sel-class').value,
+      subject_id: document.getElementById('sel-subject').value,
+      session_id: document.getElementById('sel-session').value,
+      term_id:    document.getElementById('sel-term').value,
+      source: 'manual', no_test: noTestMode, scores: rows,
+    });
+    _lastSavedBatchId = result.batch_id;
+    Toast.success('Draft saved', `${result.created} scores saved as draft.`);
+    _showReviewModal(rows);
+  } catch(err) {
+    Toast.error('Save failed', err.message);
+  } finally {
+    setLoading(btn, false);
+  }
+}
+
+function _buildRows() {
+  return students.map((s,i) => {
+    const ftEl   = document.getElementById('ft-'+i);
+    const stEl   = document.getElementById('st-'+i);
     const examEl = document.getElementById('exam-'+i);
-    const tcEl = document.getElementById('tc-'+i);
-    const ft = ftEl ? parseFloat(ftEl.value) : NaN;
-    const st = stEl ? parseFloat(stEl.value) : NaN;
+    const tcEl   = document.getElementById('tc-'+i);
+    const ft   = ftEl   ? parseFloat(ftEl.value)   : NaN;
+    const st   = stEl   ? parseFloat(stEl.value)   : NaN;
     const exam = examEl ? parseFloat(examEl.value) : NaN;
-    const tc = tcEl ? tcEl.value.trim() : '';
+    const tc   = tcEl   ? tcEl.value.trim() : '';
     if (noTestMode) {
       if (isNaN(exam)) return null;
       if (exam > TOTAL_MAX) return null;
       return { student_id: s.id||s.student_id, exam_score: exam, total_score: exam, teacher_comment: tc||null };
     }
     if ((isNaN(ft) && isNaN(st)) || isNaN(exam)) return null;
-    const firstT = isNaN(ft) ? null : ft;
+    const firstT  = isNaN(ft) ? null : ft;
     const secondT = isNaN(st) ? null : st;
     const ca = (firstT||0) + (secondT||0);
     if (ca > 40 || exam > EXAM_MAX) return null;
-    return { student_id: s.id||s.student_id, first_test: firstT, second_test: secondT, ca_score: ca, exam_score: exam, total_score: ca+exam, teacher_comment: tc||null };
+    return { student_id: s.id||s.student_id, first_test: firstT, second_test: secondT,
+             ca_score: ca, exam_score: exam, total_score: ca+exam, teacher_comment: tc||null };
   }).filter(Boolean);
-  if (!rows.length) { Toast.warning('No scores','Enter scores before submitting.'); return; }
-  // AI Validation
-  const issues = [];
-  rows.forEach((r,i) => { if (r.total_score===0) issues.push({type:'warning',msg:`Row ${i+1}: Zero total score`}); });
-  const filled = students.length - rows.length;
-  if (filled>0) issues.push({type:'warning',msg:`${filled} students have no scores entered`});
-  if (issues.length) {
-    const panel = document.getElementById('validation-panel'); panel.classList.remove('hidden');
-    document.getElementById('validation-items').innerHTML = issues.map(v=>`<div class="validation-item ${v.type}"><i class="fas ${v.type==='error'?'fa-circle-exclamation':'fa-triangle-exclamation'}"></i>${v.msg}</div>`).join('');
-    if (issues.some(v=>v.type==='error')) { Toast.warning('Validation Issues','Fix errors before submitting.'); return; }
-  }
+}
+
+function _showReviewModal(rows) {
+  const clsText = document.getElementById('sel-class').selectedOptions[0]?.text || '';
+  const subText = document.getElementById('sel-subject').selectedOptions[0]?.text || '';
+  const sesText = document.getElementById('sel-session').selectedOptions[0]?.text || '';
+  const trmText = document.getElementById('sel-term').selectedOptions[0]?.text || '';
+  const missing = students.length - rows.length;
+
+  // Build student map for names
+  const studentMap = {};
+  students.forEach(s => { studentMap[s.id||s.student_id] = s.full_name; });
+
+  const hasBreak = rows.some(r => r.first_test != null || r.second_test != null);
+
+  document.getElementById('review-modal-title').textContent = `Review: ${clsText} — ${subText}`;
+  document.getElementById('review-modal-sub').textContent   = `${sesText} · ${trmText} · ${rows.length} students scored`;
+
+  document.getElementById('review-modal-body').innerHTML = `
+    ${missing > 0 ? `<div class="alert alert-warning mb-3">
+      <i class="fas fa-triangle-exclamation"></i>
+      <strong>${missing} student(s) have no score entered</strong> and will be skipped.
+    </div>` : `<div class="alert alert-success mb-3">
+      <i class="fas fa-check-circle"></i> All ${rows.length} students have scores entered.
+    </div>`}
+    <div style="overflow-x:auto">
+      <table class="table" style="font-size:.83rem">
+        <thead><tr>
+          <th>#</th><th>Student</th>
+          ${hasBreak ? '<th style="text-align:center">1st Test</th><th style="text-align:center">2nd Test</th>' : ''}
+          <th style="text-align:center">Exam</th>
+          <th style="text-align:center">Total</th>
+          <th style="text-align:center">Grade</th>
+          <th>Remark</th>
+        </tr></thead>
+        <tbody>
+          ${rows.map((r, i) => {
+            const total = r.total_score ?? ((r.ca_score||0) + (r.exam_score||0));
+            const gr  = Fmt.grade(total);
+            const gc  = Fmt.gradeColor(gr.g);
+            const name = studentMap[r.student_id] || r.student_id;
+            return `<tr>
+              <td style="color:var(--text-muted)">${i+1}</td>
+              <td><strong>${Security.sanitize(name)}</strong></td>
+              ${hasBreak ? `<td style="text-align:center;font-family:var(--font-mono)">${r.first_test??'—'}</td>
+                            <td style="text-align:center;font-family:var(--font-mono)">${r.second_test??'—'}</td>` : ''}
+              <td style="text-align:center;font-family:var(--font-mono)">${r.exam_score??'—'}</td>
+              <td style="text-align:center;font-family:var(--font-mono);font-weight:700">${total}</td>
+              <td style="text-align:center">
+                <span style="display:inline-flex;align-items:center;justify-content:center;
+                  width:26px;height:26px;border-radius:6px;font-weight:800;font-size:.75rem;
+                  background:${gc}22;color:${gc};border:1px solid ${gc}40">${gr.g}</span>
+              </td>
+              <td style="color:var(--text-secondary);font-size:.82rem">${gr.r}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>`;
+
+  Modal.open('modal-review');
+}
+
+async function confirmAndSaveDraft() {
+  // Draft already saved — just close modal and redirect to upload history
+  Modal.close('modal-review');
+  Toast.success('Draft saved!', 'Go to Upload History to review all classes and submit to admin when ready.');
+  setTimeout(() => window.location.href = 'upload-history.html', 1200);
+}
+
+async function submitScores() {
+  // This button now only appears after review — it submits the draft to admin
   const btn = document.getElementById('submit-scores-btn');
   setLoading(btn, true, 'Submitting…');
   try {
-    // Add attendance count to each score row
-    const daysOpened = parseInt(document.getElementById('days-school-opened')?.value)||null;
-    if (daysOpened) rows.forEach(r => r.attendance = daysOpened);
+    const rows = _buildRows();
+    if (!rows.length) { Toast.warning('No scores','Enter scores before submitting.'); return; }
 
-    const termId = document.getElementById('sel-term').value;
-    const className = document.getElementById('sel-class').value;
+    const daysOpened  = parseInt(document.getElementById('days-school-opened')?.value)||null;
+    const daysPresent = parseInt(document.getElementById('days-present')?.value)||null;
+    const daysAbsent  = parseInt(document.getElementById('days-absent')?.value)||null;
+    if (daysOpened)  rows.forEach(r => r.attendance   = daysOpened);
+    if (daysPresent) rows.forEach(r => r.days_present = daysPresent);
+    if (daysAbsent)  rows.forEach(r => r.days_absent  = daysAbsent);
 
     await API.results.upload({
-      class_name: className,
+      class_name: document.getElementById('sel-class').value,
       subject_id: document.getElementById('sel-subject').value,
       session_id: document.getElementById('sel-session').value,
-      term_id: termId,
+      term_id:    document.getElementById('sel-term').value,
       source: 'manual', no_test: noTestMode, scores: rows,
     });
-
-    Toast.success('Submitted!', 'Scores sent for Super Admin approval');
+    Toast.success('Saved!', 'Scores saved as draft. Go to Upload History to submit to admin.');
     setTimeout(() => window.location.href='upload-history.html', 1400);
   } catch(err) { Toast.error('Failed', err.message); setLoading(btn, false); }
 }
 </script>
+<!-- ══ REVIEW SCORES MODAL ══ -->
+<div class="modal-overlay" id="modal-review">
+  <div class="modal modal-xl">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="review-modal-title">Review Scores</div>
+        <div class="modal-subtitle" id="review-modal-sub"></div>
+      </div>
+      <button class="modal-close" onclick="Modal.close('modal-review')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body" id="review-modal-body" style="max-height:65vh;overflow-y:auto;padding:20px"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="Modal.close('modal-review')">
+        <i class="fas fa-arrow-left"></i> Back &amp; Edit
+      </button>
+      <button class="btn btn-secondary" onclick="confirmAndSaveDraft()">
+        <i class="fas fa-floppy-disk"></i> Save as Draft
+      </button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>

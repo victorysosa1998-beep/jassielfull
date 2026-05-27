@@ -54,8 +54,38 @@
   font-size: .72rem; color: rgba(255,255,255,.45);
   text-transform: uppercase; letter-spacing: .08em;
 }
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .login-mobile-brand { display: flex !important; }
+  body { overflow-x: hidden; }
+  /* Collapse the two-column grid */
+  .login-shell {
+    display: block !important;
+    min-height: 100vh;
+  }
+  /* Hide the marketing left panel */
+  .login-left {
+    display: none !important;
+  }
+  /* Make the right (form) panel fill full width */
+  .login-right {
+    min-height: calc(100vh - 148px);
+    padding: 32px 24px 48px !important;
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+  }
+  .login-box {
+    max-width: 100% !important;
+    width: 100%;
+  }
+  .login-title { font-size: 1.65rem !important; }
+  .login-sub { margin-bottom: 20px !important; }
+}
+@media (max-width: 480px) {
+  .login-right { padding: 24px 20px 40px !important; }
+  .login-title { font-size: 1.4rem !important; }
+  .role-selector { gap: 6px !important; }
+  .role-pill { padding: 7px 13px !important; font-size: .78rem !important; }
+  .role-pill i { display: none !important; }
 }
 </style>
 </head>
@@ -65,7 +95,7 @@
 
 <!-- Mobile-only logo — sits above everything on small screens -->
 <div class="login-mobile-brand">
-  <img src="./images/school-logo.pn" alt="Jaasiel Education Centre"
+  <img src="images/logo.png" alt="Jaasiel Education Centre"
        onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
   <div class="brand-fallback"><i class="fas fa-graduation-cap"></i></div>
   <div>
@@ -151,6 +181,13 @@
         <button type="submit" class="btn btn-primary btn-lg" id="login-btn" style="width:100%;justify-content:center;margin-bottom:16px">
           <i class="fas fa-right-to-bracket"></i> Sign In
         </button>
+
+        <!-- Forgot password link -->
+        <div style="text-align:center;margin-bottom:16px">
+          <button type="button" onclick="openResetModal()" style="background:none;border:none;color:var(--brand-gold);font-size:.83rem;cursor:pointer;text-decoration:underline;text-underline-offset:3px;font-family:inherit">
+            <i class="fas fa-key" style="font-size:.75rem"></i> Forgot Password?
+          </button>
+        </div>
       </form>
 
       <div style="background:rgba(255,255,255,.03);border:1px solid var(--border-light);border-radius:var(--radius);padding:12px 16px;font-size:.8rem;color:var(--text-muted)">
@@ -158,6 +195,114 @@
         Students — your username and password were auto-generated on registration and sent to your parent. Change it after first login.
       </div>
     </div>
+  </div>
+</div>
+
+<!-- ── FORGOT PASSWORD MODAL ── -->
+<div id="reset-modal" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px;overflow-y:auto">
+  <div style="background:#0D1B35;border:1px solid rgba(201,151,58,.25);border-radius:20px;padding:32px;width:100%;max-width:460px;position:relative;box-shadow:0 20px 60px rgba(0,0,0,.6)">
+
+    <!-- Close -->
+    <button onclick="closeResetModal()" style="position:absolute;top:14px;right:14px;background:rgba(255,255,255,.06);border:none;color:var(--text-muted);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:1rem">✕</button>
+
+    <!-- Step 1: Enter username + role -->
+    <div id="rst-step1">
+      <div style="font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;margin-bottom:6px">Reset Password</div>
+      <div style="font-size:.83rem;color:var(--text-secondary);margin-bottom:24px">Enter your username and we'll verify your identity.</div>
+
+      <div class="form-group">
+        <label class="form-label">Your Role</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap" id="rst-role-btns">
+          <button type="button" class="role-pill active" onclick="setRstRole('student',this)"><i class="fas fa-graduation-cap"></i> Student</button>
+          <button type="button" class="role-pill" onclick="setRstRole('sub_admin',this)"><i class="fas fa-user-tie"></i> Sub Admin</button>
+          <button type="button" class="role-pill" onclick="setRstRole('super_admin',this)"><i class="fas fa-user-shield"></i> Super Admin</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Username</label>
+        <div class="input-group">
+          <i class="input-icon fas fa-user"></i>
+          <input type="text" class="form-control" id="rst-username" placeholder="Enter your username" autocomplete="off">
+        </div>
+      </div>
+
+      <button type="button" class="btn btn-primary" onclick="rstStep1Next()" id="rst-btn1" style="width:100%;justify-content:center">
+        Continue <i class="fas fa-arrow-right"></i>
+      </button>
+    </div>
+
+    <!-- Step 2: Verify identity -->
+    <div id="rst-step2" style="display:none">
+      <button onclick="showStep(1)" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:.83rem;margin-bottom:16px;padding:0;display:flex;align-items:center;gap:6px">
+        <i class="fas fa-arrow-left"></i> Back
+      </button>
+      <div style="font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;margin-bottom:6px">Verify Your Identity</div>
+      <div style="font-size:.83rem;color:var(--text-secondary);margin-bottom:24px">Answer these questions to confirm it's really you.</div>
+
+      <div class="form-group">
+        <label class="form-label">Full Name <span style="color:var(--danger)">*</span></label>
+        <div class="input-group">
+          <i class="input-icon fas fa-id-card"></i>
+          <input type="text" class="form-control" id="rst-fullname" placeholder="Enter your full name as registered">
+        </div>
+      </div>
+
+      <!-- Student fields -->
+      <div id="rst-student-fields">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="form-group">
+            <label class="form-label">Birth Year <span style="color:var(--danger)">*</span></label>
+            <input type="number" class="form-control" id="rst-year" placeholder="e.g. 2005" min="1950" max="2020" style="font-family:var(--font-mono)">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Birth Month <span style="color:var(--danger)">*</span></label>
+            <select class="form-control" id="rst-month">
+              <option value="">-- Month --</option>
+              <option value="1">January</option><option value="2">February</option>
+              <option value="3">March</option><option value="4">April</option>
+              <option value="5">May</option><option value="6">June</option>
+              <option value="7">July</option><option value="8">August</option>
+              <option value="9">September</option><option value="10">October</option>
+              <option value="11">November</option><option value="12">December</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Staff fields -->
+      <div id="rst-staff-fields" style="display:none">
+        <div class="form-group">
+          <label class="form-label">School PIN <span style="color:var(--danger)">*</span></label>
+          <div class="input-group">
+            <i class="input-icon fas fa-lock"></i>
+            <input type="password" class="form-control" id="rst-pin" placeholder="Enter the school reset PIN">
+          </div>
+          <div class="form-hint">Contact the school administrator for the reset PIN.</div>
+        </div>
+      </div>
+
+      <div id="rst-error" style="display:none;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);border-radius:10px;padding:10px 14px;font-size:.82rem;color:#EF4444;margin-bottom:14px"></div>
+
+      <button type="button" class="btn btn-primary" onclick="rstSubmit()" id="rst-btn2" style="width:100%;justify-content:center">
+        <i class="fas fa-key"></i> Reset My Password
+      </button>
+    </div>
+
+    <!-- Step 3: Success -->
+    <div id="rst-step3" style="display:none;text-align:center;padding:8px 0">
+      <div style="width:64px;height:64px;border-radius:50%;background:rgba(34,197,94,.15);border:2px solid rgba(34,197,94,.3);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:1.8rem;color:#22C55E">
+        <i class="fas fa-check"></i>
+      </div>
+      <div style="font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;margin-bottom:8px">Password Reset!</div>
+      <div style="font-size:.88rem;color:var(--text-secondary);margin-bottom:6px">Your new password is:</div>
+      <div style="font-family:var(--font-mono);font-size:1.1rem;font-weight:700;color:var(--brand-gold);background:rgba(201,151,58,.08);border:1px solid rgba(201,151,58,.2);border-radius:10px;padding:12px 20px;margin-bottom:20px;letter-spacing:.1em" id="rst-new-pwd">—</div>
+      <div style="font-size:.8rem;color:var(--text-muted);margin-bottom:24px" id="rst-success-hint">Log in with this password. You will be asked to change it on your first login.</div>
+      <button type="button" class="btn btn-primary" onclick="closeResetModal()" style="width:100%;justify-content:center">
+        <i class="fas fa-right-to-bracket"></i> Go to Login
+      </button>
+    </div>
+
   </div>
 </div>
 
@@ -215,6 +360,114 @@ document.addEventListener('DOMContentLoaded', async () => {
   togglePwd; // expose
   document.getElementById('username-hint').style.display = 'none';
 });
-</script>
+
+/* ── RESET PASSWORD MODAL ── */
+let _rstRole = 'student';
+
+function openResetModal() {
+  document.getElementById('reset-modal').style.display = 'flex';
+  showStep(1);
+  document.getElementById('rst-username').value = '';
+  document.getElementById('rst-fullname').value = '';
+  document.getElementById('rst-year').value = '';
+  document.getElementById('rst-month').value = '';
+  document.getElementById('rst-pin').value = '';
+  document.getElementById('rst-error').style.display = 'none';
+  setRstRole('student', document.querySelector('#rst-role-btns .role-pill'));
+}
+
+function closeResetModal() {
+  document.getElementById('reset-modal').style.display = 'none';
+}
+
+function showStep(n) {
+  [1,2,3].forEach(i => {
+    const el = document.getElementById(`rst-step${i}`);
+    if (el) el.style.display = i === n ? 'block' : 'none';
+  });
+}
+
+function setRstRole(role, btn) {
+  _rstRole = role;
+  document.querySelectorAll('#rst-role-btns .role-pill').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  const isStudent = role === 'student';
+  document.getElementById('rst-student-fields').style.display = isStudent ? '' : 'none';
+  document.getElementById('rst-staff-fields').style.display   = isStudent ? 'none' : '';
+}
+
+function rstStep1Next() {
+  const username = document.getElementById('rst-username').value.trim();
+  if (!username) { alert('Please enter your username.'); return; }
+  showStep(2);
+}
+
+async function rstSubmit() {
+  const btn       = document.getElementById('rst-btn2');
+  const errorEl   = document.getElementById('rst-error');
+  const username  = document.getElementById('rst-username').value.trim();
+  const fullName  = document.getElementById('rst-fullname').value.trim();
+  const isStudent = _rstRole === 'student';
+
+  errorEl.style.display = 'none';
+
+  if (!fullName) { showRstError('Please enter your full name.'); return; }
+
+  const payload = { username, full_name: fullName, school_pin: null, birth_year: null, birth_month: null };
+
+  if (isStudent) {
+    const year  = parseInt(document.getElementById('rst-year').value);
+    const month = parseInt(document.getElementById('rst-month').value);
+    if (!year || !month) { showRstError('Please enter your birth year and month.'); return; }
+    payload.birth_year  = year;
+    payload.birth_month = month;
+  } else {
+    const pin = document.getElementById('rst-pin').value.trim();
+    if (!pin) { showRstError('Please enter the school PIN.'); return; }
+    payload.school_pin = pin;
+    payload.username   = username;
+  }
+
+  const origText = btn.innerHTML;
+  btn.innerHTML = '<span class="btn-spinner"></span> Verifying…';
+  btn.disabled  = true;
+
+  try {
+    const API_BASE = 'https://jaasiel-school-project-backend-production.up.railway.app/api/v1';
+    const resp = await fetch(`${API_BASE}/auth/reset-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await resp.json();
+    if (!resp.ok) { showRstError(data.detail || 'Details do not match our records.'); return; }
+
+    // Show success — backend returns the actual new password in `hint`
+    document.getElementById('rst-new-pwd').textContent = data.hint || username;
+    const hintEl = document.getElementById('rst-success-hint');
+    if (_rstRole === 'student') {
+      hintEl.textContent = 'This is your date of birth in DDMMYY format. Log in and change it immediately.';
+    } else {
+      hintEl.textContent = 'Your new password is your username. Log in and change it immediately.';
+    }
+    showStep(3);
+  } catch(e) {
+    showRstError('Network error. Please try again.');
+  } finally {
+    btn.innerHTML = origText;
+    btn.disabled  = false;
+  }
+}
+
+function showRstError(msg) {
+  const el = document.getElementById('rst-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+// Close modal on backdrop click
+document.getElementById('reset-modal')?.addEventListener('click', function(e) {
+  if (e.target === this) closeResetModal();
+});</script>
 </body>
 </html>
