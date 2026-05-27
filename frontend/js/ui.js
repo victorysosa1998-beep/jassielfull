@@ -41,8 +41,6 @@ window.buildAdminSidebar = function() {
           <i class="fas fa-ellipsis-vertical" style="font-size:.8rem;color:var(--text-muted)"></i>
         </button>
         <div class="dropdown-menu" id="sb-user-dd" style="bottom:100%;top:auto;right:0">
-          <a href="settings.html" class="dropdown-item"><i class="fas fa-user-pen"></i> Edit Profile</a>
-          <div class="dropdown-divider"></div>
           <button class="dropdown-item danger" data-action="logout"><i class="fas fa-right-from-bracket"></i> Sign Out</button>
         </div>
       </div>
@@ -70,9 +68,7 @@ window.buildSubAdminSidebar = function() {
       <a href="add-student.html" class="nav-item"><i class="fas fa-user-plus"></i><span>Register Student</span></a>
       <a href="bulk-upload.html" class="nav-item"><i class="fas fa-file-arrow-up"></i><span>Bulk Upload</span></a>
     </div>
-    <div class="nav-section"><div class="nav-section-label">Account</div>
-      <a href="settings.html" class="nav-item"><i class="fas fa-gear"></i><span>Settings</span></a>
-    </div>
+
   </nav>
   <div class="sidebar-footer">
     <div class="sidebar-user">
@@ -86,8 +82,6 @@ window.buildSubAdminSidebar = function() {
           <i class="fas fa-ellipsis-vertical" style="font-size:.8rem;color:var(--text-muted)"></i>
         </button>
         <div class="dropdown-menu" id="sb-sub-dd" style="bottom:100%;top:auto;right:0">
-          <a href="settings.html" class="dropdown-item"><i class="fas fa-user-pen"></i> Edit Profile</a>
-          <div class="dropdown-divider"></div>
           <button class="dropdown-item danger" data-action="logout"><i class="fas fa-right-from-bracket"></i> Sign Out</button>
         </div>
       </div>
