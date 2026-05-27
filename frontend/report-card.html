@@ -247,12 +247,13 @@
   font-size: 11px;
 }
 .rc-scores tfoot td.left { text-align: right; color: rgba(255,215,0,.8); font-size: 9px; font-family: 'DM Sans'; text-transform: uppercase; letter-spacing: .5px; }
-.grade-A { color: #15803d; font-weight: 800; }
-.grade-B { color: #1d4ed8; font-weight: 800; }
-.grade-C { color: #b45309; font-weight: 800; }
-.grade-D { color: #ea580c; font-weight: 800; }
-.grade-E { color: #dc2626; font-weight: 800; }
-.grade-F { color: #b91c1c; font-weight: 800; }
+.grade-A  { color: #15803d; font-weight: 800; }
+.grade-B  { color: #1d4ed8; font-weight: 800; }
+.grade-C  { color: #b45309; font-weight: 800; }
+.grade-D  { color: #ea580c; font-weight: 800; }
+.grade-E  { color: #dc2626; font-weight: 800; }
+.grade-F  { color: #b91c1c; font-weight: 800; }
+.grade-Ap { color: #0f6b2c; font-weight: 800; }
 .rc-lower {
   display: grid;
   grid-template-columns: 1.1fr 1fr 1fr;
@@ -659,62 +660,207 @@ async function loadCard() {
   }
 }
 
-/* ── Grade helper ── */
+/* ─────────────────────────────────────────────────────────────────────────
+   GRADE SYSTEM
+   70–100 = A  |  60–69 = B  |  50–59 = C
+   45–49  = D  |  40–44 = E  |  0–39  = F
+   Special: 100 exactly = A+ (bonus display only, still grade A tier)
+   ───────────────────────────────────────────────────────────────────────── */
 function gradeInfo(score) {
   const s = parseFloat(score);
-  if (s >= 70) return {g:'A', r:'Distinction', c:'grade-A'};
-  if (s >= 60) return {g:'B', r:'Credit',      c:'grade-B'};
-  if (s >= 50) return {g:'C', r:'Good',        c:'grade-C'};
-  if (s >= 45) return {g:'D', r:'Fair',        c:'grade-D'};
-  if (s >= 40) return {g:'E', r:'Pass',        c:'grade-E'};
-  return              {g:'F', r:'Fail',        c:'grade-F'};
+  if (isNaN(s)) return { g: '—', r: '—', c: '' };
+  if (s === 100)  return { g: 'A+', r: 'Distinction', c: 'grade-A' };
+  if (s >= 70)    return { g: 'A',  r: 'Distinction', c: 'grade-A' };
+  if (s >= 60)    return { g: 'B',  r: 'Credit',      c: 'grade-B' };
+  if (s >= 50)    return { g: 'C',  r: 'Good',        c: 'grade-C' };
+  if (s >= 45)    return { g: 'D',  r: 'Fair',        c: 'grade-D' };
+  if (s >= 40)    return { g: 'E',  r: 'Pass',        c: 'grade-E' };
+  return               { g: 'F',  r: 'Fail',        c: 'grade-F' };
 }
 
-/* ── Subject total computation ── */
+/* ─────────────────────────────────────────────────────────────────────────
+   SUBJECT VALIDITY CHECK
+   A subject is "scored" only when it has at least an exam score.
+   Blank subjects, empty rows, unoffered subjects, subjects without
+   test/exam entries are IGNORED and must NOT affect totals or averages.
+   ───────────────────────────────────────────────────────────────────────── */
+function isValidScore(v) {
+  return v !== null && v !== undefined && v !== '';
+}
+
 function computeSubjectTotal(r) {
-  const hasExam  = r.exam_score  != null && r.exam_score  !== '';
-  const hasFirst = r.first_test  != null && r.first_test  !== '';
-  const hasSec   = r.second_test != null && r.second_test !== '';
-  const hasCA    = r.ca_score    != null && r.ca_score    !== '';
-  const hasTotal = r.total_score != null && r.total_score !== '';
+  /* If backend already computed and stored total_score, use it */
+  if (isValidScore(r.total_score)) return parseFloat(r.total_score);
 
-  if (hasTotal) return parseFloat(r.total_score);
-  if (!hasExam) return null;
+  /* Exam score is mandatory — without it the subject is unscored */
+  if (!isValidScore(r.exam_score)) return null;
 
-  const exam = parseFloat(r.exam_score) || 0;
+  const exam  = parseFloat(r.exam_score)  || 0;
+  const hasT1 = isValidScore(r.first_test);
+  const hasT2 = isValidScore(r.second_test);
+  const hasCA = isValidScore(r.ca_score);
 
-  if (hasFirst || hasSec) {
-    const t1 = hasFirst ? (parseFloat(r.first_test)  || 0) : 0;
-    const t2 = hasSec   ? (parseFloat(r.second_test) || 0) : 0;
+  /* Subject Total = Test1 + Test2 + Exam (preferred breakdown) */
+  if (hasT1 || hasT2) {
+    const t1 = hasT1 ? (parseFloat(r.first_test)  || 0) : 0;
+    const t2 = hasT2 ? (parseFloat(r.second_test) || 0) : 0;
     return t1 + t2 + exam;
   }
 
+  /* Fallback: CA + Exam (when school uses continuous assessment lump sum) */
   if (hasCA) return (parseFloat(r.ca_score) || 0) + exam;
 
+  /* Exam-only subject */
   return exam;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   POSITION RULES
+   • Creche / Nursery / Primary / Basic / JSS1–JSS3 → show position
+   • SS1 / SS2 / SS3 → position field stays blank
+   ───────────────────────────────────────────────────────────────────────── */
+function shouldShowPosition(className) {
+  if (!className) return true; // default: show
+  const cn = className.trim().toUpperCase();
+  /* Match SS1, SS2, SS3 (Senior Secondary) */
+  if (/^SS\s*[123]$/.test(cn)) return false;
+  return true;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   PASS / FAIL STATUS
+   Student passes if average >= 40 (grade E threshold)
+   ───────────────────────────────────────────────────────────────────────── */
+function passFailStatus(avg) {
+  return avg >= 40 ? 'PASS' : 'FAIL';
 }
 
 /* ── Render the full report card HTML ── */
 function renderCard(data, results) {
   if (!results || !results.length) results = data.results || [];
 
-  const scored       = results.filter(r => computeSubjectTotal(r) !== null);
-  const subjectTotals= scored.map(r => computeSubjectTotal(r));
-  const overallTotal = subjectTotals.reduce((a,b) => a + b, 0);
+  /* ── Filter to only valid (scored) subjects ── */
+  const scored        = results.filter(r => computeSubjectTotal(r) !== null);
+  const subjectTotals = scored.map(r => computeSubjectTotal(r));
+
+  /* ── Overall totals ── */
   const scoredCount  = scored.length;
-  const obtainable   = results.length * 100;
+  const overallTotal = subjectTotals.reduce((a, b) => a + b, 0);
+
+  /*
+   * Obtainable Score = Number of Scored Subjects × 100
+   * e.g. 15 subjects → 1500
+   */
+  const obtainable   = scoredCount * 100;
+
+  /*
+   * Average = Total Score ÷ Number of Scored Subjects
+   * NOT (Total ÷ Obtainable) × 100
+   */
   const avg          = scoredCount ? overallTotal / scoredCount : 0;
 
+  /* ── Pass/Fail ── */
+  const passFail = passFailStatus(avg);
+
+  /* ── Position (blank for SS classes) ── */
+  const showPos    = shouldShowPosition(data.class_name);
+  const posDisplay = showPos ? Fmt.ordinal(data.position || '—') : '—';
+
+  /* ── Overall grade based on average ── */
+  const gl = gradeInfo(avg);
+
+  /* ── Attendance ── */
   const timesOpen  = results.length ? Math.max(...results.map(r => r.attendance || 0)) : 0;
-  const teacherCmt = results.find(r => r.teacher_comment)?.teacher_comment || 'Eager to learn and always ready to improve. Keep up the good work!';
-  const adminCmt   = results.find(r => r.admin_comment)?.admin_comment   || 'Good performance. Aim higher next term!';
-  const hasBreak   = scored.some(r =>
-    (r.first_test  != null && r.first_test  !== '') ||
-    (r.second_test != null && r.second_test !== '')
+
+  /* ─────────────────────────────────────────────────────────────────────────
+     AUTO-GENERATED COMMENTS
+     Priority: use backend-stored comment if provided, else auto-generate
+     based on the student's actual performance this term.
+     ─────────────────────────────────────────────────────────────────────── */
+
+  /* ── Find the subject with the lowest total (to name in principal remark) ── */
+  let weakestSubject = null;
+  let weakestScore   = Infinity;
+  scored.forEach((r, idx) => {
+    const t = subjectTotals[idx];
+    if (t !== null && t < weakestScore) {
+      weakestScore   = t;
+      weakestSubject = r.subject_name || null;
+    }
+  });
+
+  /* ── Teacher Comment: based on average ── */
+  function autoTeacherComment(avg) {
+    if (avg >= 70) return 'Excellent performance.';
+    if (avg >= 50) return 'Good results, work harder next term.';
+    return 'Weak results, put more effort next term.';
+  }
+
+  /* ── Principal Remark: based on average + weakest subject ── */
+  function autoPrincipalRemark(avg, weakSub) {
+    if (avg >= 70) return 'Excellent, keep it up.';
+    if (avg >= 50) return 'Satisfactory.';
+    if (avg >= 40) return 'Work harder next term.';
+    return weakSub
+      ? `Sit up and work on your ${weakSub}.`
+      : 'Sit up and work harder next term.';
+  }
+
+  /* Use backend value if supplied, otherwise auto-generate */
+  const teacherCmt = results.find(r => r.teacher_comment)?.teacher_comment
+                     || autoTeacherComment(avg);
+  const principalRemark = results.find(r => r.admin_comment)?.admin_comment
+                          || autoPrincipalRemark(avg, weakestSubject);
+
+  /* ── Admin Conduct Comment (stored separately on data object) ── */
+  const conductCmt = data.conduct_comment || results.find(r => r.conduct_comment)?.conduct_comment || '';
+
+  /* ── Determine if 1st/2nd test columns are needed ── */
+  const hasBreak = scored.some(r =>
+    isValidScore(r.first_test) || isValidScore(r.second_test)
   );
-  const gl      = gradeInfo(avg);
+
   const today   = new Date();
-  const dateStr = today.toLocaleDateString('en-NG', {day:'2-digit', month:'long', year:'numeric'});
+  const dateStr = today.toLocaleDateString('en-NG', { day:'2-digit', month:'long', year:'numeric' });
+
+  /* ── Build subject rows ── */
+  const subjectRows = scored.map((r, idx) => {
+    const t1    = isValidScore(r.first_test)  ? parseFloat(r.first_test)  : null;
+    const t2    = isValidScore(r.second_test) ? parseFloat(r.second_test) : null;
+    const ca    = isValidScore(r.ca_score)    ? parseFloat(r.ca_score)    : null;
+    const exam  = isValidScore(r.exam_score)  ? parseFloat(r.exam_score)  : null;
+    const total = subjectTotals[idx];
+    const gi    = gradeInfo(total);
+
+    /* CA column: sum of t1+t2 if both exist, else raw ca, else '—' */
+    const showT1 = hasBreak ? (t1 !== null ? t1 : '—') : null;
+    const showT2 = hasBreak ? (t2 !== null ? t2 : '—') : null;
+    const showCA = (t1 !== null || t2 !== null)
+                    ? ((t1 || 0) + (t2 || 0))
+                    : (ca !== null ? ca : '—');
+
+    return `<tr>
+      <td class="left">${r.subject_name || '—'}</td>
+      ${hasBreak ? `<td>${showT1}</td><td>${showT2}</td>` : ''}
+      <td>${showCA}</td>
+      <td>${exam !== null ? exam : '—'}</td>
+      <td style="font-weight:700;font-size:11px">${total !== null ? total : '—'}</td>
+      <td><span class="${gi.c}">${gi.g}</span></td>
+      <td style="font-family:'Source Serif 4',serif;font-weight:600;font-size:10px"><span class="${gi.c}">${gi.r}</span></td>
+    </tr>`;
+  }).join('');
+
+  /* ── Blank-subjects notice row ── */
+  const skippedCount = results.length - scoredCount;
+  const skippedNote  = skippedCount > 0 ? `
+    <tr style="opacity:.45;font-style:italic">
+      <td class="left" colspan="${hasBreak ? 7 : 5}" style="font-size:9px;color:#888;text-align:center">
+        ${skippedCount} subject(s) with no entries not shown
+      </td>
+    </tr>` : '';
+
+  /* ── Footer formula note ── */
+  const formulaNote = `Total: ${overallTotal} ÷ ${scoredCount} subjects = ${avg.toFixed(1)}%`;
 
   document.getElementById('card-container').innerHTML = `
   <div class="rc-page">
@@ -730,9 +876,9 @@ function renderCard(data, results) {
         </div>
         <div class="rc-photo-box">
           ${data.photo_url
-            ? `<img src="${data.photo_url.startsWith('http')||data.photo_url.startsWith('/') ? data.photo_url : '/uploads/'+data.photo_url}" alt="Student Photo" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+            ? `<img src="${data.photo_url.startsWith('http') || data.photo_url.startsWith('/') ? data.photo_url : '/uploads/' + data.photo_url}" alt="Student Photo" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
             : ''}
-          <div style="text-align:center;padding:4px;font-size:8px;color:#999;line-height:1.4;${data.photo_url?'display:none':''}">PASSPORT<br>PHOTO</div>
+          <div style="text-align:center;padding:4px;font-size:8px;color:#999;line-height:1.4;${data.photo_url ? 'display:none' : ''}">PASSPORT<br>PHOTO</div>
         </div>
       </div>
     </div>
@@ -741,31 +887,51 @@ function renderCard(data, results) {
 
     <div class="rc-info-section">
       <div class="rc-row">
-        <div class="rc-cell triple"><span class="rc-lbl">Name:</span><span class="rc-val">${data.full_name||'—'}</span></div>
-        <div class="rc-cell"><span class="rc-lbl">Class:</span><span class="rc-val">${data.class_name||'—'}</span></div>
-        <div class="rc-cell"><span class="rc-lbl">Gender:</span><span class="rc-val" style="text-transform:capitalize">${data.gender||'—'}</span></div>
-        <div class="rc-cell"><span class="rc-lbl">Term:</span><span class="rc-val">${(data.term_name||'').split(' ')[0]||'—'}</span></div>
+        <div class="rc-cell triple"><span class="rc-lbl">Name:</span><span class="rc-val">${data.full_name || '—'}</span></div>
+        <div class="rc-cell"><span class="rc-lbl">Class:</span><span class="rc-val">${data.class_name || '—'}</span></div>
+        <div class="rc-cell"><span class="rc-lbl">Gender:</span><span class="rc-val" style="text-transform:capitalize">${data.gender || '—'}</span></div>
+        <div class="rc-cell"><span class="rc-lbl">Term:</span><span class="rc-val">${(data.term_name || '').split(' ')[0] || '—'}</span></div>
       </div>
       <div class="rc-row">
-        <div class="rc-cell double"><span class="rc-lbl">Session:</span><span class="rc-val">${data.session_name||'—'}</span></div>
-        <div class="rc-cell"><span class="rc-lbl">No. in Class:</span><span class="rc-val">${data.total_students||'—'}</span></div>
-        <div class="rc-cell double"><span class="rc-lbl">Date of Birth:</span><span class="rc-val">${data.date_of_birth ? new Date(data.date_of_birth).toLocaleDateString('en-GB',{day:'2-digit',month:'2-digit',year:'numeric'}) : '—'}</span></div>
+        <div class="rc-cell double"><span class="rc-lbl">Session:</span><span class="rc-val">${data.session_name || '—'}</span></div>
+        <div class="rc-cell"><span class="rc-lbl">No. in Class:</span><span class="rc-val">${data.total_students || '—'}</span></div>
+        <div class="rc-cell double"><span class="rc-lbl">Date of Birth:</span><span class="rc-val">${data.date_of_birth ? new Date(data.date_of_birth).toLocaleDateString('en-GB', { day:'2-digit', month:'2-digit', year:'numeric' }) : '—'}</span></div>
         <div class="rc-cell"><span class="rc-lbl">Age:</span><span class="rc-val">${data.age != null ? data.age + ' yrs' : '—'}</span></div>
-        <div class="rc-cell"><span class="rc-lbl">Student ID:</span><span class="rc-val" style="font-family:monospace">${data.student_id||'—'}</span></div>
+        <div class="rc-cell"><span class="rc-lbl">Student ID:</span><span class="rc-val" style="font-family:monospace">${data.student_id || '—'}</span></div>
       </div>
       <div class="rc-row">
-        <div class="rc-cell double"><span class="rc-lbl">No. of Times School Opened:</span><span class="rc-val">${timesOpen||'—'}</span></div>
-        <div class="rc-cell double"><span class="rc-lbl">No. of Times Present:</span><span class="rc-val">${timesOpen||'—'}</span></div>
+        <div class="rc-cell double"><span class="rc-lbl">No. of Times School Opened:</span><span class="rc-val">${timesOpen || '—'}</span></div>
+        <div class="rc-cell double"><span class="rc-lbl">No. of Times Present:</span><span class="rc-val">${timesOpen || '—'}</span></div>
         <div class="rc-cell double"><span class="rc-lbl">No. of Times Absent:</span><span class="rc-val"></span></div>
       </div>
     </div>
 
+    <!-- ── Summary Stats Row ── -->
     <div class="rc-stats-row">
-      <div class="rc-stat-cell"><span class="rc-lbl">Total Score:</span><span class="rc-stat-val">${overallTotal} / ${obtainable}</span></div>
-      <div class="rc-stat-cell"><span class="rc-lbl">Average %:</span><span class="rc-stat-val">${avg.toFixed(1)}%</span></div>
-      <div class="rc-stat-cell"><span class="rc-lbl">Subjects Scored:</span><span class="rc-stat-val">${scoredCount}</span></div>
-      <div class="rc-stat-cell"><span class="rc-lbl">Position:</span><span class="rc-stat-val">${Fmt.ordinal(data.position||'—')}</span></div>
-      <div class="rc-stat-cell"><span class="rc-lbl">Grade:</span><span class="rc-stat-val ${gl.c}">${gl.g}</span></div>
+      <div class="rc-stat-cell">
+        <span class="rc-lbl">Total Score:</span>
+        <span class="rc-stat-val">${overallTotal} / ${obtainable}</span>
+      </div>
+      <div class="rc-stat-cell">
+        <span class="rc-lbl">Average %:</span>
+        <span class="rc-stat-val">${avg.toFixed(1)}%</span>
+      </div>
+      <div class="rc-stat-cell">
+        <span class="rc-lbl">Subjects:</span>
+        <span class="rc-stat-val">${scoredCount}</span>
+      </div>
+      <div class="rc-stat-cell">
+        <span class="rc-lbl">Position:</span>
+        <span class="rc-stat-val">${showPos ? posDisplay : ''}</span>
+      </div>
+      <div class="rc-stat-cell">
+        <span class="rc-lbl">Grade:</span>
+        <span class="rc-stat-val ${gl.c}">${gl.g}</span>
+      </div>
+      <div class="rc-stat-cell">
+        <span class="rc-lbl">Status:</span>
+        <span class="rc-stat-val" style="color:${passFail === 'PASS' ? '#15803d' : '#b91c1c'}">${passFail}</span>
+      </div>
     </div>
 
     <div class="rc-section-head">Student's Academic Performance</div>
@@ -783,39 +949,13 @@ function renderCard(data, results) {
         </tr>
       </thead>
       <tbody>
-        ${scored.map((r, idx) => {
-          const t1    = (r.first_test  != null && r.first_test  !== '') ? parseFloat(r.first_test)  : null;
-          const t2    = (r.second_test != null && r.second_test !== '') ? parseFloat(r.second_test) : null;
-          const ca    = (r.ca_score    != null && r.ca_score    !== '') ? parseFloat(r.ca_score)    : null;
-          const exam  = (r.exam_score  != null && r.exam_score  !== '') ? parseFloat(r.exam_score)  : null;
-          const total = subjectTotals[idx];
-          const gi    = gradeInfo(total);
-          const showT1  = hasBreak ? (t1   != null ? t1   : '—') : null;
-          const showT2  = hasBreak ? (t2   != null ? t2   : '—') : null;
-          const showCA  = (t1 != null || t2 != null)
-                           ? ((t1||0) + (t2||0))
-                           : (ca != null ? ca : '—');
-          return `<tr>
-            <td class="left">${r.subject_name||'—'}</td>
-            ${hasBreak ? `<td>${showT1}</td><td>${showT2}</td>` : ''}
-            <td>${showCA}</td>
-            <td>${exam != null ? exam : '—'}</td>
-            <td style="font-weight:700;font-size:11px">${total != null ? total : '—'}</td>
-            <td><span class="${gi.c}">${gi.g}</span></td>
-            <td style="font-family:'Source Serif 4',serif;font-weight:600;font-size:10px"><span class="${gi.c}">${gi.r}</span></td>
-          </tr>`;
-        }).join('')}
-        ${results.length > scored.length ? `
-        <tr style="opacity:.45;font-style:italic">
-          <td class="left" colspan="${hasBreak ? 7 : 5}" style="font-size:9px;color:#888;text-align:center">
-            ${results.length - scored.length} subject(s) with no entries not shown
-          </td>
-        </tr>` : ''}
+        ${subjectRows}
+        ${skippedNote}
       </tbody>
       <tfoot>
         <tr>
           <td class="left" colspan="${hasBreak ? 4 : 2}" style="font-size:8.5px">
-            Total: ${overallTotal} ÷ ${scoredCount} subjects = ${avg.toFixed(1)}%
+            ${formulaNote}
           </td>
           <td>${overallTotal}</td>
           <td><span class="${gl.c}">${gl.g}</span></td>
@@ -871,19 +1011,20 @@ function renderCard(data, results) {
         <span class="rc-comment-lbl">Form Teacher's Comment:</span>
         <span class="rc-comment-line">${teacherCmt}</span>
       </div>
-      ${adminCmt ? `<div class="rc-comment-row" style="margin-top:5px">
+      <div class="rc-comment-row" style="margin-top:5px">
         <span class="rc-comment-lbl">Principal's Remark:</span>
-        <span class="rc-comment-line">${adminCmt}</span>
-      </div>` : `<div class="rc-comment-row" style="margin-top:5px">
-        <span class="rc-comment-lbl">Principal's Remark:</span>
-        <span class="rc-comment-line"></span>
-      </div>`}
+        <span class="rc-comment-line">${principalRemark}</span>
+      </div>
+      <div class="rc-comment-row" style="margin-top:5px">
+        <span class="rc-comment-lbl">Student's Conduct:</span>
+        <span class="rc-comment-line" style="${!conductCmt ? 'min-height:14px' : ''}">${conductCmt}</span>
+      </div>
     </div>
 
     ${(data.resumption_date || data.next_term_fee) ? `
     <div class="rc-next-bar">
       <div class="rc-next-item"><span class="rc-next-lbl">Closing Date:</span><span class="rc-next-val">—</span></div>
-      ${data.resumption_date ? `<div class="rc-next-item"><span class="rc-next-lbl">Resumption Date:</span><span class="rc-next-val">${new Date(data.resumption_date).toLocaleDateString('en-NG',{day:'numeric',month:'long',year:'numeric'})}</span></div>` : ''}
+      ${data.resumption_date ? `<div class="rc-next-item"><span class="rc-next-lbl">Resumption Date:</span><span class="rc-next-val">${new Date(data.resumption_date).toLocaleDateString('en-NG', { day:'numeric', month:'long', year:'numeric' })}</span></div>` : ''}
     </div>` : ''}
 
     <div class="rc-sig-area">
