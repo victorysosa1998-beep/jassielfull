@@ -124,7 +124,7 @@
 <!-- ══ PUBLISH MODAL ══ -->
 <div class="modal-overlay" id="modal-publish">
   <div class="modal">
-    <div class="modal-header"><div class="modal-title"><i class="fas fa-bullhorn" style="color:var(--brand-gold);margin-right:8px"></i>Publish Results</div><button class="modal-close" onclick="Modal.close('modal-publish')"><i class="fas fa-times"></i></button></div>
+    <div class="modal-header"><div><div class="modal-title"><i class="fas fa-bullhorn" style="color:var(--brand-gold);margin-right:8px"></i>Publish Results</div><div class="modal-subtitle" id="modal-publish-sub" style="margin-top:2px"></div></div><button class="modal-close" onclick="Modal.close('modal-publish')"><i class="fas fa-times"></i></button></div>
     <div class="modal-body" style="padding:20px">
       <p id="publish-confirm-text" style="color:var(--text-secondary);margin-bottom:16px"></p>
       <div class="alert alert-warning mb-3"><i class="fas fa-triangle-exclamation"></i> Once published, students can immediately view their results.</div>
@@ -135,8 +135,8 @@
           <input type="date" class="form-control" id="pub-resumption-date" style="font-size:.85rem">
         </div>
         <div class="form-group mb-0">
-          <label class="form-label" style="font-size:.8rem">Next Term School Fees (optional, per class)</label>
-          <div id="pub-fees-grid" style="display:grid;gap:6px;max-height:140px;overflow-y:auto"></div>
+          <label class="form-label" style="font-size:.8rem">Next Term School Fees <span id="pub-fee-class-label" style="color:var(--brand-gold)"></span> (optional)</label>
+          <div id="pub-fees-grid" style="display:grid;gap:6px"></div>
         </div>
       </div>
     </div>
@@ -558,38 +558,54 @@ function openPublishConfirm(classId, mode) {
     mode === 'all'
       ? `Publish results for <strong>ALL ready classes</strong> — ${sesName} · ${termName}?`
       : `Publish results for <strong>${currentClassName||'this class'}</strong> — ${sesName} · ${termName}?`;
-  _populateFeeGrid();
+  /* Pass the exact class name so fee + resumption are scoped to this class */
+  const publishClassName = mode === 'all' ? '' : (currentClassName || '');
+  /* Update modal subtitle to show which class is being published */
+  const subEl = document.getElementById('modal-publish-sub');
+  if (subEl) subEl.textContent = publishClassName ? publishClassName + ' · ' + sesName + ' · ' + termName : sesName + ' · ' + termName;
+  _populateFeeGrid(publishClassName);
+  /* Reset resumption date field each time modal opens */
+  document.getElementById('pub-resumption-date').value = '';
   document.getElementById('publish-confirm-btn').onclick = doPublish;
   Modal.open('modal-publish');
 }
 
-function _populateFeeGrid() {
-  const grid = document.getElementById('pub-fees-grid');
-  if (!grid || !window.SCHOOL_CLASSES) return;
-  grid.innerHTML = window.SCHOOL_CLASSES.map(cls =>
-    `<div style="display:flex;align-items:center;gap:8px;padding:3px 0">
-      <label style="font-size:.78rem;color:var(--text-secondary);min-width:110px">${cls}</label>
-      <input type="number" class="form-control fee-input" data-class="${cls}" placeholder="₦ Amount"
-        style="font-size:.8rem;padding:5px 10px;height:auto;flex:1" min="0">
-    </div>`
-  ).join('');
+function _populateFeeGrid(className) {
+  const grid      = document.getElementById('pub-fees-grid');
+  const lbl       = document.getElementById('pub-fee-class-label');
+  if (!grid) return;
+  /* Show only the class being published — not all classes */
+  const cls = className || currentClassName || '';
+  if (lbl) lbl.textContent = cls ? `— ${cls}` : '';
+  grid.innerHTML = `<div style="display:flex;align-items:center;gap:8px;padding:3px 0">
+    <label style="font-size:.78rem;color:var(--text-secondary);min-width:110px">${cls}</label>
+    <input type="number" class="form-control fee-input" data-class="${cls}" placeholder="₦ Amount"
+      style="font-size:.8rem;padding:5px 10px;height:auto;flex:1" min="0">
+  </div>`;
 }
 
 async function doPublish() {
   const btn = document.getElementById('publish-confirm-btn');
   setLoading(btn, true, 'Publishing…');
   try {
-    const termId = publishPayload._term_id || publishPayload.term_id;
-    const resumptionDate = document.getElementById('pub-resumption-date')?.value;
+    const termId         = publishPayload._term_id || publishPayload.term_id;
+    const classId        = publishPayload.class_id || null;
+    const resumptionDate = document.getElementById('pub-resumption-date')?.value || null;
+
+    /* Build fee map — only the single class input shown in the modal */
     const feeMap = {};
     document.querySelectorAll('.fee-input').forEach(inp => {
       const val = parseFloat(inp.value);
       if (!isNaN(val) && val > 0) feeMap[inp.dataset.class] = val;
     });
+
+    /* Save publish settings scoped to this class (classId sent so backend
+       knows which class's report cards to update) */
     if (resumptionDate || Object.keys(feeMap).length > 0) {
       const p = {};
       if (resumptionDate) p.resumption_date = resumptionDate;
       if (Object.keys(feeMap).length > 0) p.next_term_fee = feeMap;
+      if (classId) p.class_id = classId;   // ← scope to this class only
       await API.post(`/results/terms/${termId}/publish-settings`, p);
     }
     const data = await API.post('/results/publish', publishPayload);
