@@ -253,7 +253,8 @@ async function loadResults() {
     const avg = totals.reduce((a,b)=>a+b,0)/totals.length;
     document.getElementById('stat-avg').textContent = avg.toFixed(1);
     document.getElementById('stat-subs').textContent = results.length;
-    document.getElementById('stat-pos').textContent = Fmt.ordinal(data.position||data.class_position||'—');
+    const rawPos = data.position || data.class_position;
+    document.getElementById('stat-pos').textContent = rawPos ? String(rawPos) : '—';
     const best = results.reduce((a,b)=>((b.total_score||0)>(a.total_score||0)?b:a),results[0]);
     const bestGr = Fmt.grade(best?.total_score||0);
     document.getElementById('stat-best').innerHTML = `<span style="color:${Fmt.gradeColor(bestGr.g)}">${bestGr.g}</span>`;
@@ -312,7 +313,7 @@ async function loadResults() {
     const avg2 = demo.reduce((a,b)=>a+b.total_score,0)/demo.length;
     document.getElementById('stat-avg').textContent = avg2.toFixed(1);
     document.getElementById('stat-subs').textContent = demo.length;
-    document.getElementById('stat-pos').textContent = '3rd';
+    document.getElementById('stat-pos').textContent = '—';
     document.getElementById('stat-best').innerHTML = `<span style="color:${Fmt.gradeColor('A')}">A</span>`;
     document.getElementById('results-period').textContent = '2024/2025 · First Term';
     document.getElementById('session-badge').textContent = 'First Term 2024/2025';
