@@ -605,7 +605,7 @@ async function openEditFees(classId, className) {
     document.getElementById('pub-modal-title').textContent = 'Edit Fees & Resumption Date';
     document.getElementById('pub-modal-icon').className = 'fas fa-pen-to-square';
     document.getElementById('publish-confirm-text').innerHTML =
-      `Update next term fees and resumption date for <strong>${currentTermName||'this term'}</strong>.
+      `Update next term fees and resumption date for <strong>${document.getElementById('sel-term')?.selectedOptions[0]?.text||'this term'}</strong>.
        <br><span style="font-size:.8rem;color:var(--text-muted)">Changes apply to all published report cards immediately.</span>`;
 
     // Pre-fill existing date
@@ -689,4 +689,5 @@ async function doPublish() {
 }
 </script>
 </body>
+<!-- jjgj -->
 </html>
