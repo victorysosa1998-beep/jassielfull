@@ -22,6 +22,7 @@
 .sp-rejected{background:rgba(239,68,68,.12);color:var(--danger)}
 .sp-locked{background:rgba(100,116,139,.15);color:#64748b}
 .sp-correction{background:rgba(168,85,247,.12);color:#9333ea}
+/* Class detail view */
 .subject-row{background:var(--bg-card);border:1px solid var(--border-light);border-radius:10px;
   padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .subject-row:hover{border-color:var(--border)}
@@ -50,6 +51,7 @@
   </header>
 
   <div class="page-body">
+    <!-- Stats -->
     <div class="stats-grid mb-3">
       <div class="stat-card"><div class="stat-icon red"><i class="fas fa-clock"></i></div><div class="stat-info"><div class="stat-label">Awaiting Review</div><div class="stat-value" id="cnt-pending">—</div></div></div>
       <div class="stat-card"><div class="stat-icon green"><i class="fas fa-check-circle"></i></div><div class="stat-info"><div class="stat-label">Approved</div><div class="stat-value" id="cnt-approved">—</div></div></div>
@@ -57,6 +59,7 @@
       <div class="stat-card"><div class="stat-icon purple"><i class="fas fa-lock"></i></div><div class="stat-info"><div class="stat-label">Locked</div><div class="stat-value" id="cnt-locked">—</div></div></div>
     </div>
 
+    <!-- Session/Term selector -->
     <div class="card mb-3" style="padding:14px 18px">
       <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
         <i class="fas fa-filter" style="color:var(--brand-gold)"></i>
@@ -66,6 +69,7 @@
       </div>
     </div>
 
+    <!-- CLASS LIST VIEW -->
     <div id="view-class-list">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
         <div style="font-weight:700;font-size:.95rem"><i class="fas fa-layer-group" style="color:var(--brand-gold);margin-right:6px"></i>Classes with Submitted Results</div>
@@ -76,8 +80,11 @@
       <div id="class-list-container"></div>
     </div>
 
+    <!-- CLASS DETAIL VIEW (subjects of one class) -->
     <div id="view-class-detail" style="display:none">
-      <div class="back-btn" onclick="backToList()"><i class="fas fa-arrow-left"></i> Back to all classes</div>
+      <div class="back-btn" onclick="backToList()">
+        <i class="fas fa-arrow-left"></i> Back to all classes
+      </div>
       <div id="class-detail-header" style="margin-bottom:16px"></div>
       <div id="class-detail-container"></div>
     </div>
@@ -117,27 +124,19 @@
 <!-- ══ PUBLISH MODAL ══ -->
 <div class="modal-overlay" id="modal-publish">
   <div class="modal">
-    <div class="modal-header">
-      <div><div class="modal-title"><i class="fas fa-bullhorn" style="color:var(--brand-gold);margin-right:8px"></i>Publish Results</div></div>
-      <button class="modal-close" onclick="Modal.close('modal-publish')"><i class="fas fa-times"></i></button>
-    </div>
+    <div class="modal-header"><div class="modal-title"><i class="fas fa-bullhorn" style="color:var(--brand-gold);margin-right:8px" id="pub-modal-icon"></i><span id="pub-modal-title">Publish Results</span></div><button class="modal-close" onclick="Modal.close('modal-publish')"><i class="fas fa-times"></i></button></div>
     <div class="modal-body" style="padding:20px">
       <p id="publish-confirm-text" style="color:var(--text-secondary);margin-bottom:16px"></p>
       <div class="alert alert-warning mb-3"><i class="fas fa-triangle-exclamation"></i> Once published, students can immediately view their results.</div>
-
-      <div style="background:rgba(201,151,58,.06);border:1px solid rgba(201,151,58,.2);border-radius:10px;padding:16px">
-        <div style="font-weight:700;font-size:.85rem;color:var(--brand-gold);margin-bottom:12px">
-          <i class="fas fa-calendar-arrow-up"></i> Next Term Info (appears on every report card)
-        </div>
-
-        <div class="form-group" style="margin-bottom:12px">
+      <div style="background:rgba(201,151,58,.06);border:1px solid rgba(201,151,58,.2);border-radius:10px;padding:14px;margin-bottom:16px">
+        <div style="font-weight:700;font-size:.85rem;color:var(--brand-gold);margin-bottom:10px"><i class="fas fa-calendar-arrow-up"></i> Next Term Info (appears on report cards)</div>
+        <div class="form-group" style="margin-bottom:10px">
           <label class="form-label" style="font-size:.8rem">Next Term Resumption Date</label>
           <input type="date" class="form-control" id="pub-resumption-date" style="font-size:.85rem">
         </div>
-
         <div class="form-group mb-0">
-          <label class="form-label" style="font-size:.8rem" id="pub-fee-label">Next Term School Fees</label>
-          <div id="pub-fees-grid" style="display:grid;gap:8px;margin-top:6px"></div>
+          <label class="form-label" style="font-size:.8rem">Next Term School Fees (optional, per class)</label>
+          <div id="pub-fees-grid" style="display:grid;gap:6px;max-height:140px;overflow-y:auto"></div>
         </div>
       </div>
     </div>
@@ -208,7 +207,7 @@ async function loadCounts() {
   } catch {}
 }
 
-/* ══ CLASS LIST ══ */
+/* ══ CLASS LIST — one card per class ══ */
 async function loadClassList() {
   currentTermId    = parseInt(document.getElementById('sel-term').value);
   currentSessionId = parseInt(document.getElementById('sel-session').value);
@@ -227,18 +226,20 @@ async function loadClassList() {
     if (!classes.length) {
       container.innerHTML = `<div class="card" style="text-align:center;padding:48px;color:var(--text-muted)">
         <i class="fas fa-inbox" style="font-size:2.5rem;display:block;margin-bottom:12px;opacity:.4"></i>
-        No results submitted for this term yet.</div>`;
+        No results submitted for this term yet.
+      </div>`;
       document.getElementById('approve-all-btn').style.display = 'none';
       return;
     }
 
+    // Show "Approve All" if any class has submitted results
     const hasSubmitted = classes.some(c => c.submitted > 0);
     document.getElementById('approve-all-btn').style.display = hasSubmitted ? '' : 'none';
 
     container.innerHTML = classes.map(cls => {
-      const done  = cls.approved + cls.published + cls.locked;
-      const total = cls.total_batches;
-      const status = cls.all_published ? 'published' : cls.ready_to_publish ? 'ready' : '';
+      const done    = cls.approved + cls.published + cls.locked;
+      const total   = cls.total_batches;
+      const status  = cls.all_published ? 'published' : cls.ready_to_publish ? 'ready' : '';
 
       const pills = [
         cls.pending    > 0 ? `<span class="subject-pill sp-pending"><i class="fas fa-clock"></i> ${cls.pending} Draft</span>` : '',
@@ -258,18 +259,28 @@ async function loadClassList() {
             </div>
             <div>
               <div style="font-weight:700;font-size:1rem">${cls.class_name}</div>
-              <div style="font-size:.76rem;color:var(--text-muted);margin-top:2px">${total} subject(s) uploaded &nbsp;·&nbsp; ${done}/${total} done</div>
+              <div style="font-size:.76rem;color:var(--text-muted);margin-top:2px">
+                ${total} subject(s) uploaded &nbsp;·&nbsp; ${done}/${total} done
+              </div>
               <div style="margin-top:5px">${pills || '<span style="font-size:.75rem;color:var(--text-muted)">No uploads yet</span>'}</div>
             </div>
           </div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
             ${cls.submitted > 0
               ? `<button class="btn btn-success btn-sm" onclick="event.stopPropagation();approveClass(${cls.class_id},'${cls.class_name}',this)">
-                   <i class="fas fa-check"></i> Approve All Submitted</button>` : ''}
+                   <i class="fas fa-check"></i> Approve All Submitted
+                 </button>` : ''}
             ${cls.ready_to_publish && !cls.all_published
-              ? `<button class="btn btn-primary btn-sm" onclick="event.stopPropagation();openPublishConfirm(${cls.class_id},'${cls.class_name}','single')">
-                   <i class="fas fa-bullhorn"></i> Publish</button>` : ''}
-            <span class="btn btn-ghost btn-sm" style="pointer-events:none"><i class="fas fa-chevron-right"></i> View Subjects</span>
+              ? `<button class="btn btn-primary btn-sm" onclick="event.stopPropagation();openPublishConfirm(${cls.class_id},'single')">
+                   <i class="fas fa-bullhorn"></i> Publish
+                 </button>` : ''}
+            ${cls.all_published
+              ? `<button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();openEditFees(${cls.class_id},'${cls.class_name}')">
+                   <i class="fas fa-pen-to-square"></i> Edit Fees & Date
+                 </button>` : ''}
+            <span class="btn btn-ghost btn-sm" style="pointer-events:none">
+              <i class="fas fa-chevron-right"></i> View Subjects
+            </span>
           </div>
         </div>
       </div>`;
@@ -279,7 +290,7 @@ async function loadClassList() {
   }
 }
 
-/* ══ CLASS DETAIL ══ */
+/* ══ CLASS DETAIL — show all subjects for one class ══ */
 async function openClassDetail(classId, className) {
   currentClassId   = classId;
   currentClassName = className;
@@ -303,7 +314,7 @@ async function openClassDetail(classId, className) {
           <i class="fas fa-check-double"></i> Approve All Submitted
         </button>
         <button class="btn btn-primary btn-sm" id="class-publish-btn"
-          onclick="openPublishConfirm(${classId},'${className}','single')">
+          onclick="openPublishConfirm(${classId},'single')">
           <i class="fas fa-bullhorn"></i> Publish Class
         </button>
       </div>
@@ -317,7 +328,8 @@ async function openClassDetail(classId, className) {
     if (!batches.length) {
       container.innerHTML = `<div class="card" style="text-align:center;padding:32px;color:var(--text-muted)">
         <i class="fas fa-inbox" style="font-size:2rem;opacity:.4;display:block;margin-bottom:10px"></i>
-        No subjects uploaded for this class yet.</div>`; return;
+        No subjects uploaded for this class yet.
+      </div>`; return;
     }
 
     const statusMap   = {pending:'badge-draft',submitted:'badge-pending',approved:'badge-approved',
@@ -349,15 +361,19 @@ async function openClassDetail(classId, className) {
         <div style="flex:1;min-width:160px">
           <div style="font-weight:700;font-size:.92rem">${b.subject_name||'—'}</div>
           <div style="font-size:.75rem;color:var(--text-muted);margin-top:2px">
-            ${b.students||0} students · Avg: ${b.avg_score??'—'} · ${Fmt.timeAgo(b.uploaded_at)}</div>
+            ${b.students||0} students · Avg: ${b.avg_score??'—'} · ${Fmt.timeAgo(b.uploaded_at)}
+          </div>
           ${b.admin_note||b.correction_comment
             ? `<div style="font-size:.75rem;color:var(--danger);margin-top:4px">
-                 <i class="fas fa-comment"></i> ${Security.sanitize(b.admin_note||b.correction_comment)}</div>` : ''}
+                 <i class="fas fa-comment"></i> ${Security.sanitize(b.admin_note||b.correction_comment)}
+               </div>` : ''}
         </div>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
           ${srcIcon}
           <span class="badge ${statusMap[b.status]||'badge-draft'}">${statusLabel[b.status]||b.status}</span>
-          <button class="btn btn-ghost btn-sm" onclick="viewBatchDetail(${b.id})"><i class="fas fa-eye"></i> Scores</button>
+          <button class="btn btn-ghost btn-sm" onclick="viewBatchDetail(${b.id})">
+            <i class="fas fa-eye"></i> Scores
+          </button>
           ${actionBtns}
         </div>
       </div>`;
@@ -373,7 +389,7 @@ function backToList() {
   currentClassId = null; currentClassName = '';
 }
 
-/* ══ Approve whole class ══ */
+/* ══ Approve whole class (all submitted batches) ══ */
 async function approveClass(classId, className, btn) {
   if (!confirm(`Approve all submitted subjects for ${className}? This cannot be undone.`)) return;
   setLoading(btn, true, 'Approving…');
@@ -385,7 +401,10 @@ async function approveClass(classId, className, btn) {
     loadCounts();
     if (currentClassId) openClassDetail(classId, className);
     else loadClassList();
-  } catch(err) { Toast.error('Failed', err.message); setLoading(btn, false); }
+  } catch(err) {
+    Toast.error('Failed', err.message);
+    setLoading(btn, false);
+  }
 }
 
 async function approveAllClasses() {
@@ -530,86 +549,119 @@ async function viewBatchDetail(id) {
   }
 }
 
-/* ══════════════════════════════════════════════════════════════
-   PUBLISH MODAL
-   - Single class publish  → shows ONE fee field labelled with that class name
-   - Publish all           → shows one fee field per class
-   - Pre-fills existing saved fees from the term
-   - Saves fee with the correct class name as the key
-   - Never saves an empty-string key
-══════════════════════════════════════════════════════════════ */
-async function openPublishConfirm(classId, className, mode) {
-  const termId    = currentTermId, sessionId = currentSessionId;
-  const termName  = document.getElementById('sel-term').selectedOptions[0]?.text    || '';
-  const sesName   = document.getElementById('sel-session').selectedOptions[0]?.text || '';
-
+/* ── Publish ── */
+function openPublishConfirm(classId, mode) {
+  const termId = currentTermId, sessionId = currentSessionId;
+  const termName = document.getElementById('sel-term').selectedOptions[0]?.text || '';
+  const sesName  = document.getElementById('sel-session').selectedOptions[0]?.text || '';
   publishPayload = mode === 'all'
-    ? { all: true,    term_id: termId, session_id: sessionId, _term_id: termId, _mode: 'all' }
-    : { class_id: classId, term_id: termId, session_id: sessionId, _term_id: termId, _mode: 'single', _class_name: className };
-
+    ? { all: true, term_id: termId, session_id: sessionId }
+    : { class_id: classId, term_id: termId, session_id: sessionId };
+  publishPayload._term_id = termId;
   document.getElementById('publish-confirm-text').innerHTML =
     mode === 'all'
       ? `Publish results for <strong>ALL ready classes</strong> — ${sesName} · ${termName}?`
-      : `Publish results for <strong>${className}</strong> — ${sesName} · ${termName}?`;
-
-  // ── Fetch existing term settings to pre-fill the inputs ──────────────────
-  let existingFees = {};
-  let existingDate = '';
-  try {
-    const termData = await API.get(`/results/terms/${termId}/settings`);
-    existingFees = termData.next_term_fee || {};
-    existingDate = termData.resumption_date
-      ? termData.resumption_date.split('T')[0]
-      : '';
-  } catch {
-    // endpoint may not exist — silently ignore, inputs start blank
-  }
-
-  // Pre-fill resumption date
-  const dateInput = document.getElementById('pub-resumption-date');
-  dateInput.value = existingDate;
-
-  // ── Build the fee grid ───────────────────────────────────────────────────
-  const grid = document.getElementById('pub-fees-grid');
-
-  if (mode === 'single') {
-    // Just one row for the class being published
-    const existingVal = existingFees[className] || '';
-    document.getElementById('pub-fee-label').textContent = `Next Term School Fees — ${className}`;
-    grid.innerHTML = `
-      <div style="display:flex;align-items:center;gap:10px">
-        <span style="font-size:.82rem;font-weight:600;color:var(--text-secondary);min-width:110px">${className}</span>
-        <input type="number" class="form-control fee-input" data-class="${className}"
-          placeholder="₦ Amount" value="${existingVal}"
-          style="font-size:.88rem;padding:6px 12px;height:auto;flex:1" min="0">
-      </div>`;
-  } else {
-    // All classes — fetch the real list from API, fall back to defaults
-    document.getElementById('pub-fee-label').textContent = 'Next Term School Fees (per class)';
-    let classList = [];
-    try {
-      const cls = await API.get('/classes');
-      classList = (cls.items || []).map(c => c.name).filter(Boolean);
-    } catch {}
-    if (!classList.length) {
-      classList = ["Creche","Daycare","Pre-Nursery","KG 1","KG 2","KG 3",
-                   "Basic 1","Basic 2","Basic 3","Basic 4","Basic 5",
-                   "JSS 1","JSS 2","JSS 3","SS 1","SS 2","SS 3"];
-    }
-    grid.innerHTML = `<div style="max-height:180px;overflow-y:auto;display:grid;gap:6px">` +
-      classList.map(cls => {
-        const existingVal = existingFees[cls] || '';
-        return `<div style="display:flex;align-items:center;gap:8px">
-          <label style="font-size:.78rem;color:var(--text-secondary);min-width:110px;flex-shrink:0">${cls}</label>
-          <input type="number" class="form-control fee-input" data-class="${cls}"
-            placeholder="₦ Amount" value="${existingVal}"
-            style="font-size:.8rem;padding:5px 10px;height:auto;flex:1" min="0">
-        </div>`;
-      }).join('') + `</div>`;
-  }
-
+      : `Publish results for <strong>${currentClassName||'this class'}</strong> — ${sesName} · ${termName}?`;
+  _resetPublishModal();
+  _populateFeeGrid({});
+  document.getElementById('pub-resumption-date').value = '';
   document.getElementById('publish-confirm-btn').onclick = doPublish;
   Modal.open('modal-publish');
+}
+
+function _populateFeeGrid(existingFees) {
+  const grid = document.getElementById('pub-fees-grid');
+  if (!grid || !window.SCHOOL_CLASSES) return;
+  const fees = existingFees || {};
+  grid.innerHTML = window.SCHOOL_CLASSES.map(cls => {
+    // Try exact match first, then case-insensitive
+    const val = fees[cls] ?? Object.entries(fees).find(([k]) =>
+      k.trim().toLowerCase() === cls.trim().toLowerCase()
+    )?.[1] ?? '';
+    return `<div style="display:flex;align-items:center;gap:8px;padding:3px 0">
+      <label style="font-size:.78rem;color:var(--text-secondary);min-width:110px">${cls}</label>
+      <input type="number" class="form-control fee-input" data-class="${cls}" placeholder="₦ Amount"
+        style="font-size:.8rem;padding:5px 10px;height:auto;flex:1" min="0"
+        value="${val}">
+    </div>`;
+  }).join('');
+}
+
+async function openEditFees(classId, className) {
+  // Load existing fees for this term then open the modal in edit mode
+  try {
+    const termId = currentTermId;
+    let existingFees = {};
+    let existingDate = '';
+    try {
+      const settings = await API.get(`/results/terms/${termId}/settings`);
+      existingFees = settings.next_term_fee || {};
+      existingDate = settings.resumption_date
+        ? settings.resumption_date.split('T')[0]
+        : '';
+    } catch {}
+
+    // Set modal to "edit" mode
+    document.getElementById('pub-modal-title').textContent = 'Edit Fees & Resumption Date';
+    document.getElementById('pub-modal-icon').className = 'fas fa-pen-to-square';
+    document.getElementById('publish-confirm-text').innerHTML =
+      `Update next term fees and resumption date for <strong>${currentTermName||'this term'}</strong>.
+       <br><span style="font-size:.8rem;color:var(--text-muted)">Changes apply to all published report cards immediately.</span>`;
+
+    // Pre-fill existing date
+    document.getElementById('pub-resumption-date').value = existingDate;
+
+    // Pre-fill existing fees
+    _populateFeeGrid(existingFees);
+
+    // Hide the publish warning, show save button only
+    document.querySelector('#modal-publish .alert-warning').style.display = 'none';
+    const btn = document.getElementById('publish-confirm-btn');
+    btn.innerHTML = '<i class="fas fa-save"></i> Save Changes';
+    btn.onclick = () => saveFeesOnly(termId);
+
+    Modal.open('modal-publish');
+  } catch(err) {
+    Toast.error('Error', err.message || 'Could not load current settings.');
+  }
+}
+
+async function saveFeesOnly(termId) {
+  const btn = document.getElementById('publish-confirm-btn');
+  setLoading(btn, true, 'Saving…');
+  try {
+    const resumptionDate = document.getElementById('pub-resumption-date')?.value;
+    const feeMap = {};
+    document.querySelectorAll('.fee-input').forEach(inp => {
+      const val = parseFloat(inp.value);
+      if (!isNaN(val) && val > 0) feeMap[inp.dataset.class] = val;
+    });
+    const p = {};
+    if (resumptionDate) p.resumption_date = resumptionDate;
+    if (Object.keys(feeMap).length > 0) p.next_term_fee = feeMap;
+    if (!Object.keys(p).length) {
+      Toast.warning('Nothing to save', 'Enter at least one fee or a resumption date.');
+      setLoading(btn, false);
+      return;
+    }
+    await API.post(`/results/terms/${termId}/publish-settings`, p);
+    Toast.success('Saved!', 'Fees and resumption date updated on all report cards.');
+    Modal.close('modal-publish');
+    // Reset modal back to publish mode for next use
+    _resetPublishModal();
+  } catch(err) {
+    Toast.error('Save failed', err.message);
+    setLoading(btn, false);
+  }
+}
+
+function _resetPublishModal() {
+  document.getElementById('pub-modal-title').textContent = 'Publish Results';
+  document.getElementById('pub-modal-icon').className = 'fas fa-bullhorn';
+  const warning = document.querySelector('#modal-publish .alert-warning');
+  if (warning) warning.style.display = '';
+  const btn = document.getElementById('publish-confirm-btn');
+  btn.innerHTML = '<i class="fas fa-bullhorn"></i> Publish Now';
 }
 
 async function doPublish() {
@@ -617,29 +669,19 @@ async function doPublish() {
   setLoading(btn, true, 'Publishing…');
   try {
     const termId = publishPayload._term_id || publishPayload.term_id;
-    const resumptionDate = document.getElementById('pub-resumption-date').value;
-
-    // Collect only filled-in fee fields — key is the class name from data-class
+    const resumptionDate = document.getElementById('pub-resumption-date')?.value;
     const feeMap = {};
     document.querySelectorAll('.fee-input').forEach(inp => {
-      const className = (inp.dataset.class || '').trim();
       const val = parseFloat(inp.value);
-      if (className && !isNaN(val) && val > 0) {
-        feeMap[className] = val;
-      }
+      if (!isNaN(val) && val > 0) feeMap[inp.dataset.class] = val;
     });
-
-    // Always save settings if date or any fee was provided
     if (resumptionDate || Object.keys(feeMap).length > 0) {
       const p = {};
       if (resumptionDate) p.resumption_date = resumptionDate;
       if (Object.keys(feeMap).length > 0) p.next_term_fee = feeMap;
       await API.post(`/results/terms/${termId}/publish-settings`, p);
     }
-
-    // Now publish the results
-    const { _term_id, _mode, _class_name, ...payload } = publishPayload;
-    const data = await API.post('/results/publish', payload);
+    const data = await API.post('/results/publish', publishPayload);
     Toast.success('Published!', data.message);
     Modal.close('modal-publish');
     loadClassList(); loadCounts();
