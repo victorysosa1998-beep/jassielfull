@@ -169,21 +169,34 @@
   border-bottom: 2px solid #002060;
   position: relative;
   z-index: 1;
+  flex-wrap: wrap;
 }
 .rc-stat-cell {
-  flex: 1;
-  padding: 5px 8px;
+  flex: 1 1 auto;
+  padding: 6px 10px;
   border-right: 1px solid #c5d0e8;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 5px;
+  justify-content: center;
+  text-align: center;
+  min-width: 80px;
 }
 .rc-stat-cell:last-child { border-right: none; }
 .rc-stat-val {
   font-family: 'Playfair Display', serif;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 900;
   color: #002060;
+  line-height: 1.2;
+}
+.rc-stat-lbl {
+  font-size: 7.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: #5a6a8a;
+  margin-bottom: 1px;
 }
 .rc-section-head {
   background: linear-gradient(135deg, #002060, #1a56c8);
@@ -1027,29 +1040,31 @@ function renderCard(data, results) {
     <!-- ── Summary Stats Row ── -->
     <div class="rc-stats-row">
       <div class="rc-stat-cell">
-        <span class="rc-lbl">Total Score:</span>
+        <span class="rc-stat-lbl">Total Score</span>
         <span class="rc-stat-val">${overallTotal}</span>
-        <span class="rc-lbl" style="margin-left:2px">Out Of:</span>
+      </div>
+      <div class="rc-stat-cell">
+        <span class="rc-stat-lbl">Out Of</span>
         <span class="rc-stat-val">${obtainable}</span>
       </div>
       <div class="rc-stat-cell">
-        <span class="rc-lbl">Average %:</span>
+        <span class="rc-stat-lbl">Average %</span>
         <span class="rc-stat-val">${avg.toFixed(1)}%</span>
       </div>
       <div class="rc-stat-cell">
-        <span class="rc-lbl">Subjects:</span>
+        <span class="rc-stat-lbl">Subjects</span>
         <span class="rc-stat-val">${scoredCount}</span>
       </div>
       <div class="rc-stat-cell">
-        <span class="rc-lbl">Position:</span>
-        <span class="rc-stat-val">${showPos ? posDisplay : ''}</span>
+        <span class="rc-stat-lbl">Position</span>
+        <span class="rc-stat-val">${showPos ? posDisplay : '—'}</span>
       </div>
       <div class="rc-stat-cell">
-        <span class="rc-lbl">Grade:</span>
+        <span class="rc-stat-lbl">Grade</span>
         <span class="rc-stat-val ${gl.c}">${gl.g}</span>
       </div>
       <div class="rc-stat-cell">
-        <span class="rc-lbl">Status:</span>
+        <span class="rc-stat-lbl">Status</span>
         <span class="rc-stat-val" style="color:${passFail === 'PASS' ? '#15803d' : '#b91c1c'}">${passFail}</span>
       </div>
     </div>
@@ -1116,12 +1131,12 @@ function renderCard(data, results) {
         <div class="rc-bill-row"><span>Phonics Fee</span><span style="border-bottom:1px solid #999;min-width:60px;text-align:right"></span></div>
         <div class="rc-bill-row"><span>Games / Sports</span><span style="border-bottom:1px solid #999;min-width:60px;text-align:right"></span></div>
         <div class="rc-bill-row"><span>P.T.A Fee</span><span style="border-bottom:1px solid #999;min-width:60px;text-align:right"></span></div>
-        ${data.next_term_fee
-          ? `<div class="rc-bill-row"><span>Next Term Fees</span><span style="font-weight:700">₦${Number(data.next_term_fee).toLocaleString()}</span></div>`
+        ${(data.next_term_fee != null && data.next_term_fee !== '')
+          ? `<div class="rc-bill-row"><span>Next Term Fees</span><span style="font-weight:700;color:#002060">₦${Number(data.next_term_fee).toLocaleString()}</span></div>`
           : `<div class="rc-bill-row"><span>Next Term Fees</span><span style="border-bottom:1px solid #999;min-width:60px"></span></div>`}
         <div class="rc-bill-row total">
           <span>TOTAL ₦</span>
-          <span>${data.next_term_fee ? Number(data.next_term_fee).toLocaleString() : '—'}</span>
+          <span>${(data.next_term_fee != null && data.next_term_fee !== '') ? Number(data.next_term_fee).toLocaleString() : '—'}</span>
         </div>
       </div>
     </div>
@@ -1141,10 +1156,11 @@ function renderCard(data, results) {
       </div>
     </div>
 
-    ${(data.resumption_date || data.next_term_fee) ? `
+    ${(data.resumption_date || (data.next_term_fee != null && data.next_term_fee !== '')) ? `
     <div class="rc-next-bar">
       <div class="rc-next-item"><span class="rc-next-lbl">Closing Date:</span><span class="rc-next-val">—</span></div>
       ${data.resumption_date ? `<div class="rc-next-item"><span class="rc-next-lbl">Resumption Date:</span><span class="rc-next-val">${new Date(data.resumption_date).toLocaleDateString('en-NG', { day:'numeric', month:'long', year:'numeric' })}</span></div>` : ''}
+      ${(data.next_term_fee != null && data.next_term_fee !== '') ? `<div class="rc-next-item"><span class="rc-next-lbl">Next Term Fee:</span><span class="rc-next-val" style="font-weight:700;color:#002060">₦${Number(data.next_term_fee).toLocaleString()}</span></div>` : ''}
     </div>` : ''}
 
     <div class="rc-sig-area">

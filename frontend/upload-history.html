@@ -18,6 +18,38 @@
 .check-status-ok{color:var(--success);font-size:.8rem;font-weight:600}
 .check-status-empty{color:var(--warning);font-size:.8rem;font-weight:600}
 .check-status-missing{color:var(--danger);font-size:.8rem;font-weight:600}
+
+/* ── Mobile responsiveness ─────────────────────────── */
+#status-tabs{display:flex;flex-wrap:wrap;gap:6px;padding:4px 0}
+#status-tabs .tab-btn{flex:1 1 auto;min-width:80px;text-align:center;font-size:.78rem;padding:7px 10px;white-space:nowrap}
+
+/* Subject cards on mobile */
+.subject-card{background:var(--bg-card);border:1px solid var(--border-light);border-radius:12px;
+  padding:12px 14px;margin-bottom:8px}
+.subject-card-header{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.subject-card-actions{display:flex;gap:6px;flex-wrap:wrap}
+
+@media(max-width:700px){
+  /* Hide table on mobile, show cards */
+  .table-wrapper{display:none}
+  .subject-cards{display:block !important}
+
+  /* Topbar new-upload button stays visible */
+  #topbar-right .btn{font-size:.75rem;padding:6px 10px}
+
+  /* Card group header */
+  .group-card-header{flex-direction:column;align-items:flex-start !important}
+  .group-card-header .badge,.group-card-header .btn{font-size:.75rem}
+
+  /* Status tabs scroll horizontally as last resort */
+  #status-tabs{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;
+    padding-bottom:4px;scrollbar-width:none}
+  #status-tabs::-webkit-scrollbar{display:none}
+  #status-tabs .tab-btn{flex:0 0 auto;min-width:72px}
+}
+@media(min-width:701px){
+  .subject-cards{display:none}
+}
 </style>
 </head>
 <body>
@@ -143,7 +175,7 @@ async function loadUploads(status, page) {
       const canSubmit    = group.batches.some(b => b.status === 'pending') && !anyLocked && !anyApproved;
 
       return `<div class="card mb-3">
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px">
+        <div class="group-card-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px">
           <div>
             <div style="font-weight:700;font-size:1rem">${group.class_name}</div>
             <div style="font-size:.78rem;color:var(--text-muted)">${group.session_name||''} · ${group.term_name} · ${group.batches.length} subject(s)</div>
@@ -200,6 +232,37 @@ async function loadUploads(status, page) {
               }).join('')}
             </tbody>
           </table>
+        </div>
+        <!-- Mobile cards view -->
+        <div class="subject-cards" style="display:none">
+          ${group.batches.map(b => {
+            const editable = ['pending','submitted'].includes(b.status);
+            const note = b.correction_comment||b.admin_note||'';
+            return `<div class="subject-card">
+              <div class="subject-card-header">
+                <div>
+                  <div style="font-weight:700;font-size:.9rem">${b.subject_name||'—'}</div>
+                  <div style="font-size:.75rem;color:var(--text-muted);margin-top:2px">
+                    ${b.students||0} students
+                    ${b.avg_score!=null?' · Avg: '+b.avg_score:''}
+                    · ${Fmt.timeAgo(b.uploaded_at)}
+                  </div>
+                </div>
+                <span class="badge ${statusMap[b.status]||'badge-draft'}">${statusLabel[b.status]||b.status}</span>
+              </div>
+              ${note ? `<div style="font-size:.75rem;color:${b.status==='correction_requested'?'var(--danger)':'var(--text-muted)'};margin-bottom:8px;padding:6px 8px;background:rgba(255,255,255,.04);border-radius:6px">
+                <i class="fas fa-comment-dots" style="margin-right:4px"></i>${note}
+              </div>` : ''}
+              <div class="subject-card-actions">
+                <button class="btn btn-ghost btn-sm" onclick="viewBatch(${b.id},false)" style="flex:1">
+                  <i class="fas fa-eye"></i> View
+                </button>
+                ${editable ? `<button class="btn btn-secondary btn-sm" onclick="viewBatch(${b.id},true)" style="flex:1">
+                  <i class="fas fa-pencil"></i> Edit
+                </button>` : ''}
+              </div>
+            </div>`;
+          }).join('')}
         </div>
       </div>`;
     }).join('');
@@ -464,9 +527,61 @@ async function checkBeforeSubmit(classId, termId, sessionId, btn) {
 }
 
 async function markMissingBlank(classId, termId, sessionId) {
-  if (!confirm('Mark all missing subjects as "blank" (no results)? This lets you submit without them.')) return;
-  Toast.info('Coming soon', 'This will create empty placeholder batches for missing subjects.');
-  // TODO: POST /results/blank-subject for each missing subject
+  if (!confirm('Mark all missing subjects as blank? This creates empty entries so you can submit.')) return;
+  const btn = document.getElementById('mark-blank-btn');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="btn-spinner"></span> Marking…'; }
+
+  try {
+    // Get all subjects for this class
+    const [subjectsData, uploadsData] = await Promise.all([
+      API.get(`/classes/${classId}/subjects`),
+      API.results.myUploads({ per_page: 100 })
+    ]);
+    const allSubjects = subjectsData.items || subjectsData || [];
+    const uploaded    = (uploadsData.items || []).filter(b => b.class_id === classId && b.term_id === termId);
+    const uploadedIds = new Set(uploaded.map(b => b.subject_id));
+
+    // Get students in this class
+    const stuData  = await API.classes.students(classId);
+    const students = stuData.items || stuData || [];
+    if (!students.length) { Toast.warning('No students', 'No students found in this class.'); return; }
+
+    // Get current session id from any upload or from page
+    const sessionId2 = sessionId || (uploaded[0] && uploaded[0].session_id);
+    if (!sessionId2) { Toast.error('Error', 'Could not determine session. Please refresh.'); return; }
+
+    // For each missing subject, upload a blank batch (all students with null scores)
+    const missing = allSubjects.filter(sub => !uploadedIds.has(sub.id));
+    if (!missing.length) { Toast.info('Nothing to do', 'All subjects already have uploads.'); return; }
+
+    let done = 0;
+    for (const sub of missing) {
+      const blankScores = students.map(s => ({
+        student_id:  s.id || s.student_id,
+        first_test:  null,
+        second_test: null,
+        ca_score:    null,
+        exam_score:  null,
+        total_score: null,
+      }));
+      await API.results.upload({
+        class_id:   classId,
+        subject_id: sub.id,
+        session_id: sessionId2,
+        term_id:    termId,
+        source:     'manual',
+        scores:     blankScores,
+      });
+      done++;
+    }
+
+    Toast.success('Done!', `${done} subject(s) marked as blank. You can now submit.`);
+    Modal.close('modal-check');
+    loadUploads(currentStatus, currentPage);
+  } catch(err) {
+    Toast.error('Failed', err.message || 'Could not mark subjects as blank.');
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-minus-circle"></i> Mark Missing as Blank'; }
+  }
 }
 
 async function doSubmitToAdmin(classId, termId, sessionId) {
