@@ -613,11 +613,15 @@ async function exportStudentList({ class_name = null, title = 'Student List' } =
 
     const rows = students.map((s, i) => {
       const pwd = s.plain_password || s.temp_password || Fmt.generatePassword(s.date_of_birth) || '—';
+      const dob = s.date_of_birth
+        ? new Date(s.date_of_birth).toLocaleDateString('en-NG', { day:'2-digit', month:'short', year:'numeric' })
+        : '—';
       return `<tr>
         <td class="num">${i + 1}</td>
         <td>${_xe(s.full_name)}</td>
         <td>${_xe(s.class_name || s.class || '—')}</td>
         <td>${_xe(s.gender ? s.gender.charAt(0).toUpperCase()+s.gender.slice(1) : '—')}</td>
+        <td>${_xe(dob)}</td>
         <td>${_xe(s.student_id || '—')}</td>
         <td class="mono">${_xe(s.username || '—')}</td>
         <td class="mono">${_xe(pwd)}</td>
@@ -678,6 +682,7 @@ tfoot td{padding:7px 10px;font-size:10.5px;color:#555;border-top:2px solid #0020
       <th>Full Name</th>
       <th>Class</th>
       <th>Gender</th>
+      <th>Date of Birth</th>
       <th>Student ID</th>
       <th>Username</th>
       <th>Password</th>
@@ -687,7 +692,7 @@ tfoot td{padding:7px 10px;font-size:10.5px;color:#555;border-top:2px solid #0020
   <tbody>${rows}</tbody>
   <tfoot>
     <tr>
-      <td colspan="8">
+      <td colspan="9">
         Total ${students.length} student(s) &nbsp;·&nbsp; Male: ${male} &nbsp;·&nbsp; Female: ${female}
         &nbsp;·&nbsp; Jaasiel Education Centre RMS &nbsp;·&nbsp; ${date}
       </td>
@@ -779,7 +784,7 @@ const ChartDefaults = {
 window.SCHOOL_CLASSES = ['Creche', 'Daycare', 'Pre-Nursery',
 'KG 1', 'KG 2', 'KG 3',
 'Basic 1', 'Basic 2', 'Basic 3', 'Basic 4', 'Basic 5',
-'JSS 1', 'JSS 2', 'JSS 3',
+'Jss 1', 'Jss 2', 'Jss 3',
 'SS 1', 'SS 2', 'SS 3',];
 
 window.populateClassSelect = function(selectEl, emptyLabel, addAll) {
@@ -818,9 +823,7 @@ window.pageInit = function(roles) {
   if (user) {
     document.querySelectorAll('.user-avatar-init').forEach(el => el.textContent = Fmt.initials(user.full_name || '?'));
     document.querySelectorAll('.user-name-display').forEach(el => el.textContent = user.full_name || '—');
-    // document.querySelectorAll('.user-role-display').forEach(el => el.textContent = user.role || '—');
-    const ROLE_LABELS = { super_admin: 'Director', admin: 'Admin', sub_admin: 'Sub Admin', student: 'Student' };
-document.querySelectorAll('.user-role-display').forEach(el => el.textContent = ROLE_LABELS[user.role] || user.role || '—');
+    document.querySelectorAll('.user-role-display').forEach(el => el.textContent = user.role || '—');
     document.querySelectorAll('.user-class-display').forEach(el => el.textContent = user.class_name || '—');
   }
   // Mark active nav item

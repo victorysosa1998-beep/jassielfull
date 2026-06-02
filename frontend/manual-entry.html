@@ -193,7 +193,6 @@ async function loadTermsFor() {
   } catch { sel.innerHTML = '<option value="">Error loading terms</option>'; }
 }
 async function loadClassOptions() {
-  // Load classes from API so we have real IDs on each option
   const sel = document.getElementById('sel-class');
   try {
     const data = await API.classes.list();
@@ -201,21 +200,15 @@ async function loadClassOptions() {
     sel.innerHTML = '<option value="">Select class…</option>';
     classes.forEach(c => {
       const o = document.createElement('option');
-      o.value = c.id;           // store the real DB id as value
-      o.textContent = c.name;
-      o.dataset.name = c.name;
+      o.value = c.id; o.textContent = c.name; o.dataset.name = c.name;
       sel.appendChild(o);
     });
-  } catch {
-    // fallback to static list if API fails
-    populateClassSelect(sel, 'Select class…', false);
-  }
+  } catch { populateClassSelect(sel, 'Select class…', false); }
 }
 
 async function onClassChange() {
   const selEl = document.getElementById('sel-class');
-  const clsId = selEl.value;                              // now a real DB id
-  const clsName = selEl.options[selEl.selectedIndex]?.dataset.name || selEl.options[selEl.selectedIndex]?.text || '';
+  const clsId = selEl.value;
   const sel = document.getElementById('sel-subject');
   sel.innerHTML='<option value="">Loading…</option>'; sel.disabled=true;
   if (!clsId) { sel.innerHTML='<option value="">Select subject…</option>'; return; }
@@ -225,30 +218,24 @@ async function onClassChange() {
     sel.innerHTML = '<option value="">Select subject…</option>';
     (subs.items||subs||[]).forEach(s => {
       const o = document.createElement('option');
-      o.value = s.id;
-      o.textContent = s.name;
+      o.value = s.id; o.textContent = s.name;
       sel.appendChild(o);
     });
-    if (!sel.options.length || sel.options.length === 1) {
-      Toast.warning('No subjects', `No subjects found for ${clsName}. Check subject assignments in Settings.`);
-    }
     sel.disabled = false;
   } catch(e) {
     sel.innerHTML='<option value="">Error loading subjects</option>';
     sel.disabled = false;
-    Toast.error('Error', e.message || 'Could not load subjects.');
   }
 }
 
 async function loadStudents() {
-  const selEl = document.getElementById('sel-class');
-  const cls = selEl.value;
+  const cls = document.getElementById('sel-class').value;
   const sub = document.getElementById('sel-subject').value;
   const ses = document.getElementById('sel-session').value;
   const trm = document.getElementById('sel-term').value;
   if (!cls||!sub||!ses||!trm) { Toast.warning('Incomplete','Please select all fields.'); return; }
   document.getElementById('entry-section').classList.remove('hidden');
-  const clsText = selEl.options[selEl.selectedIndex]?.text || '';
+  const clsText = document.getElementById('sel-class').options[document.getElementById('sel-class').selectedIndex].text;
   const subText = document.getElementById('sel-subject').options[document.getElementById('sel-subject').selectedIndex].text;
   document.getElementById('entry-heading').textContent = `${clsText} — ${subText}`;
   const tbody = document.getElementById('score-tbody');
