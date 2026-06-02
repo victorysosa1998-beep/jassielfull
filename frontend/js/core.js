@@ -818,7 +818,9 @@ window.pageInit = function(roles) {
   if (user) {
     document.querySelectorAll('.user-avatar-init').forEach(el => el.textContent = Fmt.initials(user.full_name || '?'));
     document.querySelectorAll('.user-name-display').forEach(el => el.textContent = user.full_name || '—');
-    document.querySelectorAll('.user-role-display').forEach(el => el.textContent = user.role || '—');
+    // document.querySelectorAll('.user-role-display').forEach(el => el.textContent = user.role || '—');
+    const ROLE_LABELS = { super_admin: 'Director', admin: 'Admin', sub_admin: 'Sub Admin', student: 'Student' };
+document.querySelectorAll('.user-role-display').forEach(el => el.textContent = ROLE_LABELS[user.role] || user.role || '—');
     document.querySelectorAll('.user-class-display').forEach(el => el.textContent = user.class_name || '—');
   }
   // Mark active nav item
