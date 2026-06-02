@@ -305,58 +305,21 @@ function calcAbsent(idx) {
 }
 
 
+function clearAll() {
   students.forEach((_,i) => {
     const ftEl=document.getElementById('ft-'+i); if(ftEl) ftEl.value='';
     const stEl=document.getElementById('st-'+i); if(stEl) stEl.value='';
     const exEl=document.getElementById('exam-'+i); if(exEl) exEl.value='';
-    document.getElementById('total-'+i).textContent='—';
-    document.getElementById('grade-'+i).innerHTML='—';
-    document.getElementById('remark-'+i).textContent='—';
+    const tcEl=document.getElementById('tc-'+i); if(tcEl) tcEl.value='';
+    const totalEl=document.getElementById('total-'+i);
+    const gradeEl=document.getElementById('grade-'+i);
+    const remarkEl=document.getElementById('remark-'+i);
+    if(totalEl) totalEl.textContent='—';
+    if(gradeEl) gradeEl.innerHTML='—';
+    if(remarkEl) remarkEl.textContent='—';
   });
   document.getElementById('validation-panel').classList.add('hidden');
-
-function reviewScores() {
-  const cls = document.getElementById('sel-class').value;
-  const sub = document.getElementById('sel-subject').value;
-  const ses = document.getElementById('sel-session').value;
-  const trm = document.getElementById('sel-term').value;
-  if (!cls||!sub||!ses||!trm) { Toast.warning('Incomplete','Please select all fields.'); return; }
-
-  // Count filled rows
-  let filled = 0;
-  students.forEach((s,i) => {
-    const examEl = document.getElementById('exam-'+i);
-    const exam = examEl ? parseFloat(examEl.value) : NaN;
-    if (!isNaN(exam) && exam >= 0) filled++;
-  });
-  if (filled === 0) { Toast.warning('No scores','Please enter at least one score before reviewing.'); return; }
-
-  // Save as draft first, then show review modal
-  _saveDraftAndReview();
-}
-
-async function _saveDraftAndReview() {
-  const btn = document.getElementById('review-scores-btn');
-  setLoading(btn, true, 'Saving draft…');
-  try {
-    const rows = _buildRows();
-    if (!rows.length) { Toast.warning('No scores','Enter at least one score.'); return; }
-
-    const result = await API.results.upload({
-      class_name: document.getElementById('sel-class').value,
-      subject_id: document.getElementById('sel-subject').value,
-      session_id: document.getElementById('sel-session').value,
-      term_id:    document.getElementById('sel-term').value,
-      source: 'manual', no_test: noTestMode, scores: rows,
-    });
-    _lastSavedBatchId = result.batch_id;
-    Toast.success('Draft saved', `${result.created} scores saved as draft.`);
-    _showReviewModal(rows);
-  } catch(err) {
-    Toast.error('Save failed', err.message);
-  } finally {
-    setLoading(btn, false);
-  }
+  Toast.info('Cleared', 'All scores have been cleared. Students will be marked as blank.');
 }
 
 function _buildRows() {
@@ -375,19 +338,76 @@ function _buildRows() {
     const da   = daEl   ? (parseInt(daEl.value) || null) : null;
     const attendance = parseInt(document.getElementById('days-school-opened')?.value) || null;
     const baseAttrs = { days_present: dp, days_absent: da, attendance };
+
     if (noTestMode) {
-      if (isNaN(exam)) return null;
-      if (exam > TOTAL_MAX) return null;
+      // Blank entry — no score entered at all
+      if (isNaN(exam) || examEl.value.trim() === '') {
+        return { student_id: s.id||s.student_id, exam_score: null, total_score: null,
+                 ca_score: null, teacher_comment: tc||null, ...baseAttrs };
+      }
+      if (exam > TOTAL_MAX) return null; // over limit — skip with error
       return { student_id: s.id||s.student_id, exam_score: exam, total_score: exam, teacher_comment: tc||null, ...baseAttrs };
     }
-    if ((isNaN(ft) && isNaN(st)) || isNaN(exam)) return null;
-    const firstT  = isNaN(ft) ? null : ft;
-    const secondT = isNaN(st) ? null : st;
+
+    const hasAnyScore = (!isNaN(ft) && ftEl?.value.trim() !== '') ||
+                        (!isNaN(st) && stEl?.value.trim() !== '') ||
+                        (!isNaN(exam) && examEl?.value.trim() !== '');
+
+    // Blank entry — no scores entered for this student
+    if (!hasAnyScore) {
+      return { student_id: s.id||s.student_id, first_test: null, second_test: null,
+               ca_score: null, exam_score: null, total_score: null,
+               teacher_comment: tc||null, ...baseAttrs };
+    }
+
+    const firstT  = (!isNaN(ft) && ftEl?.value.trim() !== '') ? ft : null;
+    const secondT = (!isNaN(st) && stEl?.value.trim() !== '') ? st : null;
+    const examVal = (!isNaN(exam) && examEl?.value.trim() !== '') ? exam : null;
+
+    if ((firstT !== null && firstT > FIRST_MAX) ||
+        (secondT !== null && secondT > SECOND_MAX) ||
+        (examVal !== null && examVal > EXAM_MAX)) return null; // over limit — skip
+
     const ca = (firstT||0) + (secondT||0);
-    if (ca > 40 || exam > EXAM_MAX) return null;
+    const total = ca + (examVal||0);
     return { student_id: s.id||s.student_id, first_test: firstT, second_test: secondT,
-             ca_score: ca, exam_score: exam, total_score: ca+exam, teacher_comment: tc||null, ...baseAttrs };
-  }).filter(Boolean);
+             ca_score: ca, exam_score: examVal, total_score: total,
+             teacher_comment: tc||null, ...baseAttrs };
+  }).filter(r => r !== null); // only remove over-limit entries, keep blanks
+}
+
+function reviewScores() {
+  const cls = document.getElementById('sel-class').value;
+  const sub = document.getElementById('sel-subject').value;
+  const ses = document.getElementById('sel-session').value;
+  const trm = document.getElementById('sel-term').value;
+  if (!cls||!sub||!ses||!trm) { Toast.warning('Incomplete','Please select all fields.'); return; }
+  // Save as draft first, then show review modal
+  _saveDraftAndReview();
+}
+
+async function _saveDraftAndReview() {
+  const btn = document.getElementById('review-scores-btn');
+  setLoading(btn, true, 'Saving draft…');
+  try {
+    const rows = _buildRows();
+    if (!rows.length) { Toast.warning('No students','Could not read student list.'); return; }
+
+    const result = await API.results.upload({
+      class_name: document.getElementById('sel-class').value,
+      subject_id: document.getElementById('sel-subject').value,
+      session_id: document.getElementById('sel-session').value,
+      term_id:    document.getElementById('sel-term').value,
+      source: 'manual', no_test: noTestMode, scores: rows,
+    });
+    _lastSavedBatchId = result.batch_id;
+    Toast.success('Draft saved', `${result.created} scores saved as draft.`);
+    _showReviewModal(rows);
+  } catch(err) {
+    Toast.error('Save failed', err.message);
+  } finally {
+    setLoading(btn, false);
+  }
 }
 
 function _showReviewModal(rows) {
@@ -395,7 +415,8 @@ function _showReviewModal(rows) {
   const subText = document.getElementById('sel-subject').selectedOptions[0]?.text || '';
   const sesText = document.getElementById('sel-session').selectedOptions[0]?.text || '';
   const trmText = document.getElementById('sel-term').selectedOptions[0]?.text || '';
-  const missing = students.length - rows.length;
+  const scoredRows = rows.filter(r => r.total_score != null);
+  const blankRows  = rows.filter(r => r.total_score == null);
 
   // Build student map for names
   const studentMap = {};
@@ -404,12 +425,12 @@ function _showReviewModal(rows) {
   const hasBreak = rows.some(r => r.first_test != null || r.second_test != null);
 
   document.getElementById('review-modal-title').textContent = `Review: ${clsText} — ${subText}`;
-  document.getElementById('review-modal-sub').textContent   = `${sesText} · ${trmText} · ${rows.length} students scored`;
+  document.getElementById('review-modal-sub').textContent   = `${sesText} · ${trmText} · ${scoredRows.length} scored, ${blankRows.length} blank`;
 
   document.getElementById('review-modal-body').innerHTML = `
-    ${missing > 0 ? `<div class="alert alert-warning mb-3">
+    ${blankRows.length > 0 ? `<div class="alert alert-warning mb-3">
       <i class="fas fa-triangle-exclamation"></i>
-      <strong>${missing} student(s) have no score entered</strong> and will be skipped.
+      <strong>${blankRows.length} student(s) have no score</strong> — shown on report card but excluded from averages.
     </div>` : `<div class="alert alert-success mb-3">
       <i class="fas fa-check-circle"></i> All ${rows.length} students have scores entered.
     </div>`}
@@ -425,23 +446,24 @@ function _showReviewModal(rows) {
         </tr></thead>
         <tbody>
           ${rows.map((r, i) => {
-            const total = r.total_score ?? ((r.ca_score||0) + (r.exam_score||0));
-            const gr  = Fmt.grade(total);
-            const gc  = Fmt.gradeColor(gr.g);
+            const isBlank = r.total_score == null && r.exam_score == null;
+            const total = isBlank ? null : (r.total_score ?? ((r.ca_score||0) + (r.exam_score||0)));
+            const gr  = isBlank ? null : Fmt.grade(total);
+            const gc  = gr ? Fmt.gradeColor(gr.g) : '#999';
             const name = studentMap[r.student_id] || r.student_id;
-            return `<tr>
+            return `<tr style="${isBlank ? 'opacity:.55' : ''}">
               <td style="color:var(--text-muted)">${i+1}</td>
-              <td><strong>${Security.sanitize(name)}</strong></td>
+              <td><strong>${Security.sanitize(name)}</strong>${isBlank ? ' <em style="font-size:.75rem;color:#aaa">(blank)</em>' : ''}</td>
               ${hasBreak ? `<td style="text-align:center;font-family:var(--font-mono)">${r.first_test??'—'}</td>
                             <td style="text-align:center;font-family:var(--font-mono)">${r.second_test??'—'}</td>` : ''}
               <td style="text-align:center;font-family:var(--font-mono)">${r.exam_score??'—'}</td>
-              <td style="text-align:center;font-family:var(--font-mono);font-weight:700">${total}</td>
-              <td style="text-align:center">
+              <td style="text-align:center;font-family:var(--font-mono);font-weight:700">${total??'—'}</td>
+              <td style="text-align:center">${gr ? `
                 <span style="display:inline-flex;align-items:center;justify-content:center;
                   width:26px;height:26px;border-radius:6px;font-weight:800;font-size:.75rem;
-                  background:${gc}22;color:${gc};border:1px solid ${gc}40">${gr.g}</span>
+                  background:${gc}22;color:${gc};border:1px solid ${gc}40">${gr.g}</span>` : '—'}
               </td>
-              <td style="color:var(--text-secondary);font-size:.82rem">${gr.r}</td>
+              <td style="color:var(--text-secondary);font-size:.82rem">${gr ? gr.r : '—'}</td>
             </tr>`;
           }).join('')}
         </tbody>
@@ -464,7 +486,7 @@ async function submitScores() {
   setLoading(btn, true, 'Submitting…');
   try {
     const rows = _buildRows();
-    if (!rows.length) { Toast.warning('No scores','Enter scores before submitting.'); return; }
+    if (!rows.length) { Toast.warning('No students','Could not read student list.'); return; }
 
     await API.results.upload({
       class_name: document.getElementById('sel-class').value,
