@@ -2,163 +2,290 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Student Dashboard — Jaasiel RMS</title>
+<title>My Dashboard — Jaasiel RMS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 <link rel="stylesheet" href="./css/style.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
-/* ── Results controls row ── */
-.results-controls {
+
+/* ══════════════════════════════════════════
+   HERO
+══════════════════════════════════════════ */
+.stu-hero {
+  background: linear-gradient(135deg, #001840 0%, #002060 55%, #003090 100%);
+  border-radius: 20px;
+  padding: 28px 28px 28px;
+  margin-bottom: 18px;
+  position: relative;
+  overflow: hidden;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 22px;
+  flex-wrap: wrap;
+}
+.stu-hero-glow {
+  position: absolute;
+  top: -80px; right: -80px;
+  width: 260px; height: 260px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(201,151,58,.18) 0%, transparent 70%);
+  pointer-events: none;
+}
+.stu-hero-glow2 {
+  position: absolute;
+  bottom: -60px; left: 20%;
+  width: 180px; height: 180px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(100,150,255,.1) 0%, transparent 70%);
+  pointer-events: none;
+}
+.stu-avatar {
+  width: 78px; height: 78px; flex-shrink: 0;
+  border-radius: 50%;
+  background: rgba(201,151,58,.2);
+  border: 3px solid rgba(201,151,58,.55);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.75rem; font-weight: 800; color: #ffd700;
+  position: relative; z-index: 1;
+  overflow: hidden;
+}
+.stu-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+.stu-info { flex: 1; min-width: 0; position: relative; z-index: 1; }
+.stu-greeting {
+  font-size: .72rem; font-weight: 600; letter-spacing: .1em;
+  text-transform: uppercase; color: rgba(201,151,58,.8);
+  margin-bottom: 4px;
+}
+.stu-name {
+  font-family: var(--font-display);
+  font-size: clamp(1.1rem, 3.5vw, 1.55rem);
+  font-weight: 900; color: #fff;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.15;
+}
+.stu-tags {
+  display: flex; gap: 7px; flex-wrap: wrap; margin-top: 10px;
+}
+.stu-tag {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: .72rem; font-weight: 600;
+  padding: 4px 11px; border-radius: 20px;
+  background: rgba(255,255,255,.1);
+  color: rgba(255,255,255,.8);
+  border: 1px solid rgba(255,255,255,.14);
+}
+.stu-tag.gold {
+  background: rgba(201,151,58,.2);
+  color: #ffd700;
+  border-color: rgba(201,151,58,.4);
+}
+.stu-hero-btns {
+  display: flex; flex-direction: column; gap: 8px;
+  position: relative; z-index: 1;
+  align-items: flex-end;
+}
+
+/* ══════════════════════════════════════════
+   RESULTS CARD
+══════════════════════════════════════════ */
+.results-card { margin-bottom: 18px; }
+.rc-header {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap; gap: 12px;
+  margin-bottom: 18px;
+}
+.rc-filters { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.rc-filters select { font-size: .8rem; }
+
+/* Subject rows */
+.subj-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-light);
+  transition: background .15s;
+}
+.subj-row:first-child { padding-top: 4px; }
+.subj-row:last-child { border-bottom: none; padding-bottom: 0; }
+.subj-dot {
+  width: 8px; height: 8px; border-radius: 50%;
   flex-shrink: 0;
 }
-
-/* ── Stat card mobile: fix cramped text in 2-col grid ── */
-@media (max-width: 640px) {
-  .stats-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-  }
-  .stat-card {
-    padding: 14px 12px;
-    gap: 10px;
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .stat-icon {
-    width: 38px;
-    height: 38px;
-    font-size: 1rem;
-    border-radius: 10px;
-    flex-shrink: 0;
-  }
-  .stat-info { width: 100%; min-width: 0; }
-  .stat-label {
-    font-size: .65rem;
-    letter-spacing: .04em;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .stat-value {
-    font-size: 1.45rem;
-    line-height: 1.1;
-  }
+.subj-name {
+  flex: 1; font-weight: 600; font-size: .875rem;
+  color: var(--text-primary); min-width: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.subj-chips {
+  display: flex; gap: 5px; align-items: center;
+  font-family: var(--font-mono);
+}
+.chip {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 36px; padding: 3px 7px;
+  border-radius: 6px; font-size: .78rem;
+  background: rgba(255,255,255,.055);
+  border: 1px solid var(--border-light);
+  color: var(--text-secondary);
+}
+.chip.total {
+  font-weight: 800; font-size: .85rem;
+  min-width: 42px;
+  background: rgba(255,255,255,.08);
+  color: var(--text-primary);
+}
+.chip-label {
+  font-size: .6rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .05em;
+  color: var(--text-muted);
+  margin-right: 2px;
+}
+.grade-pill {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; border-radius: 8px;
+  font-weight: 900; font-size: .82rem;
+  flex-shrink: 0;
+}
+.avg-row {
+  margin-top: 10px;
+  padding: 13px 16px;
+  border-radius: 10px;
+  background: rgba(201,151,58,.07);
+  border: 1px solid rgba(201,151,58,.18);
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 8px;
+}
+.avg-label {
+  font-weight: 700; font-size: .88rem;
+  color: var(--brand-gold);
+  display: flex; align-items: center; gap: 8px;
+}
+.avg-score-big {
+  font-family: var(--font-display);
+  font-size: 1.6rem; font-weight: 900;
+  color: #ffd700; line-height: 1;
 }
 
-/* ── Topbar mobile fixes ── */
-@media (max-width: 640px) {
-  /* Shrink topbar height slightly */
-  .topbar { height: 56px; padding: 0 12px; gap: 8px; }
+/* ══════════════════════════════════════════
+   CHART CARD
+══════════════════════════════════════════ */
+.chart-wrap { position: relative; }
 
-  /* Keep left side compact */
-  .topbar-left { gap: 8px; min-width: 0; }
-  .page-title  { font-size: .88rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
-  .breadcrumb  { display: none; }   /* hide breadcrumb — saves a full line */
-
-  /* Right side: hide session pill, keep bell + avatar */
-  .session-pill { display: none !important; }
-  .topbar-right { gap: 4px; }
-
-  /* Results controls: selects stack above button */
-  .results-controls {
-    flex-wrap: wrap;
-    gap: 6px;
-    justify-content: flex-end;
-  }
-  .results-controls .filter-select {
-    flex: 1;
-    min-width: 90px;
-    max-width: 130px;
-    font-size: .78rem !important;
-  }
-  /* Download button: show only icon on very small screens */
-  .dl-text { display: none; }
-  .dl-btn  { padding: 7px 10px; min-width: 36px; justify-content: center; }
+/* ══════════════════════════════════════════
+   MOBILE
+══════════════════════════════════════════ */
+@media(max-width:620px) {
+  .stu-hero { padding: 20px 18px; gap: 16px; }
+  .stu-hero-btns { flex-direction: row; align-items: center; }
+  .stu-hero-btns .btn-text { display: none; }
+  .rc-header { flex-direction: column; align-items: flex-start; }
+  .rc-filters { width: 100%; }
+  .rc-filters select { flex: 1; min-width: 0; }
+  .subj-chips { flex-wrap: wrap; }
+  .chip-label { display: none; }
+  .avg-score-big { font-size: 1.3rem; }
 }
-
-@media (max-width: 400px) {
-  .results-controls { width: 100%; }
-  .results-controls .filter-select { max-width: none; flex: 1 1 0; }
+@media(max-width:400px) {
+  .stu-avatar { width: 62px; height: 62px; font-size: 1.4rem; }
+  .stu-name { font-size: 1rem; }
 }
 </style>
 </head>
 <body>
 <div class="page-bg"></div>
-<div class="page-loader" id="page-loader"><div class="loader-logo"><i class="fas fa-graduation-cap"></i> Jaasiel RMS</div><div class="loader-ring"></div></div>
+<div class="page-loader" id="page-loader">
+  <div class="loader-logo"><i class="fas fa-graduation-cap"></i> Jaasiel RMS</div>
+  <div class="loader-ring"></div>
+</div>
 <div class="toast-container" id="toast-container"></div>
 <div class="app-layout">
-<div class="sidebar-overlay" id="sidebar-overlay"></div>
-<aside class="sidebar" id="sidebar"></aside>
-<div class="main-content">
-  <header class="topbar">
-    <div class="topbar-left">
-      <button class="menu-toggle" id="menu-toggle"><i class="fas fa-bars"></i></button>
-      <div>
-        <div class="page-title">My Results</div>
-        <div class="breadcrumb"><span class="text-gold">Student Portal</span></div>
-      </div>
-    </div>
-    <div class="topbar-right" id="topbar-right"></div>
-  </header>
-  <div class="page-body">
-    <!-- Student Profile Banner -->
-    <div class="welcome-banner mb-3">
-      <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap">
-        <div class="avatar avatar-xl user-avatar-init" style="flex-shrink:0">ST</div>
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="menu-toggle" id="menu-toggle"><i class="fas fa-bars"></i></button>
         <div>
-          <div style="font-family:var(--font-display);font-size:clamp(1.1rem,2.5vw,1.6rem);font-weight:700" class="user-name-display">Student Name</div>
-          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:6px">
-            <span class="badge badge-gold"><i class="fas fa-school"></i> <span class="user-class-display">Class</span></span>
-            <span class="badge badge-draft" id="stu-id-badge">ID: Loading…</span>
-            <span class="badge badge-approved" id="session-badge">Loading…</span>
-          </div>
+          <div class="page-title">My Dashboard</div>
+          <div class="breadcrumb"><span class="text-gold">Student Portal</span></div>
         </div>
       </div>
-      <div style="display:flex;gap:12px;flex-wrap:wrap">
-        <a href="report-card.html" class="btn btn-primary"><i class="fas fa-file-pdf"></i> Report Card</a>
+      <div class="topbar-right" id="topbar-right"></div>
+    </header>
+
+    <div class="page-body">
+
+      <!-- ── Hero ── -->
+      <div class="stu-hero mb-3">
+        <div class="stu-hero-glow"></div>
+        <div class="stu-hero-glow2"></div>
+
+        <div class="stu-avatar" id="stu-avatar-wrap">
+          <span id="stu-initials">ST</span>
+        </div>
+
+        <div class="stu-info">
+          <div class="stu-greeting">Welcome back</div>
+          <div class="stu-name user-name-display">Loading…</div>
+          <div class="stu-tags">
+            <span class="stu-tag gold">
+              <i class="fas fa-school"></i>
+              <span class="user-class-display">Class</span>
+            </span>
+            <span class="stu-tag" id="stu-id-tag">
+              <i class="fas fa-id-card"></i> —
+            </span>
+            <span class="stu-tag" id="stu-session-tag">
+              <i class="fas fa-calendar-alt"></i> —
+            </span>
+          </div>
+        </div>
+
+        <div class="stu-hero-btns">
+          <a href="report-card.html" class="btn btn-primary">
+            <i class="fas fa-file-pdf"></i>
+            <span class="btn-text"> Report Card</span>
+          </a>
+        </div>
       </div>
-    </div>
 
-    <!-- Term Stats -->
-    <div class="stats-grid mb-3">
-      <div class="stat-card"><div class="stat-icon gold"><i class="fas fa-star"></i></div><div class="stat-info"><div class="stat-label">Average Score</div><div class="stat-value" id="stat-avg">—</div></div></div>
-      <div class="stat-card"><div class="stat-icon green"><i class="fas fa-trophy"></i></div><div class="stat-info"><div class="stat-label">Class Position</div><div class="stat-value" id="stat-pos">—</div></div></div>
-      <div class="stat-card"><div class="stat-icon blue"><i class="fas fa-book-open"></i></div><div class="stat-info"><div class="stat-label">Subjects</div><div class="stat-value" id="stat-subs">—</div></div></div>
-      <div class="stat-card"><div class="stat-icon purple"><i class="fas fa-graduation-cap"></i></div><div class="stat-info"><div class="stat-label">Best Grade</div><div class="stat-value" id="stat-best">—</div></div></div>
-    </div>
-
-    <div class="grid-2">
-      <!-- Current Term Results Table -->
-      <div class="card" style="grid-column:1/-1">
-        <div class="section-header">
-          <div><div class="section-title">Current Term Results</div><div class="section-sub" id="results-period">Loading…</div></div>
-          <div class="results-controls">
-            <select class="filter-select" id="term-filter" onchange="loadResults()" style="font-size:.82rem"></select>
-            <a href="report-card.html" class="btn btn-primary btn-sm dl-btn"><i class="fas fa-download"></i><span class="dl-text"> Download Report</span></a>
+      <!-- ── Results ── -->
+      <div class="card results-card">
+        <div class="rc-header">
+          <div>
+            <div class="section-title">Term Results</div>
+            <div id="results-period" style="font-size:.78rem;color:var(--text-muted);margin-top:3px">—</div>
+          </div>
+          <div class="rc-filters">
+            <select class="filter-select" id="session-filter-dash"></select>
+            <select class="filter-select" id="term-filter"></select>
+            <a href="report-card.html" class="btn btn-ghost btn-sm" title="Download Report Card">
+              <i class="fas fa-download"></i>
+            </a>
           </div>
         </div>
         <div id="results-container">
-          <div class="skeleton mb-2" style="height:50px;border-radius:10px"></div>
-          <div class="skeleton mb-2" style="height:50px;border-radius:10px"></div>
-          <div class="skeleton mb-2" style="height:50px;border-radius:10px"></div>
-          <div class="skeleton" style="height:50px;border-radius:10px"></div>
+          <div class="skeleton mb-2" style="height:46px;border-radius:8px"></div>
+          <div class="skeleton mb-2" style="height:46px;border-radius:8px"></div>
+          <div class="skeleton mb-2" style="height:46px;border-radius:8px"></div>
+          <div class="skeleton" style="height:46px;border-radius:8px"></div>
         </div>
       </div>
-    </div>
 
-    <!-- Performance Chart -->
-    <div class="card mt-3">
-      <div class="section-title mb-3">Performance by Subject</div>
-      <canvas id="subject-chart" height="120"></canvas>
+      <!-- ── Chart ── -->
+      <div class="card" style="padding:20px 20px 16px">
+        <div class="section-title mb-3">Performance by Subject</div>
+        <div class="chart-wrap">
+          <canvas id="subject-chart" height="130"></canvas>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
-</div>
+
 <script src="./js/core.js"></script>
 <script src="./js/ui.js"></script>
 <script>
@@ -170,22 +297,40 @@ document.addEventListener('DOMContentLoaded', async () => {
   loadResults();
 });
 
+/* ── Profile ── */
+async function loadProfile() {
+  try {
+    const s = await API.students.myProfile();
+    document.querySelectorAll('.user-name-display').forEach(el => el.textContent = s.full_name || '—');
+    document.querySelectorAll('.user-class-display').forEach(el => el.textContent = s.class_name || '—');
+    const initials = Fmt.initials(s.full_name || '?');
+    document.querySelectorAll('.user-avatar-init').forEach(el => el.textContent = initials);
+    document.getElementById('stu-initials').textContent = initials;
+    document.getElementById('stu-id-tag').innerHTML =
+      `<i class="fas fa-id-card"></i> ${s.student_id || '—'}`;
+    if (s.photo_url) {
+      const wrap = document.getElementById('stu-avatar-wrap');
+      const src = (s.photo_url.startsWith('http') || s.photo_url.startsWith('/'))
+        ? s.photo_url : '/uploads/' + s.photo_url;
+      wrap.innerHTML = `<img src="${src}" alt="Photo" onerror="this.style.display='none'">`;
+    }
+  } catch {}
+  try {
+    const sess = await API.sessions.current();
+    const tag = document.getElementById('stu-session-tag');
+    if (tag) tag.innerHTML =
+      `<i class="fas fa-calendar-alt"></i> ${sess.session_name || ''}${sess.term_name ? ' · ' + sess.term_name : ''}`;
+  } catch {}
+}
+
+/* ── Term / Session dropdowns ── */
 async function loadTermDropdown() {
   const termSel = document.getElementById('term-filter');
-  if (!termSel) return;
-  // Insert a session selector before term selector if not already there
-  if (!document.getElementById('session-filter-dash')) {
-    const sessSel = document.createElement('select');
-    sessSel.className = 'filter-select';
-    sessSel.id = 'session-filter-dash';
-    sessSel.style.fontSize = '.82rem';
-    sessSel.innerHTML = '<option value="">Loading…</option>';
-    termSel.parentNode.insertBefore(sessSel, termSel);
-  }
+  const sessSel = document.getElementById('session-filter-dash');
+  if (!termSel || !sessSel) return;
   try {
     const data = await API.students.mySessions();
     const sessions = data.items || [];
-    const sessSel = document.getElementById('session-filter-dash');
     sessSel.innerHTML = '<option value="">All Sessions</option>';
     sessions.forEach(s => {
       const o = document.createElement('option');
@@ -193,160 +338,151 @@ async function loadTermDropdown() {
       if (s.is_current) o.selected = true;
       sessSel.appendChild(o);
     });
-    const _populateTerms = (sid) => {
+    const populateTerms = sid => {
       termSel.innerHTML = '<option value="">All Terms</option>';
       const sess = sessions.find(s => String(s.id) === String(sid));
-      if (sess && sess.terms) {
-        sess.terms.forEach(t => {
-          const o = document.createElement('option');
-          o.value = t.id; o.textContent = t.term_name;
-          if (t.is_current) o.selected = true;
-          termSel.appendChild(o);
-        });
-      }
+      if (sess && sess.terms) sess.terms.forEach(t => {
+        const o = document.createElement('option');
+        o.value = t.id; o.textContent = t.term_name;
+        if (t.is_current) o.selected = true;
+        termSel.appendChild(o);
+      });
     };
-    _populateTerms(sessSel.value);
-    sessSel.addEventListener('change', () => { _populateTerms(sessSel.value); loadResults(); });
+    populateTerms(sessSel.value);
+    sessSel.addEventListener('change', () => { populateTerms(sessSel.value); loadResults(); });
     termSel.addEventListener('change', () => loadResults());
-  } catch(e) {
-    console.warn('loadTermDropdown failed', e);
-    const sessSel = document.getElementById('session-filter-dash');
-    if (sessSel) sessSel.innerHTML = '<option value="">Session</option>';
-  }
+  } catch(e) { console.warn('loadTermDropdown', e); }
 }
 
-async function loadProfile() {
-  try {
-    const s = await API.students.myProfile();
-    document.querySelectorAll('.user-name-display').forEach(el => el.textContent = s.full_name||'—');
-    document.querySelectorAll('.user-class-display').forEach(el => el.textContent = s.class_name||'—');
-    document.querySelectorAll('.user-avatar-init').forEach(el => el.textContent = Fmt.initials(s.full_name||'?'));
-    document.getElementById('stu-id-badge').textContent = 'ID: '+(s.student_id||'—');
-  } catch {}
-  try {
-    const sess = await API.sessions.current();
-    const badge = document.getElementById('session-badge');
-    if (badge) badge.textContent = (sess.session_name||'') + ' · ' + (sess.term_name||'');
-  } catch { const badge = document.getElementById('session-badge'); if(badge) badge.textContent='—'; }
-}
-
+/* ── Results ── */
 async function loadResults() {
   const container = document.getElementById('results-container');
-  showSkeleton(container, 4, '50px', '10px');
+  showSkeleton(container, 5, '46px', '8px');
+
   try {
     const params = {};
     const sessSel = document.getElementById('session-filter-dash');
     const termSel = document.getElementById('term-filter');
     if (sessSel && sessSel.value) params.session_id = sessSel.value;
     if (termSel && termSel.value) params.term_id = termSel.value;
+
     const data = await API.students.myResults(params);
-    const results = data.results || data.items || data || [];
+    const results = data.results || data.items || [];
+
     if (!results.length) {
-      container.innerHTML = `<div style="text-align:center;padding:48px;color:var(--text-muted)">
-        <i class="fas fa-inbox" style="font-size:2.5rem;display:block;margin-bottom:12px;opacity:.4"></i>
-        No results published yet. Check back after your exams.
-      </div>`;
+      container.innerHTML = `
+        <div style="text-align:center;padding:52px 20px">
+          <div style="font-size:2.8rem;margin-bottom:14px;opacity:.25">📋</div>
+          <div style="font-weight:700;font-size:.95rem;color:var(--text-primary);margin-bottom:6px">No results published yet</div>
+          <div style="font-size:.82rem;color:var(--text-muted)">Your results will appear here once your school publishes them.</div>
+        </div>`;
       return;
     }
-    // Update stats
-    const totals = results.map(r => r.total_score||0);
-    const avg = totals.reduce((a,b)=>a+b,0)/totals.length;
-    document.getElementById('stat-avg').textContent = avg.toFixed(1);
-    document.getElementById('stat-subs').textContent = results.length;
-    document.getElementById('stat-pos').textContent = Fmt.ordinal(data.position||data.class_position||'—');
-    const best = results.reduce((a,b)=>((b.total_score||0)>(a.total_score||0)?b:a),results[0]);
-    const bestGr = Fmt.grade(best?.total_score||0);
-    document.getElementById('stat-best').innerHTML = `<span style="color:${Fmt.gradeColor(bestGr.g)}">${bestGr.g}</span>`;
-    document.getElementById('results-period').textContent = data.session_name||'' + ' · ' + (data.term_name||'');
 
-    // Session filter
-    // termSel is declared above; reuse it rather than redeclaring to avoid redeclare error
-    // don't rebuild dropdown here, it's populated by loadTermDropdown
+    // Period label
+    document.getElementById('results-period').textContent =
+      [data.session_name, data.term_name].filter(Boolean).join(' · ');
+
+    // Scored subjects only (exclude blanks from average)
+    const scored  = results.filter(r => r.total_score != null);
+    const totals  = scored.map(r => parseFloat(r.total_score));
+    const avg     = totals.length ? totals.reduce((a,b) => a+b, 0) / totals.length : 0;
+    const avgGr   = Fmt.grade(avg);
+    const avgColor = Fmt.gradeColor(avgGr.g);
+
+    const hasBreak = results.some(r => r.first_test != null || r.second_test != null);
 
     container.innerHTML = `
-      <div style="overflow-x:auto">
-        <table style="width:100%;border-collapse:collapse;font-size:.88rem">
-          <thead><tr style="border-bottom:1px solid var(--border-light)">
-            <th style="padding:10px 14px;text-align:left;font-size:.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em">Subject</th>
-            <th style="padding:10px 14px;text-align:center;font-size:.72rem;color:var(--text-muted);text-transform:uppercase">CA</th>
-            <th style="padding:10px 14px;text-align:center;font-size:.72rem;color:var(--text-muted);text-transform:uppercase">Exam</th>
-            <th style="padding:10px 14px;text-align:center;font-size:.72rem;color:var(--text-muted);text-transform:uppercase">Total</th>
-            <th style="padding:10px 14px;text-align:center;font-size:.72rem;color:var(--text-muted);text-transform:uppercase">Grade</th>
-            <th style="padding:10px 14px;text-align:left;font-size:.72rem;color:var(--text-muted);text-transform:uppercase">Remarks</th>
-          </tr></thead>
-          <tbody>
-          ${results.map(r => {
-            const gr = Fmt.grade(r.total_score||0);
-            return `<tr style="border-bottom:1px solid rgba(255,255,255,.04)">
-              <td style="padding:12px 14px;font-weight:600">${r.subject_name||'—'}</td>
-              <td style="padding:12px 14px;text-align:center;font-family:var(--font-mono)">${r.ca_score??'—'}</td>
-              <td style="padding:12px 14px;text-align:center;font-family:var(--font-mono)">${r.exam_score??'—'}</td>
-              <td style="padding:12px 14px;text-align:center;font-family:var(--font-mono);font-weight:700">${r.total_score??'—'}</td>
-              <td style="padding:12px 14px;text-align:center">
-                <span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;font-weight:700;font-size:.85rem;background:${Fmt.gradeColor(gr.g)}22;color:${Fmt.gradeColor(gr.g)};border:1px solid ${Fmt.gradeColor(gr.g)}44">${gr.g}</span>
-              </td>
-              <td style="padding:12px 14px;font-size:.85rem;color:var(--text-secondary)">${gr.r}</td>
-            </tr>`;
-          }).join('')}
-          <tr style="border-top:2px solid var(--border-light);background:rgba(201,151,58,.04)">
-            <td style="padding:12px 14px;font-weight:700">Overall Average</td>
-            <td colspan="2"></td>
-            <td style="padding:12px 14px;text-align:center;font-family:var(--font-mono);font-weight:700;font-size:1.1rem;color:var(--brand-gold)">${avg.toFixed(1)}</td>
-            <td style="padding:12px 14px;text-align:center"><span style="background:${Fmt.gradeColor(Fmt.grade(avg).g)}22;color:${Fmt.gradeColor(Fmt.grade(avg).g)};border:1px solid ${Fmt.gradeColor(Fmt.grade(avg).g)}44;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;font-weight:700">${Fmt.grade(avg).g}</span></td>
-            <td style="padding:12px 14px;color:var(--brand-gold);font-weight:600">${Fmt.grade(avg).r}</td>
-          </tr>
-          </tbody>
-        </table>
+      <div>
+        ${results.map(r => {
+          const isBlank = r.total_score == null && r.exam_score == null;
+          const gr  = isBlank ? null : Fmt.grade(parseFloat(r.total_score) || 0);
+          const gc  = gr ? Fmt.gradeColor(gr.g) : '#555';
+          return `
+          <div class="subj-row">
+            <div class="subj-dot" style="background:${gc};opacity:${isBlank?.35:1}"></div>
+            <div class="subj-name" style="${isBlank?'opacity:.45':''}">
+              ${r.subject_name || '—'}
+            </div>
+            <div class="subj-chips">
+              ${hasBreak ? `
+                <span class="chip"><span class="chip-label">T1</span>${r.first_test ?? '—'}</span>
+                <span class="chip"><span class="chip-label">T2</span>${r.second_test ?? '—'}</span>
+              ` : ''}
+              <span class="chip"><span class="chip-label">CA</span>${r.ca_score ?? '—'}</span>
+              <span class="chip"><span class="chip-label">EX</span>${r.exam_score ?? '—'}</span>
+              <span class="chip total">${r.total_score ?? '—'}</span>
+              ${gr
+                ? `<span class="grade-pill" style="background:${gc}20;color:${gc};border:1px solid ${gc}40">${gr.g}</span>`
+                : `<span style="width:32px;display:inline-block"></span>`}
+            </div>
+          </div>`;
+        }).join('')}
+
+        ${scored.length ? `
+        <div class="avg-row">
+          <div class="avg-label">
+            <i class="fas fa-chart-line" style="opacity:.7"></i>
+            Overall Average
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="avg-score-big">${avg.toFixed(1)}</div>
+            <div class="grade-pill" style="width:38px;height:38px;font-size:.9rem;background:${avgColor}22;color:${avgColor};border:2px solid ${avgColor}44">
+              ${avgGr.g}
+            </div>
+          </div>
+        </div>` : ''}
       </div>`;
-    initSubjectChart(results);
-  } catch {
-    // Demo data
-    const demo = [
-      {subject_name:'Mathematics',ca_score:35,exam_score:52,total_score:87},
-      {subject_name:'English Language',ca_score:30,exam_score:48,total_score:78},
-      {subject_name:'Basic Science',ca_score:28,exam_score:44,total_score:72},
-      {subject_name:'Social Studies',ca_score:32,exam_score:46,total_score:78},
-      {subject_name:'Yoruba Language',ca_score:36,exam_score:50,total_score:86},
-      {subject_name:'Fine Arts',ca_score:38,exam_score:55,total_score:93},
-    ];
-    const avg2 = demo.reduce((a,b)=>a+b.total_score,0)/demo.length;
-    document.getElementById('stat-avg').textContent = avg2.toFixed(1);
-    document.getElementById('stat-subs').textContent = demo.length;
-    document.getElementById('stat-pos').textContent = '3rd';
-    document.getElementById('stat-best').innerHTML = `<span style="color:${Fmt.gradeColor('A')}">A</span>`;
-    document.getElementById('results-period').textContent = '2024/2025 · First Term';
-    document.getElementById('session-badge').textContent = 'First Term 2024/2025';
-    container.innerHTML = `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:.88rem">
-      <thead><tr style="border-bottom:1px solid var(--border-light)"><th style="padding:10px 14px;text-align:left;font-size:.72rem;color:var(--text-muted);text-transform:uppercase">Subject</th><th style="padding:10px 14px;text-align:center;font-size:.72rem;color:var(--text-muted);text-transform:uppercase">CA</th><th style="padding:10px 14px;text-align:center;font-size:.72rem;color:var(--text-muted);text-transform:uppercase">Exam</th><th style="padding:10px 14px;text-align:center;font-size:.72rem;color:var(--text-muted);text-transform:uppercase">Total</th><th style="padding:10px 14px;text-align:center;font-size:.72rem;color:var(--text-muted);text-transform:uppercase">Grade</th><th style="padding:10px 14px;font-size:.72rem;color:var(--text-muted);text-transform:uppercase">Remarks</th></tr></thead>
-      <tbody>${demo.map(r=>{const gr=Fmt.grade(r.total_score);return`<tr style="border-bottom:1px solid rgba(255,255,255,.04)"><td style="padding:12px 14px;font-weight:600">${r.subject_name}</td><td style="padding:12px 14px;text-align:center;font-family:var(--font-mono)">${r.ca_score}</td><td style="padding:12px 14px;text-align:center;font-family:var(--font-mono)">${r.exam_score}</td><td style="padding:12px 14px;text-align:center;font-family:var(--font-mono);font-weight:700">${r.total_score}</td><td style="padding:12px 14px;text-align:center"><span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;font-weight:700;font-size:.85rem;background:${Fmt.gradeColor(gr.g)}22;color:${Fmt.gradeColor(gr.g)};border:1px solid ${Fmt.gradeColor(gr.g)}44">${gr.g}</span></td><td style="padding:12px 14px;font-size:.85rem;color:var(--text-secondary)">${gr.r}</td></tr>`;}).join('')}
-      <tr style="border-top:2px solid var(--border-light);background:rgba(201,151,58,.04)"><td style="padding:12px 14px;font-weight:700">Overall Average</td><td colspan="2"></td><td style="padding:12px 14px;text-align:center;font-family:var(--font-mono);font-weight:700;font-size:1.1rem;color:var(--brand-gold)">${avg2.toFixed(1)}</td><td style="padding:12px 14px;text-align:center"><span style="background:${Fmt.gradeColor(Fmt.grade(avg2).g)}22;color:${Fmt.gradeColor(Fmt.grade(avg2).g)};border:1px solid ${Fmt.gradeColor(Fmt.grade(avg2).g)}44;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;font-weight:700">${Fmt.grade(avg2).g}</span></td><td style="padding:12px 14px;color:var(--brand-gold);font-weight:600">${Fmt.grade(avg2).r}</td></tr>
-      </tbody></table></div>`;
-    initSubjectChart(demo);
+
+    initSubjectChart(scored);
+
+  } catch(err) {
+    console.error('loadResults error', err);
+    container.innerHTML = `
+      <div style="text-align:center;padding:48px 20px">
+        <i class="fas fa-circle-exclamation" style="font-size:2rem;color:var(--danger);opacity:.6;display:block;margin-bottom:12px"></i>
+        <div style="font-weight:600;margin-bottom:6px">Could not load results</div>
+        <div style="font-size:.8rem;color:var(--text-muted);margin-bottom:16px">${err.message || 'Check your connection and try again.'}</div>
+        <button onclick="loadResults()" class="btn btn-ghost btn-sm">
+          <i class="fas fa-rotate-right"></i> Retry
+        </button>
+      </div>`;
   }
 }
 
-function initSubjectChart(results) {
+/* ── Chart ── */
+function initSubjectChart(scored) {
   ChartDefaults.apply();
   const ctx = document.getElementById('subject-chart');
   if (!ctx) return;
-  if (ctx._chart) ctx._chart.destroy();
-  const colors = results.map(r => {
-    const gr = Fmt.grade(r.total_score||0);
-    return Fmt.gradeColor(gr.g);
-  });
+  if (ctx._chart) { ctx._chart.destroy(); ctx._chart = null; }
+  if (!scored.length) { ctx.closest('.chart-wrap').style.display = 'none'; return; }
+  ctx.closest('.chart-wrap').style.display = '';
+  const colors = scored.map(r => Fmt.gradeColor(Fmt.grade(r.total_score || 0).g));
   ctx._chart = new Chart(ctx, {
     type: 'bar',
     data: {
-      labels: results.map(r => r.subject_name),
+      labels: scored.map(r => r.subject_name),
       datasets: [{
-        label: 'Score', data: results.map(r => r.total_score||0),
-        backgroundColor: colors.map(c => c+'33'), borderColor: colors,
-        borderWidth: 2, borderRadius: 6,
+        label: 'Score',
+        data: scored.map(r => r.total_score || 0),
+        backgroundColor: colors.map(c => c + '2e'),
+        borderColor: colors,
+        borderWidth: 2,
+        borderRadius: 7,
+        borderSkipped: false,
       }]
     },
-    options: { responsive:true, plugins:{legend:{display:false}},
-      scales:{x:{ticks:{color:'#657088',maxRotation:30},grid:{display:false}},
-              y:{min:0,max:100,ticks:{color:'#657088'},grid:{color:'rgba(255,255,255,.04)'}}} }
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false }, tooltip: {
+        callbacks: { label: ctx => ` Score: ${ctx.parsed.y}` }
+      }},
+      scales: {
+        x: { ticks: { color: '#657088', maxRotation: 30, font: { size: 11 } }, grid: { display: false } },
+        y: { min: 0, max: 100, ticks: { color: '#657088', stepSize: 20 }, grid: { color: 'rgba(255,255,255,.04)' } }
+      }
+    }
   });
 }
 </script>

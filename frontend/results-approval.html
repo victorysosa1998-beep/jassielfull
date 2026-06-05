@@ -333,10 +333,12 @@ async function openClassDetail(classId, className) {
     const statusLabel = {pending:'Draft',submitted:'Submitted',approved:'Approved',
       rejected:'Rejected',correction_requested:'Correction Needed',locked:'Locked',published:'Published'};
 
-    const hasSubmitted = batches.some(b => b.status === 'submitted');
-    const allApproved  = batches.every(b => ['approved','locked','published'].includes(b.status));
+    const hasSubmitted  = batches.some(b => b.status === 'submitted');
+    const allApproved   = batches.every(b => ['approved','locked','published'].includes(b.status));
+    const allPublished  = batches.every(b => ['published','locked'].includes(b.status));
     document.getElementById('class-approve-all-btn').style.display = hasSubmitted ? '' : 'none';
-    document.getElementById('class-publish-btn').style.display     = allApproved  ? '' : 'none';
+    // Hide publish button if already all published; show only when approved but not yet published
+    document.getElementById('class-publish-btn').style.display = (allApproved && !allPublished) ? '' : 'none';
 
     container.innerHTML = batches.map(b => {
       const srcIcon = b.source === 'ocr'

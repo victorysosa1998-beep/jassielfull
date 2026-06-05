@@ -18,6 +18,26 @@
 .check-status-ok{color:var(--success);font-size:.8rem;font-weight:600}
 .check-status-empty{color:var(--warning);font-size:.8rem;font-weight:600}
 .check-status-missing{color:var(--danger);font-size:.8rem;font-weight:600}
+
+/* ── Status tabs ── */
+#status-tabs{display:flex;flex-wrap:wrap;gap:6px;padding:4px 0}
+#status-tabs .tab-btn{flex:1 1 auto;min-width:76px;text-align:center;padding:7px 10px;font-size:.78rem;white-space:nowrap}
+
+/* ── Subject card (mobile) ── */
+.subject-card{background:var(--bg-input);border:1px solid var(--border-light);border-radius:10px;padding:12px 14px;margin-bottom:8px}
+.subject-card-header{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px}
+.subject-card-actions{display:flex;gap:6px}
+
+/* ── Responsive: desktop shows table, mobile shows cards ── */
+.subject-cards{display:none}
+@media(max-width:680px){
+  .table-wrapper{display:none}
+  .subject-cards{display:block}
+  #status-tabs{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;scrollbar-width:none}
+  #status-tabs::-webkit-scrollbar{display:none}
+  #status-tabs .tab-btn{flex:0 0 auto;min-width:68px;font-size:.74rem;padding:6px 8px}
+  .group-header-row{flex-direction:column;align-items:flex-start!important}
+}
 </style>
 </head>
 <body>
@@ -143,7 +163,7 @@ async function loadUploads(status, page) {
       const canSubmit    = group.batches.some(b => b.status === 'pending') && !anyLocked && !anyApproved;
 
       return `<div class="card mb-3">
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px">
+        <div class="group-header-row" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px">
           <div>
             <div style="font-weight:700;font-size:1rem">${group.class_name}</div>
             <div style="font-size:.78rem;color:var(--text-muted)">${group.session_name||''} · ${group.term_name} · ${group.batches.length} subject(s)</div>
@@ -200,6 +220,29 @@ async function loadUploads(status, page) {
               }).join('')}
             </tbody>
           </table>
+        </div>
+        <!-- Mobile cards -->
+        <div class="subject-cards">
+          ${group.batches.map(b => {
+            const editable = ['pending','submitted'].includes(b.status);
+            const note = b.correction_comment||b.admin_note||'';
+            return `<div class="subject-card">
+              <div class="subject-card-header">
+                <div>
+                  <div style="font-weight:700;font-size:.88rem">${b.subject_name||'—'}</div>
+                  <div style="font-size:.73rem;color:var(--text-muted);margin-top:2px">
+                    ${b.students||0} students${b.avg_score!=null?' · Avg: '+b.avg_score:''} · ${Fmt.timeAgo(b.uploaded_at)}
+                  </div>
+                </div>
+                <span class="badge ${statusMap[b.status]||'badge-draft'}" style="flex-shrink:0">${statusLabel[b.status]||b.status}</span>
+              </div>
+              ${note?`<div style="font-size:.73rem;color:${b.status==='correction_requested'?'var(--danger)':'var(--text-muted)'};margin-bottom:8px;padding:5px 8px;background:rgba(255,255,255,.04);border-radius:6px"><i class="fas fa-comment-dots" style="margin-right:4px"></i>${note}</div>`:''}
+              <div class="subject-card-actions">
+                <button class="btn btn-ghost btn-sm" onclick="viewBatch(${b.id},false)" style="flex:1"><i class="fas fa-eye"></i> View</button>
+                ${editable?`<button class="btn btn-secondary btn-sm" onclick="viewBatch(${b.id},true)" style="flex:1"><i class="fas fa-pencil"></i> Edit</button>`:''}
+              </div>
+            </div>`;
+          }).join('')}
         </div>
       </div>`;
     }).join('');
@@ -464,9 +507,41 @@ async function checkBeforeSubmit(classId, termId, sessionId, btn) {
 }
 
 async function markMissingBlank(classId, termId, sessionId) {
-  if (!confirm('Mark all missing subjects as "blank" (no results)? This lets you submit without them.')) return;
-  Toast.info('Coming soon', 'This will create empty placeholder batches for missing subjects.');
-  // TODO: POST /results/blank-subject for each missing subject
+  if (!confirm('Mark all missing subjects as blank? They will show on report cards but not affect averages.')) return;
+  const btn = document.getElementById('mark-blank-btn');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="btn-spinner"></span> Marking…'; }
+  try {
+    const [subjectsData, uploadsData, stuData] = await Promise.all([
+      API.get(`/classes/${classId}/subjects`),
+      API.results.myUploads({ per_page: 100 }),
+      API.classes.students(classId)
+    ]);
+    const allSubjects = subjectsData.items || subjectsData || [];
+    const uploaded    = (uploadsData.items || []).filter(b => b.class_id === classId && b.term_id === termId);
+    const uploadedIds = new Set(uploaded.map(b => b.subject_id));
+    const students    = stuData.items || stuData || [];
+    if (!students.length) { Toast.warning('No students', 'No students in this class.'); return; }
+    const missing = allSubjects.filter(sub => !uploadedIds.has(sub.id));
+    if (!missing.length) { Toast.info('Nothing to do', 'All subjects already uploaded.'); return; }
+    for (const sub of missing) {
+      await API.results.upload({
+        class_id: classId, subject_id: sub.id,
+        session_id: sessionId, term_id: termId,
+        source: 'manual',
+        scores: students.map(s => ({
+          student_id: s.id||s.student_id,
+          first_test: null, second_test: null,
+          ca_score: null, exam_score: null, total_score: null,
+        })),
+      });
+    }
+    Toast.success('Done!', `${missing.length} subject(s) marked blank. You can now submit.`);
+    Modal.close('modal-check');
+    loadUploads(currentStatus, currentPage);
+  } catch(err) {
+    Toast.error('Failed', err.message || 'Could not mark subjects as blank.');
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-minus-circle"></i> Mark Missing as Blank'; }
+  }
 }
 
 async function doSubmitToAdmin(classId, termId, sessionId) {

@@ -135,7 +135,7 @@ let _lastSavedBatchId = null;
 document.addEventListener('DOMContentLoaded', async () => {
   await window.__rmsBootstrapReady;
   initPage('sub_admin', 'subadmin');
-  populateClassSelect(document.getElementById('sel-class'), 'Select class…', false);
+  loadClassOptions();
   loadSessions();
 
   // Auto-calculate days absent when present or opened changes (class-level defaults)
@@ -192,16 +192,40 @@ async function loadTermsFor() {
     sel.disabled = false;
   } catch { sel.innerHTML = '<option value="">Error loading terms</option>'; }
 }
-async function onClassChange() {
-  const cls = document.getElementById('sel-class').value;
-  const sel = document.getElementById('sel-subject'); sel.innerHTML='<option value="">Loading…</option>'; sel.disabled=true;
-  if (!cls) { sel.innerHTML='<option value="">Select subject…</option>'; return; }
+async function loadClassOptions() {
+  const sel = document.getElementById('sel-class');
   try {
     const data = await API.classes.list();
-    const clsObj = (data.items||data||[]).find(c=>c.name===cls||c.id===cls);
-    if (clsObj) { classId=clsObj.id; const subs=await API.classes.subjects(clsObj.id); sel.innerHTML='<option value="">Select subject…</option>'; (subs.items||subs||[]).forEach(s=>{const o=document.createElement('option');o.value=s.id||s.name;o.textContent=s.name;sel.appendChild(o);}); }
-    sel.disabled=false;
-  } catch { sel.innerHTML='<option value="">Error</option>'; sel.disabled=false; }
+    const classes = data.items || data || [];
+    sel.innerHTML = '<option value="">Select class…</option>';
+    classes.forEach(c => {
+      const o = document.createElement('option');
+      o.value = c.id; o.textContent = c.name; o.dataset.name = c.name;
+      sel.appendChild(o);
+    });
+  } catch { populateClassSelect(sel, 'Select class…', false); }
+}
+
+async function onClassChange() {
+  const selEl = document.getElementById('sel-class');
+  const clsId = selEl.value;
+  const sel = document.getElementById('sel-subject');
+  sel.innerHTML='<option value="">Loading…</option>'; sel.disabled=true;
+  if (!clsId) { sel.innerHTML='<option value="">Select subject…</option>'; return; }
+  classId = parseInt(clsId);
+  try {
+    const subs = await API.classes.subjects(classId);
+    sel.innerHTML = '<option value="">Select subject…</option>';
+    (subs.items||subs||[]).forEach(s => {
+      const o = document.createElement('option');
+      o.value = s.id; o.textContent = s.name;
+      sel.appendChild(o);
+    });
+    sel.disabled = false;
+  } catch(e) {
+    sel.innerHTML='<option value="">Error loading subjects</option>';
+    sel.disabled = false;
+  }
 }
 
 async function loadStudents() {
@@ -343,10 +367,10 @@ async function _saveDraftAndReview() {
     if (!rows.length) { Toast.warning('No scores','Enter at least one score.'); return; }
 
     const result = await API.results.upload({
-      class_name: document.getElementById('sel-class').value,
-      subject_id: document.getElementById('sel-subject').value,
-      session_id: document.getElementById('sel-session').value,
-      term_id:    document.getElementById('sel-term').value,
+      class_id:   classId,
+      subject_id: parseInt(document.getElementById('sel-subject').value),
+      session_id: parseInt(document.getElementById('sel-session').value),
+      term_id:    parseInt(document.getElementById('sel-term').value),
       source: 'manual', no_test: noTestMode, scores: rows,
     });
     _lastSavedBatchId = result.batch_id;
@@ -467,10 +491,10 @@ async function submitScores() {
     if (!rows.length) { Toast.warning('No scores','Enter scores before submitting.'); return; }
 
     await API.results.upload({
-      class_name: document.getElementById('sel-class').value,
-      subject_id: document.getElementById('sel-subject').value,
-      session_id: document.getElementById('sel-session').value,
-      term_id:    document.getElementById('sel-term').value,
+      class_id:   classId,
+      subject_id: parseInt(document.getElementById('sel-subject').value),
+      session_id: parseInt(document.getElementById('sel-session').value),
+      term_id:    parseInt(document.getElementById('sel-term').value),
       source: 'manual', no_test: noTestMode, scores: rows,
     });
     Toast.success('Saved!', 'Scores saved as draft. Go to Upload History to submit to admin.');
