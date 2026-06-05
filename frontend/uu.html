@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wire Transfer Confirmation</title>
+    <style>
+        /* --- Global Styles --- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #1a1a1a;
+            line-height: 1.5;
+            padding: 20px;
+        }
+
+        /* --- Container --- */
+        .receipt-container {
+            max-width: 700px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            padding: 40px 30px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        /* --- Header & Banner --- */
+        .receipt-header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            color: #111111;
+            line-height: 1.2;
+            margin-bottom: 25px;
+            max-width: 90%;
+        }
+
+        .logo-banner {
+            background-color: #cd1412; /* Wells Fargo Red */
+            color: #ffffff;
+            font-size: 20px;
+            font-weight: bold;
+            padding: 12px 20px;
+            letter-spacing: 0.5px;
+            border-bottom: 4px solid #f2a900; /* Yellow bottom accent line */
+        }
+
+        /* --- Body Typography --- */
+        .receipt-body {
+            padding-top: 25px;
+        }
+
+        .success-message {
+            font-size: 18px;
+            font-weight: 600;
+            color: #111;
+            margin-bottom: 12px;
+        }
+
+        .instruction-text {
+            font-size: 14px;
+            color: #444;
+            margin-bottom: 30px;
+        }
+
+        /* --- Layout Sections --- */
+        .info-section {
+            margin-bottom: 25px;
+        }
+
+        .info-section h3 {
+            font-size: 15px;
+            font-weight: 700;
+            color: #111;
+            margin-bottom: 12px;
+            border-bottom: 1px solid #eaeaea;
+            padding-bottom: 4px;
+        }
+
+        /* Row-based Structure (Desktop Default) */
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 6px 0;
+            font-size: 14px;
+        }
+
+        .label {
+            color: #222222;
+            font-weight: 500;
+            flex: 0 0 40%;
+            padding-right: 15px;
+        }
+
+        .value {
+            color: #111111;
+            text-align: left;
+            flex: 0 0 60%;
+            word-break: break-word;
+        }
+
+        /* Highlight styles for totals */
+        .highlighted-row {
+            font-weight: 700;
+        }
+
+        .note {
+            font-size: 13px;
+            color: #444;
+            margin: 10px 0;
+            font-style: normal;
+        }
+
+        /* Simulated Image Redactions */
+        /* .hidden-field {
+            color: transparent;
+            text-shadow: 0 0 8px rgba(0,0,0,0.5);
+            user-select: none;
+        } */
+
+        /* .hidden-field-green {
+            background-color: #3b6e3b;
+            color: #3b6e3b;
+            border-radius: 4px;
+            display: inline-block;
+            padding: 2px 6px;
+            user-select: none;
+            max-width: fit-content;
+        } */
+
+        /* --- Footer Elements --- */
+        .divider {
+            border: 0;
+            border-top: 1px solid #cccccc;
+            margin: 30px 0 20px 0;
+        }
+
+        .legal-footer {
+            font-size: 12px;
+            color: #444444;
+        }
+
+        .legal-footer p {
+            margin-bottom: 16px;
+            line-height: 1.6;
+        }
+
+        .legal-footer a {
+            color: #0066cc;
+            text-decoration: underline;
+        }
+
+        .info-disclaimer {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .info-icon {
+            background-color: #0066cc;
+            color: white;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: bold;
+            font-family: serif;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        /* --- Mobile Adaptive Viewport Rules --- */
+        @media (max-width: 600px) {
+            body {
+                padding: 0;
+            }
+
+            .receipt-container {
+                padding: 20px 15px;
+                box-shadow: none;
+            }
+
+            .receipt-header h1 {
+                font-size: 24px;
+                max-width: 100%;
+            }
+
+            .data-row {
+                flex-direction: column;
+                justify-content: flex-start;
+                align-items: flex-start;
+                padding: 8px 0;
+            }
+
+            .label {
+                flex: unset;
+                width: 100%;
+                margin-bottom: 2px;
+                color: #666666;
+                font-size: 13px;
+            }
+
+            .value {
+                flex: unset;
+                width: 100%;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="receipt-container">
+        <header class="receipt-header">
+            <h1>Your Wells Fargo wire transfer confirmation and receipt</h1>
+            <div class="logo-banner">
+                WELLS FARGO
+            </div>
+        </header>
+
+        <main class="receipt-body">
+            <h2 class="success-message">You've successfully submitted your transaction</h2>
+            <p class="instruction-text">Please keep this message as your receipt.</p>
+
+            <section class="info-section">
+                <h3>Wire details</h3>
+                <div class="data-row">
+                    <span class="label">Confirmation number</span>
+                    <span class="value hidden-field">OW88888176409315</span>
+                </div>
+                <div class="data-row">
+                    <span class="label">Send to</span>
+                    <span class="value hidden-field">Robyn Apel</span>
+                </div>
+                <div class="data-row">
+                    <span class="label">From account (debit account)</span>
+                    <span class="value">EVERYDAY CHECKING ...0732</span>
+                </div>
+                <div class="data-row">
+                    <span class="label">Wire currency</span>
+                    <span class="value">US Dollar (USD)</span>
+                </div>
+                
+                <p class="note">NOTE: This transfer is being sent in USD</p>
+
+                <div class="data-row">
+                    <span class="label">Send on</span>
+                    <span class="value">06/05/2026</span>
+                </div>
+                <div class="data-row">
+                    <span class="label">Deliver by</span>
+                    <span class="value">06/08/2026</span>
+                </div>
+            </section>
+
+            <section class="info-section">
+                <h3>Originator (sender) information</h3>
+                <div class="data-row">
+                    <span class="label">Name</span>
+                    <span class="value">Rebbecca Davis</span>
+                </div>
+                <div class="data-row">
+                    <span class="label">Address</span>
+                    <span class="value hidden-field-green">266 Chapman Road STE Newark, Delaware 19702</span>
+                </div>
+            </section>
+
+            <section class="info-section">
+                <h3>Recipient information</h3>
+                <div class="data-row">
+                    <span class="label">Name</span>
+                    <span class="value">Robyn Apel</span>
+                </div>
+                <div class="data-row">
+                    <span class="label">Address</span>
+                    <span class="value">116 S Clark St,Apt D Moberly Missouri 65270</span>
+                </div>
+            </section>
+
+            <section class="info-section">
+                <h3>Recipient bank information</h3>
+                <div class="data-row">
+                    <span class="label">Bank name</span>
+                    <span class="value">Wells Fargo</span>
+                </div>
+                <div class="data-row">
+                    <span class="label">Bank country</span>
+                    <span class="value">United States</span>
+                </div>
+                <div class="data-row">
+                    <span class="label">Bank ID</span>
+                    <span class="value">WFBIUS6SSTL</span>
+                </div>
+                <div class="data-row">
+                    <span class="label">Account number</span>
+                    <span class="value">XXXXXXXXXXXXXXXXXXXX8933</span>
+                </div>
+            </section>
+
+            <section class="info-section">
+                <h3>The following items will be debited from your account:</h3>
+                <div class="data-row">
+                    <span class="label">Transfer amount</span>
+                    <span class="value">$10,276.59</span>
+                </div>
+                <div class="data-row">
+                    <span class="label">Wire transfer fee</span>
+                    <span class="value">$4.00</span>
+                </div>
+                <div class="data-row">
+                    <span class="label">Taxes</span>
+                    <span class="value">$0.00</span>
+                </div>
+                <div class="data-row highlighted-row">
+                    <span class="label">Total USD from account</span>
+                    <span class="value">$10,321.59</span>
+                </div>
+                <div class="data-row">
+                    <span class="label">Exchange rate</span>
+                    <span class="value">N/A</span>
+                </div>
+            </section>
+
+            <section class="info-section">
+                <h3>Recipient amount and fees</h3>
+                <div class="data-row">
+                    <span class="label">Transfer amount</span>
+                    <span class="value">$10,276.59 USD</span>
+                </div>
+                <div class="data-row">
+                    <span class="label">Other fees</span>
+                    <span class="value">0.00 USD</span>
+                </div>
+                <div class="data-row highlighted-row">
+                    <span class="label">Total for recipient</span>
+                    <span class="value">10,276.59 USD</span>
+                </div>
+                
+                <p class="note">Note: Recipient may receive less due to fees charged by the recipient's bank and foreign taxes.</p>
+            </section>
+
+            <section class="info-section">
+                <div class="data-row">
+                    <span class="label"><strong>Availability date</strong></span>
+                    <span class="value"><strong>05/08/2026</strong></span>
+                </div>
+            </section>
+
+            <hr class="divider">
+
+            <footer class="legal-footer">
+                <div class="info-disclaimer">
+                    <span class="info-icon">i</span>
+                    <p><strong>Beneficiary Account Number / Bank ID:</strong> The beneficiary account number and beneficiary bank identification number (e.g. IBAN, RTN, or SWIFT/BIC) you provided must be confirmed as complete and accurate. You could lose the transfer amount if this information is incorrect.</p>
+                </div>
+                
+                <p><strong>Availability Date:</strong> The recipient may receive the wire transfer before or on the availability date specified above.</p>
+                
+                <p><strong>Cancellation:</strong> You can cancel this wire transfer for a full refund within 30 minutes of transaction authorization. To initiate such a request or if you have questions, call us at <a href="tel:1-800-956-4442">1-800-956-4442</a>.</p>
+                
+                <p><strong>Disputes:</strong> You have a right to dispute errors in your transaction. If you think there is an error, contact the Wire Transfer Services Team at <a href="tel:1-855-339-6655">1-855-339-6655</a> as soon as possible (it must be within 180 days of the Availability Date listed above). You may also go to <a href="https://www.wellsfargo.com" target="_blank">www.wellsfargo.com</a>.</p>
+            </footer>
+        </main>
+    </div>
+
+</body>
+</html>
