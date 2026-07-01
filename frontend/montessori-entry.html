@@ -102,7 +102,7 @@ let CATEGORIES = {}, GRADING_KEY = {}, _students = [], _sessions = [], _currentR
 
 document.addEventListener('DOMContentLoaded', async () => {
   await window.__rmsBootstrapReady;
-  initPage(['super_admin','admin','sub_admin'], 'admin');
+  initPage(['super_admin','admin','sub_admin'], AuthState.getRole() === 'sub_admin' ? 'subadmin' : 'admin');
   await loadCategories();
   await loadClasses();
   await loadSessions();
