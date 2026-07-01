@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Montessori History — Jaasiel RMS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="./css/style.css">
+<style>
+.hx-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0;border-bottom:1px solid rgba(255,255,255,.04);flex-wrap:wrap}
+.hx-row:last-child{border-bottom:none}
+.hx-name{font-weight:600;font-size:.92rem}
+.hx-meta{font-size:.76rem;color:var(--text-muted);margin-top:2px}
+.hx-actions{display:flex;gap:6px;align-items:center;flex-shrink:0}
+.filters-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.badge-draft{background:rgba(255,255,255,.06);color:var(--text-secondary)}
+.badge-submitted{background:rgba(59,130,246,.12);color:#93C5FD}
+.badge-correction{background:rgba(239,68,68,.1);color:#FCA5A5}
+.badge-locked{background:rgba(100,116,139,.15);color:#CBD5E1}
+.empty-state{text-align:center;padding:40px 16px;color:var(--text-muted)}
+</style>
+</head>
+<body>
+<div class="page-bg"></div>
+<div class="page-loader" id="page-loader"><div class="loader-logo"><i class="fas fa-graduation-cap"></i> Jaasiel RMS</div><div class="loader-ring"></div></div>
+<div class="toast-container" id="toast-container"></div>
+<div class="app-layout">
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<aside class="sidebar" id="sidebar"></aside>
+<div class="main-content">
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" id="menu-toggle"><i class="fas fa-bars"></i></button>
+      <div>
+        <div class="page-title">Montessori History</div>
+        <div class="breadcrumb"><a href="montessori-entry.html">Montessori Entry</a><span class="sep">/</span><span class="text-gold">History</span></div>
+      </div>
+    </div>
+    <div class="topbar-right" id="topbar-right">
+      <a href="montessori-entry.html" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> New / Edit Report</a>
+    </div>
+  </header>
+
+  <div class="page-body">
+    <div class="card mb-3">
+      <div class="filters-bar">
+        <div class="form-group mb-0">
+          <label class="form-label">Class</label>
+          <select class="form-control" id="f-class"><option value="">All Montessori Classes</option></select>
+        </div>
+        <div class="form-group mb-0">
+          <label class="form-label">Session</label>
+          <select class="form-control" id="f-session"><option value="">All Sessions</option></select>
+        </div>
+        <div class="form-group mb-0">
+          <label class="form-label">Term</label>
+          <select class="form-control" id="f-term"><option value="">All Terms</option></select>
+        </div>
+        <div class="form-group mb-0">
+          <label class="form-label">Status</label>
+          <select class="form-control" id="f-status">
+            <option value="">All Statuses</option>
+            <option value="pending">Draft</option>
+            <option value="submitted">Submitted</option>
+            <option value="approved">Approved</option>
+            <option value="published">Published</option>
+            <option value="rejected">Rejected</option>
+            <option value="correction_requested">Correction Requested</option>
+            <option value="locked">Locked</option>
+          </select>
+        </div>
+        <div class="form-group mb-0">
+          <label class="form-label">Search Student</label>
+          <input class="form-control" id="f-search" placeholder="Type a name…">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-header">
+        <div>
+          <div class="section-title" id="list-title">Montessori Reports</div>
+          <div class="section-sub" id="list-sub">Loading…</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="loadHistory()"><i class="fas fa-rotate"></i> Refresh</button>
+      </div>
+      <div id="history-list">
+        <div class="skeleton mb-2" style="height:64px;border-radius:12px"></div>
+        <div class="skeleton mb-2" style="height:64px;border-radius:12px"></div>
+        <div class="skeleton" style="height:64px;border-radius:12px"></div>
+      </div>
+      <div id="history-pagination" class="mt-2"></div>
+    </div>
+  </div>
+</div>
+</div>
+<script src="./js/core.js"></script>
+<script src="./js/ui.js"></script>
+<script>
+let _sessions = [], _page = 1, _perPage = 15, _isAdmin = false;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await window.__rmsBootstrapReady;
+  initPage(['super_admin','admin','sub_admin'], AuthState.getRole() === 'sub_admin' ? 'subadmin' : 'admin');
+  _isAdmin = AuthState.hasRole('super_admin','admin');
+  await loadClasses();
+  await loadSessions();
+  wireFilters();
+  await loadHistory();
+});
+
+async function loadClasses() {
+  const sel = document.getElementById('f-class');
+  sel.innerHTML = '<option value="">All Montessori Classes</option>' +
+    MONTESSORI_CLASSES.map(c => `<option value="${c}">${c}</option>`).join('');
+}
+
+async function loadSessions() {
+  try {
+    const data = await API.sessions.list();
+    _sessions = data.items || data || [];
+    const sessSel = document.getElementById('f-session');
+    sessSel.innerHTML = '<option value="">All Sessions</option>' + _sessions.map(s =>
+      `<option value="${s.id}" ${s.is_current?'selected':''}>${s.session_name}</option>`).join('');
+    populateTerms(sessSel.value);
+  } catch(e) { console.warn(e); }
+}
+
+function populateTerms(sid) {
+  const termSel = document.getElementById('f-term');
+  const sess = _sessions.find(s => String(s.id) === String(sid));
+  termSel.innerHTML = '<option value="">All Terms</option>' + (sess?.terms||[]).map(t =>
+    `<option value="${t.id}" ${t.is_current?'selected':''}>${t.term_name}</option>`).join('');
+}
+
+function wireFilters() {
+  document.getElementById('f-session').addEventListener('change', e => { populateTerms(e.target.value); _page = 1; loadHistory(); });
+  ['f-class','f-term','f-status'].forEach(id =>
+    document.getElementById(id).addEventListener('change', () => { _page = 1; loadHistory(); }));
+  let t;
+  document.getElementById('f-search').addEventListener('input', () => {
+    clearTimeout(t); t = setTimeout(() => { _page = 1; loadHistory(); }, 350);
+  });
+}
+
+async function loadHistory() {
+  const listEl = document.getElementById('history-list');
+  showSkeleton(listEl, 4, '64px');
+  const params = {
+    page: _page, per_page: _perPage,
+    class_name: document.getElementById('f-class').value || undefined,
+    session_id: document.getElementById('f-session').value || undefined,
+    term_id: document.getElementById('f-term').value || undefined,
+    status: document.getElementById('f-status').value || undefined,
+    search: document.getElementById('f-search').value || undefined,
+  };
+  try {
+    const data = _isAdmin
+      ? await API.montessori.list(params)
+      : await API.montessori.myUploads(params);
+    const items = data.items || data || [];
+    const total = data.total ?? items.length;
+    document.getElementById('list-sub').textContent = `${total} report${total===1?'':'s'} found`;
+    renderList(items);
+    renderPagination(document.getElementById('history-pagination'), {
+      page: _page, total, perPage: _perPage,
+      onChange: 'p => { _page = p; loadHistory(); }'
+    });
+  } catch(err) {
+    listEl.innerHTML = `<div class="empty-state"><i class="fas fa-triangle-exclamation" style="font-size:1.4rem;display:block;margin-bottom:8px"></i>Could not load history.<br><span style="font-size:.78rem">${Security.sanitize(err.message||'')}</span></div>`;
+    document.getElementById('list-sub').textContent = '—';
+  }
+}
+
+const STATUS_CFG = {
+  pending:               { label: 'Draft',                cls: 'badge-draft',      icon: 'fa-pencil' },
+  submitted:             { label: 'Submitted',             cls: 'badge-submitted',  icon: 'fa-paper-plane' },
+  approved:              { label: 'Approved',               cls: 'badge-approved',   icon: 'fa-check-circle' },
+  published:             { label: 'Published',              cls: 'badge-gold',       icon: 'fa-star' },
+  locked:                { label: 'Locked',                 cls: 'badge-locked',     icon: 'fa-lock' },
+  rejected:              { label: 'Rejected',                cls: 'badge-rejected',  icon: 'fa-circle-xmark' },
+  correction_requested:  { label: 'Correction Requested',    cls: 'badge-correction',icon: 'fa-rotate' },
+};
+
+function renderList(items) {
+  const el = document.getElementById('history-list');
+  if (!items.length) {
+    el.innerHTML = `<div class="empty-state"><i class="fas fa-inbox" style="font-size:1.6rem;display:block;margin-bottom:8px;opacity:.5"></i>No Montessori reports match these filters.</div>`;
+    return;
+  }
+  el.innerHTML = items.map(r => {
+    const cfg = STATUS_CFG[r.status] || { label: r.status, cls: 'badge-draft', icon: 'fa-circle-info' };
+    const editable = ['pending','submitted','rejected','correction_requested'].includes(r.status);
+    const params = `class=${encodeURIComponent(r.class_name || r.class?.name || '')}&student_id=${r.student_id}&session_id=${r.session_id}&term_id=${r.term_id}`;
+    return `<div class="hx-row">
+      <div>
+        <div class="hx-name">${Security.sanitize(r.student_name || r.student?.full_name || 'Student #' + r.student_id)}</div>
+        <div class="hx-meta">${Security.sanitize(r.class_name || r.class?.name || '—')} · ${Security.sanitize(r.session_name || '')} ${Security.sanitize(r.term_name || '')} · ${Fmt.timeAgo(r.updated_at || r.uploaded_at)}
+          ${r.entered_by_name ? ' · by ' + Security.sanitize(r.entered_by_name) : ''}</div>
+      </div>
+      <div class="hx-actions">
+        <span class="badge ${cfg.cls}"><i class="fas ${cfg.icon}"></i> ${cfg.label.toLowerCase()}</span>
+        <a href="montessori-report.html?student_id=${r.student_id}&term_id=${r.term_id}" class="btn btn-sm btn-ghost" title="View report"><i class="fas fa-eye"></i></a>
+        ${editable ? `<a href="montessori-entry.html?${params}" class="btn btn-sm btn-secondary" title="Edit"><i class="fas fa-pen"></i></a>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+</script>
+</body>
+</html>
