@@ -122,7 +122,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
-  await Promise.all([loadStudentInfo(), loadSessions()]);
+  await loadStudentInfo();
+
+  // Creche/Daycare/Pre-Nursery/KG pupils use the skills-based Montessori
+  // report — send staff to that view/entry form instead of the subject table.
+  if (_studentData && _studentData.is_montessori) {
+    window.location.replace(`montessori-report.html?student_id=${STUDENT_ID}`);
+    return;
+  }
+
+  await loadSessions();
   loadResults();
 });
 

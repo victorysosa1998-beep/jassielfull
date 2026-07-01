@@ -234,6 +234,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('back-btn').href = backUrl;
   document.getElementById('breadcrumb-results').href = backUrl;
 
+  // Creche/Daycare/Pre-Nursery/KG pupils use the skills-based Montessori
+  // report card — redirect here too in case this page was linked directly.
+  try {
+    const profile = await API.students.get(STUDENT_ID);
+    if (profile.is_montessori) {
+      window.location.replace(`montessori-report.html?student_id=${STUDENT_ID}&session_id=${SESSION_ID||''}&term_id=${TERM_ID||''}`);
+      return;
+    }
+  } catch (e) { console.warn('Could not check profile type', e); }
+
   await Promise.all([loadStudent(), loadAllResults()]);
   buildTermSwitcher();
   renderCard(TERM_ID || _firstTermId());

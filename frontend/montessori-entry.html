@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Montessori Report Entry — Jaasiel RMS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="./css/style.css">
+<style>
+.rating-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--border-light)}
+.rating-row:last-child{border-bottom:none}
+.rating-item-label{font-size:.87rem;color:var(--text-secondary);flex:1}
+.rating-scale{display:flex;gap:6px;flex-shrink:0}
+.rating-btn{width:34px;height:34px;border-radius:8px;border:1px solid var(--border-light);background:rgba(255,255,255,.03);color:var(--text-muted);font-weight:700;font-size:.85rem;cursor:pointer;transition:.15s}
+.rating-btn.active{background:linear-gradient(135deg,#C9973A,#9A6E20);color:#fff;border-color:transparent}
+.cat-card{margin-bottom:16px}
+.cat-title{font-family:var(--font-display);font-weight:700;font-size:.95rem;margin-bottom:6px;color:var(--brand-gold)}
+</style>
+</head>
+<body>
+<div class="page-bg"></div>
+<div class="page-loader" id="page-loader"><div class="loader-logo"><i class="fas fa-graduation-cap"></i> Jaasiel RMS</div><div class="loader-ring"></div></div>
+<div class="toast-container" id="toast-container"></div>
+<div class="app-layout">
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<aside class="sidebar" id="sidebar"></aside>
+<div class="main-content">
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" id="menu-toggle"><i class="fas fa-bars"></i></button>
+      <div>
+        <div class="page-title">Montessori Report Entry</div>
+        <div class="breadcrumb"><a href="manual-entry.html">Manual Entry</a><span class="sep">/</span><span class="text-gold">Montessori</span></div>
+      </div>
+    </div>
+    <div class="topbar-right" id="topbar-right"></div>
+  </header>
+  <div class="page-body">
+
+    <div class="alert alert-info mb-3">
+      <i class="fas fa-circle-info" style="flex-shrink:0"></i>
+      <div>This form is used for <strong>Creche, Daycare &amp; Pre-Nursery</strong> classes only. Instead of subject scores,
+      each pupil is rated <strong>1–3</strong> on a list of developmental skills. There is no average, grade or position for these classes.</div>
+    </div>
+
+    <!-- Selectors -->
+    <div class="card mb-3">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px">
+        <div class="form-group mb-0">
+          <label class="form-label">Class</label>
+          <select class="form-control" id="sel-class" onchange="onClassChange()"><option value="">Select…</option></select>
+        </div>
+        <div class="form-group mb-0">
+          <label class="form-label">Student</label>
+          <select class="form-control" id="sel-student" onchange="onStudentChange()"><option value="">Select class first</option></select>
+        </div>
+        <div class="form-group mb-0">
+          <label class="form-label">Session</label>
+          <select class="form-control" id="sel-session"><option value="">Select…</option></select>
+        </div>
+        <div class="form-group mb-0">
+          <label class="form-label">Term</label>
+          <select class="form-control" id="sel-term"><option value="">Select…</option></select>
+        </div>
+      </div>
+    </div>
+
+    <div id="form-area" style="display:none">
+      <div id="categories-container"></div>
+
+      <div class="card mb-3">
+        <div class="cat-title">Comments &amp; Signatures</div>
+        <div class="form-group"><label class="form-label">Development of Creative Expression — Comment</label>
+          <textarea class="form-control" id="f-creative" rows="2" placeholder="e.g. Shows strong interest in colouring and shape work…"></textarea></div>
+        <div class="form-group"><label class="form-label">General Comment</label>
+          <textarea class="form-control" id="f-general" rows="3" placeholder="e.g. Have a wonderful holiday…"></textarea></div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
+          <div class="form-group mb-0"><label class="form-label">Class Teacher's Name</label><input class="form-control" id="f-teacher-name"></div>
+          <div class="form-group mb-0"><label class="form-label">Class Teacher's Report</label><input class="form-control" id="f-teacher-report" placeholder="e.g. Good Result"></div>
+          <div class="form-group mb-0"><label class="form-label">Pupil's Conduct</label><input class="form-control" id="f-conduct" placeholder="e.g. Well Behaved"></div>
+          <div class="form-group mb-0"><label class="form-label">Proprietor's Report</label><input class="form-control" id="f-proprietor" placeholder="e.g. Satisfactory"></div>
+        </div>
+        <div class="alert alert-info mb-0" style="margin-top:12px">
+          <i class="fas fa-circle-info" style="flex-shrink:0"></i>
+          <div>Next term's fee and resumption date are pulled automatically from the current Term settings — there's nothing to enter here.</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button class="btn btn-primary" id="save-btn" onclick="saveReport()"><i class="fas fa-save"></i> Save Report</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+<script src="./js/core.js"></script>
+<script src="./js/ui.js"></script>
+<script>
+let CATEGORIES = {}, GRADING_KEY = {}, _students = [], _sessions = [], _currentReportId = null;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await window.__rmsBootstrapReady;
+  initPage(['super_admin','admin','sub_admin'], 'admin');
+  await loadCategories();
+  await loadClasses();
+  await loadSessions();
+});
+
+async function loadCategories() {
+  const data = await API.montessori.categories();
+  CATEGORIES = data.categories; GRADING_KEY = data.grading_key;
+}
+
+async function loadClasses() {
+  const sel = document.getElementById('sel-class');
+  sel.innerHTML = '<option value="">Select…</option>' +
+    MONTESSORI_CLASSES.map(c => `<option value="${c}">${c}</option>`).join('');
+}
+
+async function loadSessions() {
+  try {
+    const data = await API.sessions.list();
+    _sessions = data.items || data || [];
+    const sessSel = document.getElementById('sel-session');
+    sessSel.innerHTML = '<option value="">Select…</option>' + _sessions.map(s =>
+      `<option value="${s.id}" ${s.is_current?'selected':''}>${s.session_name}</option>`).join('');
+    populateTerms(sessSel.value);
+    sessSel.onchange = () => populateTerms(sessSel.value);
+  } catch(e) { console.warn(e); }
+}
+
+function populateTerms(sid) {
+  const termSel = document.getElementById('sel-term');
+  const sess = _sessions.find(s => String(s.id) === String(sid));
+  termSel.innerHTML = '<option value="">Select…</option>' + (sess?.terms||[]).map(t =>
+    `<option value="${t.id}" ${t.is_current?'selected':''}>${t.term_name}</option>`).join('');
+}
+
+async function onClassChange() {
+  const cls = document.getElementById('sel-class').value;
+  const studentSel = document.getElementById('sel-student');
+  document.getElementById('form-area').style.display = 'none';
+  if (!cls) { studentSel.innerHTML = '<option value="">Select class first</option>'; return; }
+  studentSel.innerHTML = '<option value="">Loading…</option>';
+  try {
+    const data = await API.students.list({ class_name: cls, per_page: 200 });
+    _students = data.items || data || [];
+    studentSel.innerHTML = '<option value="">Select…</option>' +
+      _students.map(s => `<option value="${s.id}">${s.full_name}</option>`).join('');
+  } catch { studentSel.innerHTML = '<option value="">Could not load students</option>'; }
+}
+
+async function onStudentChange() {
+  const sid = document.getElementById('sel-student').value;
+  if (!sid) { document.getElementById('form-area').style.display = 'none'; return; }
+  renderCategories();
+  document.getElementById('form-area').style.display = '';
+  await loadExisting();
+}
+
+function renderCategories() {
+  const container = document.getElementById('categories-container');
+  container.innerHTML = Object.entries(CATEGORIES).map(([cat, items]) => `
+    <div class="card cat-card">
+      <div class="cat-title">${cat}</div>
+      ${items.map(item => `
+        <div class="rating-row" data-cat="${escapeAttr(cat)}" data-item="${escapeAttr(item)}">
+          <div class="rating-item-label">${item}</div>
+          <div class="rating-scale">
+            ${[1,2,3].map(v => `<button type="button" class="rating-btn" data-val="${v}" title="${GRADING_KEY[v]}" onclick="setRating(this)">${v}</button>`).join('')}
+          </div>
+        </div>`).join('')}
+    </div>`).join('');
+}
+
+function setRating(btn) {
+  const row = btn.closest('.rating-row');
+  row.querySelectorAll('.rating-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function escapeAttr(s){ return String(s).replace(/"/g,'&quot;'); }
+
+async function loadExisting() {
+  const sid = document.getElementById('sel-student').value;
+  const tid = document.getElementById('sel-term').value;
+  _currentReportId = null;
+  if (!sid || !tid) return;
+  try {
+    const data = await API.montessori.list({ student_id: sid, term_id: tid });
+    const r = (data.items||[])[0];
+    if (!r) return;
+    _currentReportId = r.id;
+    Object.entries(r.ratings||{}).forEach(([cat, items]) => {
+      Object.entries(items).forEach(([item, val]) => {
+        if (!val) return;
+        const row = document.querySelector(`.rating-row[data-cat="${escapeAttr(cat)}"][data-item="${escapeAttr(item)}"]`);
+        const btn = row?.querySelector(`.rating-btn[data-val="${val}"]`);
+        if (btn) btn.classList.add('active');
+      });
+    });
+    document.getElementById('f-creative').value = r.creative_expression_comment || '';
+    document.getElementById('f-general').value = r.general_comment || '';
+    document.getElementById('f-teacher-name').value = r.class_teacher_name || '';
+    document.getElementById('f-teacher-report').value = r.class_teacher_report || '';
+    document.getElementById('f-conduct').value = r.pupils_conduct || '';
+    document.getElementById('f-proprietor').value = r.proprietors_report || '';
+  } catch(e) { console.warn('No existing report yet', e); }
+}
+
+function collectRatings() {
+  const ratings = {};
+  document.querySelectorAll('.rating-row').forEach(row => {
+    const cat = row.dataset.cat, item = row.dataset.item;
+    const active = row.querySelector('.rating-btn.active');
+    ratings[cat] = ratings[cat] || {};
+    ratings[cat][item] = active ? parseInt(active.dataset.val) : null;
+  });
+  return ratings;
+}
+
+async function saveReport() {
+  const student_id = document.getElementById('sel-student').value;
+  const session_id = document.getElementById('sel-session').value;
+  const term_id = document.getElementById('sel-term').value;
+  if (!student_id || !session_id || !term_id) { Toast.warning('Missing info', 'Select class, student, session and term'); return; }
+
+  const btn = document.getElementById('save-btn');
+  setLoading(btn, true);
+  try {
+    await API.montessori.save({
+      student_id: parseInt(student_id), session_id: parseInt(session_id), term_id: parseInt(term_id),
+      ratings: collectRatings(),
+      creative_expression_comment: document.getElementById('f-creative').value,
+      general_comment: document.getElementById('f-general').value,
+      class_teacher_name: document.getElementById('f-teacher-name').value,
+      class_teacher_report: document.getElementById('f-teacher-report').value,
+      pupils_conduct: document.getElementById('f-conduct').value,
+      proprietors_report: document.getElementById('f-proprietor').value,
+    });
+    Toast.success('Saved', 'Montessori report saved successfully');
+  } catch(err) { Toast.error('Failed', err.message); }
+  setLoading(btn, false);
+}
+</script>
+</body>
+</html>

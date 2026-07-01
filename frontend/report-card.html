@@ -677,6 +677,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   await window.__rmsBootstrapReady;
   initPage('student', 'student');
 
+  // Creche/Daycare/Pre-Nursery/KG pupils get the skills-based Montessori
+  // report card instead of the subject/average/grade/position one.
+  try {
+    const profile = await API.students.myProfile();
+    if (profile.is_montessori) {
+      const qs = new URLSearchParams(window.location.search).toString();
+      window.location.replace('montessori-report.html' + (qs ? '?' + qs : ''));
+      return;
+    }
+  } catch (e) { console.warn('Could not check profile type', e); }
+
   /* Show back button + banner only when URL has session/term params */
   if (_paramSession || _paramTerm) {
     const backBtn = document.getElementById('btn-back');

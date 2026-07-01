@@ -16,6 +16,7 @@ window.buildAdminSidebar = function() {
     <div class="nav-section"><div class="nav-section-label">Main</div>
       <a href="admin-dashboard.html" class="nav-item"><i class="fas fa-house-chimney"></i><span>Dashboard</span></a>
       <a href="results-approval.html" class="nav-item"><i class="fas fa-clipboard-check"></i><span>Result Approvals</span><span class="nav-badge" id="pending-badge" style="display:none">0</span></a>
+      <a href="montessori-entry.html" class="nav-item"><i class="fas fa-child-reaching"></i><span>Montessori Report</span></a>
       <a href="analytics.html" class="nav-item"><i class="fas fa-chart-mixed"></i><span>Analytics</span></a>
     </div>
     <div class="nav-section"><div class="nav-section-label">Management</div>
@@ -61,6 +62,7 @@ window.buildSubAdminSidebar = function() {
       <a href="subadmin-dashboard.html" class="nav-item"><i class="fas fa-house-chimney"></i><span>Dashboard</span></a>
       <a href="ocr-upload.html" class="nav-item"><i class="fas fa-robot"></i><span>AI OCR Upload</span></a>
       <a href="manual-entry.html" class="nav-item"><i class="fas fa-keyboard"></i><span>Manual Entry</span></a>
+      <a href="montessori-entry.html" class="nav-item"><i class="fas fa-child-reaching"></i><span>Montessori Report</span></a>
       <a href="upload-history.html" class="nav-item"><i class="fas fa-clock-rotate-left"></i><span>My Uploads</span></a>
     </div>
     <div class="nav-section"><div class="nav-section-label">Students</div>

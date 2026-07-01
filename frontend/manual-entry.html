@@ -209,6 +209,16 @@ async function loadClassOptions() {
 async function onClassChange() {
   const selEl = document.getElementById('sel-class');
   const clsId = selEl.value;
+  const clsText = selEl.options[selEl.selectedIndex]?.text || '';
+
+  // Creche/Daycare/Pre-Nursery/KG don't use subject scores — send staff to
+  // the skills-based Montessori entry form instead.
+  if (clsId && isMontessoriClass(clsText)) {
+    Toast.info('Montessori class', `${clsText} uses the Montessori report — redirecting…`);
+    window.location.href = 'montessori-entry.html';
+    return;
+  }
+
   const sel = document.getElementById('sel-subject');
   sel.innerHTML='<option value="">Loading…</option>'; sel.disabled=true;
   if (!clsId) { sel.innerHTML='<option value="">Select subject…</option>'; return; }

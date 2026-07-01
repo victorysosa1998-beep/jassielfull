@@ -266,6 +266,14 @@ const API = {
     history:  p  => API.get('/ocr/history', p),
     analytics:() => API.get('/ocr/analytics'),
   },
+  montessori: {
+    categories: ()      => API.get('/montessori/categories'),
+    save:       d       => API.post('/montessori', d),
+    publish:    id       => API.post(`/montessori/${id}/publish`),
+    list:       p       => API.get('/montessori', p),
+    get:        id      => API.get(`/montessori/${id}`),
+    myReports:  p       => API.get('/montessori/me/all', p),
+  },
   sessions: {
     list:   ()       => API.get('/sessions'),
     create: d        => API.post('/sessions', d),
@@ -786,6 +794,16 @@ window.SCHOOL_CLASSES = ['Creche', 'Daycare', 'Pre-Nursery',
 'Basic 1', 'Basic 2', 'Basic 3', 'Basic 4', 'Basic 5',
 'Jss 1', 'Jss 2', 'Jss 3',
 'SS 1', 'SS 2', 'SS 3',];
+
+/* ── Montessori (early-years) classes ──
+   Keep this list in sync with app/utils/montessori_data.py on the backend.
+   These classes get the skills-based report card instead of the
+   subject/score/average/grade/position report. */
+window.MONTESSORI_CLASSES = ['Creche', 'Daycare', 'Pre-Nursery'];
+window.isMontessoriClass = function(className) {
+  if (!className) return false;
+  return MONTESSORI_CLASSES.some(c => c.toLowerCase() === String(className).trim().toLowerCase());
+};
 
 window.populateClassSelect = function(selectEl, emptyLabel, addAll) {
   if (!selectEl) return;

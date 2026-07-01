@@ -136,6 +136,14 @@ let _sessions = [];
 document.addEventListener('DOMContentLoaded', async () => {
   await window.__rmsBootstrapReady;
   initPage('student', 'student');
+
+  // Creche/Daycare/Pre-Nursery/KG pupils use the skills-based Montessori
+  // report instead of subject scores — send them straight there.
+  try {
+    const profile = await API.students.myProfile();
+    if (profile.is_montessori) { window.location.replace('montessori-report.html'); return; }
+  } catch (e) { console.warn('Could not check profile type', e); }
+
   await loadSessions();
   loadAll();
 });

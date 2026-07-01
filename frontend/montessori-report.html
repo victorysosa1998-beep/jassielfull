@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=780, initial-scale=0.45, minimum-scale=0.3, maximum-scale=5, user-scalable=yes">
+<title>Pre-Nursery Report Card — Jaasiel Education Centre</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400&family=Source+Serif+4:ital,wght@0,300;0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<style>
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: #eef1f8;
+  font-family: 'DM Sans', sans-serif;
+  padding: 24px 0 60px;
+}
+.toolbar {
+  max-width: 780px;
+  margin: 0 auto 14px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  padding: 0 4px;
+}
+.toolbar button {
+  background: linear-gradient(135deg, #002060, #1a56c8);
+  color: #ffd700;
+  border: none;
+  border-radius: 6px;
+  padding: 9px 16px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.toolbar button:hover { opacity: .9; }
+.toolbar button:disabled { opacity: .5; cursor: default; }
+.toolbar button.secondary { background: linear-gradient(135deg, #4b5563, #6b7280); color: #fff; }
+
+.pn-page {
+  background: #fff;
+  color: #1a1a2e;
+  width: 780px;
+  min-width: 780px;
+  margin: 0 auto 22px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10.5px;
+  border: 3px double #002060;
+  position: relative;
+  box-shadow: 0 12px 60px rgba(0,32,96,.18), 0 2px 8px rgba(0,0,0,.08);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.pn-page::before {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border: 1px solid rgba(0,32,96,.15);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Header ── */
+.pn-head-top { background: linear-gradient(135deg, #002060 0%, #0a3d8f 50%, #1a56c8 100%); height: 7px; }
+.pn-head {
+  border-bottom: 3px solid #002060;
+  background: linear-gradient(180deg, #f0f4ff 0%, #fff 100%);
+  position: relative; z-index: 1;
+}
+.pn-head-inner { display: flex; align-items: center; padding: 14px 20px 10px; gap: 14px; }
+.pn-logo {
+  width: 76px; height: 76px; flex-shrink: 0; border-radius: 50%;
+  border: 2px solid rgba(0,32,96,.2); overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,32,96,.15); background: #fff;
+  display: flex; align-items: center; justify-content: center;
+}
+.pn-logo img { width: 100%; height: 100%; object-fit: contain; }
+.pn-school-info { flex: 1; text-align: center; }
+.pn-school-name {
+  font-family: 'Playfair Display', serif; font-size: 25px; font-weight: 900;
+  color: #002060; letter-spacing: .5px; line-height: 1.1; text-transform: uppercase;
+}
+.pn-motto {
+  font-family: 'Playfair Display', serif; font-size: 10px; font-weight: 700;
+  color: #b8860b; margin-top: 4px; text-transform: uppercase; letter-spacing: .8px; font-style: italic;
+}
+.pn-photo-box {
+  width: 68px; height: 80px; border: 1.5px solid #002060; background: #f8f9ff;
+  display: flex; align-items: center; justify-content: center; font-size: .55rem;
+  color: #999; flex-shrink: 0; overflow: hidden; border-radius: 4px; text-align: center;
+}
+.pn-photo-box img { width: 100%; height: 100%; object-fit: cover; }
+.pn-title-bar {
+  background: linear-gradient(135deg, #002060, #1a56c8); color: #ffd700; text-align: center;
+  padding: 6px; font-family: 'Playfair Display', serif; font-size: 13px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; border-bottom: 2px solid #002060;
+  position: relative; z-index: 1;
+}
+
+/* ── Info row ── */
+.pn-info-section { border-bottom: 1.5px solid #002060; position: relative; z-index: 1; }
+.pn-row { display: flex; border-bottom: 1px solid #c5d0e8; }
+.pn-row:last-child { border-bottom: none; }
+.pn-cell {
+  padding: 4px 8px; border-right: 1px solid #c5d0e8; display: flex; align-items: flex-end;
+  gap: 5px; min-height: 26px; flex: 1;
+}
+.pn-cell:last-child { border-right: none; }
+.pn-cell.double { flex: 2; }
+.pn-lbl {
+  font-size: 8.5px; font-weight: 700; text-transform: uppercase; color: #002060;
+  white-space: nowrap; flex-shrink: 0; letter-spacing: .3px; padding-bottom: 4px;
+}
+.pn-val {
+  font-family: 'Source Serif 4', serif; font-size: 10.5px; font-weight: 600; color: #000;
+  border-bottom: 1px solid #000; flex: 1; text-align: center; min-width: 30px;
+  padding-bottom: 3px; line-height: 1.4; outline: none;
+}
+.pn-val:empty::before { content: attr(data-ph); color: #aaa; font-weight: 400; }
+
+/* ── Grading key strip ── */
+.pn-key-strip {
+  display: flex; background: linear-gradient(135deg, #fffde7, #fff9c4);
+  border-bottom: 1.5px solid #002060; padding: 5px 14px; gap: 18px; flex-wrap: wrap;
+  align-items: center; position: relative; z-index: 1;
+}
+.pn-key-title { font-size: 8.5px; font-weight: 700; color: #7a6000; text-transform: uppercase; letter-spacing: .4px; }
+.pn-key-item { font-size: 9px; color: #3a2c00; }
+.pn-key-item b { color: #002060; }
+
+/* ── Comments box ── */
+.pn-comments-wrap { padding: 10px 14px; position: relative; z-index: 1; }
+.pn-comments-head {
+  font-family: 'Playfair Display', serif; font-size: 10.5px; font-weight: 700; color: #002060;
+  text-transform: uppercase; letter-spacing: .8px; margin-bottom: 5px; text-align: center;
+}
+.pn-comments-box {
+  border: 1.5px solid #002060; border-radius: 10px; min-height: 60px; padding: 8px 14px;
+  font-family: 'Source Serif 4', serif; font-size: 10.5px; line-height: 1.9;
+  background-image: repeating-linear-gradient(to bottom, transparent, transparent 22px, #d8def0 23px);
+  outline: none; color: #222;
+}
+.pn-comments-box:empty::before { content: attr(data-ph); color: #aaa; font-style: italic; }
+.pn-sig-row { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 8px; gap: 20px; }
+.pn-sig-block { display: flex; flex-direction: column; align-items: center; gap: 2px; flex: 1; }
+.pn-sig-lbl { font-size: 8px; font-weight: 700; color: #002060; text-transform: uppercase; letter-spacing: .4px; }
+.pn-sig-val {
+  font-family: 'Playfair Display', serif; font-size: 12px; font-weight: 700; color: #002060;
+  border-bottom: 1px solid #002060; min-width: 130px; text-align: center; padding-bottom: 3px;
+  font-style: italic; outline: none;
+}
+.pn-sig-val:empty::before { content: attr(data-ph); color: #aaa; font-style: normal; font-weight: 400; }
+.pn-stamp-wrap { width: 72px; height: 72px; flex-shrink: 0; }
+.pn-stamp-img { width: 100%; height: 100%; object-fit: contain; mix-blend-mode: multiply; opacity: .85; }
+
+/* ── Skill section tables ── */
+.pn-section-head {
+  background: linear-gradient(135deg, #002060, #1a56c8); color: #ffd700; text-align: center;
+  padding: 4px; font-family: 'Playfair Display', serif; font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 1px; position: relative; z-index: 1;
+}
+.pn-skill-table { width: 100%; border-collapse: collapse; font-size: 9.8px; position: relative; z-index: 1; }
+.pn-skill-table td { padding: 4px 10px; border-bottom: 1px solid #e5e9f5; vertical-align: middle; }
+.pn-skill-table tr:nth-child(even) td { background: #f7f9ff; }
+.pn-skill-table td.item { font-family: 'Source Serif 4', serif; color: #222; }
+.pn-skill-table td.rate { width: 42px; text-align: center; border-left: 1px solid #e5e9f5; }
+.pn-rate-input {
+  width: 26px; height: 20px; border: 1px solid #99a6c8; border-radius: 4px; text-align: center;
+  font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 700; color: #002060;
+  outline: none;
+}
+.pn-rate-input:focus { border-color: #002060; box-shadow: 0 0 0 2px rgba(0,32,96,.12); }
+.pn-rate-input[readonly] { background: #f7f9ff; border-color: #d5dcee; cursor: default; }
+
+/* ── Creative expression comment paragraph ── */
+.pn-creative-box {
+  padding: 8px 10px; font-family: 'Source Serif 4', serif; font-size: 10px; line-height: 1.7;
+  color: #222; outline: none; min-height: 20px;
+}
+.pn-creative-box:empty::before { content: attr(data-ph); color: #aaa; font-style: italic; }
+
+/* ── School management summary grid (page 2 bottom) ── */
+.pn-mgmt-grid { display: grid; grid-template-columns: 1fr 1fr; border-top: 2px solid #002060; position: relative; z-index: 1; }
+.pn-mgmt-cell { border: 1px solid #c5d0e8; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; }
+.pn-mgmt-lbl { font-size: 8.5px; font-weight: 700; text-transform: uppercase; color: #002060; letter-spacing: .4px; }
+.pn-mgmt-val {
+  font-family: 'Source Serif 4', serif; font-size: 11.5px; font-weight: 600; color: #000;
+  border-bottom: 1px solid #999; padding-bottom: 4px; min-height: 18px; outline: none;
+}
+.pn-mgmt-val:empty::before { content: attr(data-ph); color: #aaa; font-weight: 400; font-size: 9.5px; }
+
+/* ── Next Term Fee / Resumption bar (mirrors report-card.html's rc-next-bar) ── */
+.pn-next-bar {
+  display: flex; flex-wrap: wrap; border-top: 2px solid #002060;
+  background: linear-gradient(135deg, #f0f4ff, #e8eeff); position: relative; z-index: 1;
+}
+.pn-next-item {
+  flex: 1 1 auto; min-width: 160px; padding: 8px 14px; display: flex; align-items: center;
+  gap: 6px; border-right: 1px solid #c5d0e8;
+}
+.pn-next-item:last-child { border-right: none; }
+.pn-next-lbl { font-size: 8.5px; font-weight: 700; color: #5a6a8a; text-transform: uppercase; letter-spacing: .4px; }
+.pn-next-val { font-family: 'Playfair Display', serif; font-size: 12px; font-weight: 700; color: #002060; }
+
+.pn-footer-strip {
+  text-align: center; padding: 6px; font-size: 9px; font-weight: 700; color: #002060;
+  border-top: 2px solid #002060; background: linear-gradient(135deg, #f0f4ff, #e8eeff);
+  letter-spacing: .3px; position: relative; z-index: 1;
+}
+
+.pn-fine-print {
+  text-align: center; padding: 3px; font-size: 7.5px; color: #aaa; border-top: 1px solid #dde;
+  background: #fafbff; position: relative; z-index: 1;
+}
+
+.pn-empty {
+  max-width: 780px; margin: 0 auto; background: #fff; border-radius: 10px; padding: 48px;
+  text-align: center; color: #667; box-shadow: 0 12px 60px rgba(0,32,96,.12);
+}
+
+@media print {
+  body { background: #fff !important; padding: 0 !important; }
+  .toolbar { display: none !important; }
+  .pn-page { box-shadow: none; border: 3px double #002060; width: 100%; min-width: unset; border-radius: 0; margin: 0 0 0; }
+}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span id="rc-status" style="align-self:center;font-size:12px;color:#556;margin-right:auto;padding-left:4px"></span>
+  <button id="btn-save" onclick="saveReport()" style="display:none"><i class="fas fa-save"></i> Save</button>
+  <button id="btn-publish" class="secondary" onclick="publishReport()" style="display:none"><i class="fas fa-check"></i> Publish</button>
+  <button onclick="window.print()"><i class="fas fa-print"></i> Print / Save PDF</button>
+</div>
+
+<div id="empty-state" class="pn-empty" style="display:none">
+  <i class="fas fa-inbox" style="font-size:2rem;display:block;margin-bottom:12px"></i>
+  <span id="empty-msg">No report has been published for this term yet.</span>
+</div>
+
+<div id="pn-root" style="display:none">
+<div class="pn-page">
+  <div class="pn-head-top"></div>
+  <div class="pn-head">
+    <div class="pn-head-inner">
+      <div class="pn-logo"><img src="./images/logo.png" alt="Jaasiel Education Centre" onerror="this.parentElement.innerHTML='<i class=\'fas fa-graduation-cap\' style=\'font-size:28px;color:#002060\'></i>'"></div>
+      <div class="pn-school-info">
+        <div class="pn-school-name">Jaasiel Education Centre</div>
+        <div class="pn-motto">Accurate Knowledge Is A Virtue</div>
+      </div>
+      <div class="pn-photo-box">Passport<br>Photo</div>
+    </div>
+  </div>
+  <div class="pn-title-bar">My Montessori School</div>
+
+  <div class="pn-info-section">
+    <div class="pn-row">
+      <div class="pn-cell double"><span class="pn-lbl">Name:</span><span class="pn-val" id="f-name" data-ph="Pupil's full name"></span></div>
+    </div>
+    <div class="pn-row">
+      <div class="pn-cell"><span class="pn-lbl">Class:</span><span class="pn-val" id="f-class" data-ph="—"></span></div>
+      <div class="pn-cell"><span class="pn-lbl">Class Teacher:</span><span class="pn-val" id="f-teacher" data-ph="—"></span></div>
+    </div>
+    <div class="pn-row">
+      <div class="pn-cell"><span class="pn-lbl">Date:</span><span class="pn-val" id="f-date" data-ph="—"></span></div>
+      <div class="pn-cell"><span class="pn-lbl">Academic Year:</span><span class="pn-val" id="f-year" data-ph="—"></span></div>
+    </div>
+  </div>
+
+  <div class="pn-key-strip" id="pn-key-strip">
+    <span class="pn-key-title">Grading Key:</span>
+  </div>
+
+  <div class="pn-comments-wrap">
+    <div class="pn-comments-head">General Comments</div>
+    <div class="pn-comments-box" id="f-general-comment" data-ph="No general comment added yet."></div>
+    <div class="pn-sig-row">
+      <div class="pn-sig-block">
+        <span class="pn-sig-val" id="f-sig1" data-ph="—"></span>
+        <span class="pn-sig-lbl">Class Teacher</span>
+      </div>
+      <div class="pn-stamp-wrap">
+        <img src="./images/schoolstamp.png" class="pn-stamp-img" alt="Official Stamp" onerror="this.style.display='none'">
+      </div>
+      <div class="pn-sig-block">
+        <span class="pn-sig-val" id="f-sigdate1" data-ph="—"></span>
+        <span class="pn-sig-lbl">Date</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rating category tables render here, fetched live from /montessori/categories -->
+  <div id="pn-categories"></div>
+
+  <div class="pn-section-head">Development of Creative Expression</div>
+  <div class="pn-creative-box" id="f-creative" data-ph="He/she has a great attitude towards learning. I would encourage him/her to read more to improve his/her vocabulary."></div>
+
+  <div class="pn-fine-print">Jaasiel Education Centre &middot; Pre-Nursery Report Card &middot; Idokpa, Benin City, Edo State</div>
+</div>
+
+<!-- ═══════════════════════ PAGE 2 — School Management Report ═══════════════════════ -->
+<div class="pn-page">
+  <div class="pn-head-top"></div>
+  <div class="pn-title-bar" style="border-top:none">School Management Report</div>
+
+  <div class="pn-mgmt-grid">
+    <div class="pn-mgmt-cell">
+      <span class="pn-mgmt-lbl">Class Teacher's Report</span>
+      <span class="pn-mgmt-val" id="f-teacher-report" data-ph="—"></span>
+    </div>
+    <div class="pn-mgmt-cell">
+      <span class="pn-mgmt-lbl">Pupil's Conduct</span>
+      <span class="pn-mgmt-val" id="f-conduct" data-ph="—"></span>
+    </div>
+    <div class="pn-mgmt-cell">
+      <span class="pn-mgmt-lbl">Class Teacher's Signature</span>
+      <div style="display:flex;align-items:flex-end;gap:8px">
+        <span class="pn-mgmt-val" id="f-sig2" data-ph="—" style="flex:1"></span>
+        <div class="pn-stamp-wrap" style="width:48px;height:48px">
+          <img src="./images/schoolstamp.png" class="pn-stamp-img" alt="Official Stamp" onerror="this.style.display='none'">
+        </div>
+      </div>
+    </div>
+    <div class="pn-mgmt-cell">
+      <span class="pn-mgmt-lbl">Proprietor's Report</span>
+      <span class="pn-mgmt-val" id="f-proprietor" data-ph="—"></span>
+    </div>
+  </div>
+
+  <!-- Next Term Fee + Resumption Date — pulled live from Term, same as the regular student report-card.html. Hidden entirely if neither is set for this term. -->
+  <div class="pn-next-bar" id="pn-next-bar" style="display:none">
+    <div class="pn-next-item" id="pn-resumption-item" style="display:none">
+      <span class="pn-next-lbl">Resumption Date:</span>
+      <span class="pn-next-val" id="f-resumption">—</span>
+    </div>
+    <div class="pn-next-item" id="pn-fee-item" style="display:none">
+      <span class="pn-next-lbl">Next Term Fee:</span>
+      <span class="pn-next-val" id="f-fee">—</span>
+    </div>
+  </div>
+
+  <div class="pn-fine-print">Jaasiel Education Centre &middot; Pre-Nursery Report Card &middot; Idokpa, Benin City, Edo State</div>
+</div>
+</div>
+
+<script src="./js/core.js"></script>
+<script>
+/* ─────────────────────────────────────────────────────────────
+   MODE
+   • Staff (has ?student_id=...&session_id=...&term_id=... in URL)
+     → EDIT mode: ratings/comments editable, Save posts to
+       POST /montessori, Publish posts to /montessori/{id}/publish.
+   • No student_id in URL → VIEW mode: logged-in student sees
+     their own published report, read-only.
+   • Staff can also pass &view=1 alongside student_id to preview
+     read-only without entering edit mode.
+   ───────────────────────────────────────────────────────────── */
+const _params    = new URLSearchParams(window.location.search);
+const _studentId = _params.get('student_id');
+const _termId    = _params.get('term_id');
+const _sessionId = _params.get('session_id');
+const _forceView = _params.get('view') === '1';
+
+let CATEGORIES = {};
+let GRADING_KEY = {};
+let EDIT_MODE = false;
+let CURRENT_REPORT_ID = null;
+let CURRENT_STATUS = null;
+
+const statusEl = document.getElementById('rc-status');
+function setStatus(msg, isError) {
+  statusEl.textContent = msg || '';
+  statusEl.style.color = isError ? '#c00' : '#556';
+}
+
+function fmtDate(iso) {
+  if (!iso) return '';
+  try { return new Date(iso).toLocaleDateString('en-NG', { day: 'numeric', month: 'long', year: 'numeric' }); }
+  catch { return iso; }
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await window.__rmsBootstrapReady;
+  if (!Router.requireAuth()) return;
+
+  const role = AuthState.getRole();
+  const staffRole = ['super_admin', 'admin', 'sub_admin'].includes(role);
+  EDIT_MODE = staffRole && !!_studentId && !_forceView;
+
+  // Load categories/grading key first — this drives the whole rating layout.
+  try {
+    const cats = await API.montessori.categories();
+    CATEGORIES = cats.categories || {};
+    GRADING_KEY = cats.grading_key || {};
+  } catch (e) {
+    setStatus('Could not load report form definition.', true);
+    return;
+  }
+  renderGradingKey();
+  buildCategoryTables();
+
+  if (EDIT_MODE) {
+    document.getElementById('btn-save').style.display = '';
+    enableEditing();
+    await loadForEdit();
+  } else if (staffRole && _studentId) {
+    await loadForStaffView();
+  } else if (role === 'student') {
+    await loadForStudentView();
+  } else {
+    setStatus('Open this page with a student_id (staff) to edit, or as a logged-in student to view your own report.', true);
+  }
+});
+
+/* ── Build grading key strip from live /montessori/categories ── */
+function renderGradingKey() {
+  const strip = document.getElementById('pn-key-strip');
+  const items = Object.entries(GRADING_KEY)
+    .map(([k, v]) => `<span class="pn-key-item"><b>${Security.sanitize(k)}</b> — ${Security.sanitize(v)}</span>`)
+    .join('');
+  strip.innerHTML = `<span class="pn-key-title">Grading Key:</span>${items}`;
+}
+
+/* ── Build one skill table per category, item rows keyed by their exact label
+   (this label IS the key stored in ratings[category][label] on the backend) ── */
+function buildCategoryTables() {
+  const container = document.getElementById('pn-categories');
+  container.innerHTML = Object.entries(CATEGORIES).map(([cat, items]) => `
+    <div class="pn-section-head">${Security.sanitize(cat)}</div>
+    <table class="pn-skill-table">
+      ${(Array.isArray(items) ? items : Object.values(items)).map(label => `
+        <tr>
+          <td class="item">${Security.sanitize(label)}</td>
+          <td class="rate"><input class="pn-rate-input" data-cat="${Security.sanitize(cat)}" data-item="${Security.sanitize(label)}" maxlength="1" readonly></td>
+        </tr>`).join('')}
+    </table>`).join('');
+}
+
+/* ── Populate all fields + rating inputs from a report record ── */
+function populateFields(record, studentInfo) {
+  document.getElementById('f-name').textContent    = studentInfo.full_name || '';
+  document.getElementById('f-class').textContent   = studentInfo.class_name || record.class_name || '';
+  document.getElementById('f-teacher').textContent = record.class_teacher_name || '';
+  document.getElementById('f-date').textContent    = fmtDate(record.uploaded_at) || '';
+  document.getElementById('f-year').textContent    = record.session_name || '';
+  document.getElementById('f-general-comment').textContent = record.general_comment || '';
+  document.getElementById('f-creative').textContent = record.creative_expression_comment || '';
+  document.getElementById('f-sig1').textContent    = record.class_teacher_name || '';
+  document.getElementById('f-sigdate1').textContent = fmtDate(record.uploaded_at) || '';
+  document.getElementById('f-teacher-report').textContent = record.class_teacher_report || '';
+  document.getElementById('f-conduct').textContent  = record.pupils_conduct || '';
+  document.getElementById('f-sig2').textContent     = record.class_teacher_name || '';
+  document.getElementById('f-proprietor').textContent = record.proprietors_report || '';
+
+  // Next term fee / resumption date — live from Term, never typed here.
+  const bar = document.getElementById('pn-next-bar');
+  const resItem = document.getElementById('pn-resumption-item');
+  const feeItem = document.getElementById('pn-fee-item');
+  let showBar = false;
+  if (record.resumption_date) {
+    document.getElementById('f-resumption').textContent = fmtDate(record.resumption_date);
+    resItem.style.display = ''; showBar = true;
+  } else { resItem.style.display = 'none'; }
+  if (record.next_term_fee != null && record.next_term_fee !== '') {
+    document.getElementById('f-fee').textContent = `₦${Number(record.next_term_fee).toLocaleString()}`;
+    feeItem.style.display = ''; showBar = true;
+  } else { feeItem.style.display = 'none'; }
+  bar.style.display = showBar ? '' : 'none';
+
+  const ratings = record.ratings || {};
+  document.querySelectorAll('.pn-rate-input[data-cat]').forEach(inp => {
+    const v = (ratings[inp.dataset.cat] || {})[inp.dataset.item];
+    inp.value = (v === undefined || v === null) ? '' : v;
+  });
+
+  CURRENT_REPORT_ID = record.id || null;
+  CURRENT_STATUS = record.status || null;
+  updatePublishButton();
+}
+
+function updatePublishButton() {
+  const btn = document.getElementById('btn-publish');
+  const isAdmin = AuthState.isAdmin();
+  if (EDIT_MODE && isAdmin && CURRENT_REPORT_ID && CURRENT_STATUS !== 'published') {
+    btn.style.display = '';
+  } else {
+    btn.style.display = 'none';
+  }
+}
+
+/* ── VIEW MODE (student, own report) ── */
+async function loadForStudentView() {
+  setStatus('Loading…');
+  try {
+    const params = {};
+    if (_sessionId) params.session_id = _sessionId;
+    if (_termId)    params.term_id    = _termId;
+    const data = await API.montessori.myReports(params);
+    const record = (data.items || [])[0];
+    if (!record) { showEmpty('No report has been published for this term yet.'); return; }
+    const studentInfo = await API.students.myProfile();
+    showReport();
+    populateFields(record, studentInfo);
+    setStatus('');
+  } catch (e) {
+    showEmpty(e.message || 'No published report card available yet.');
+  }
+}
+
+/* ── VIEW MODE (staff, read-only preview) ── */
+async function loadForStaffView() {
+  setStatus('Loading…');
+  try {
+    const params = { student_id: _studentId };
+    if (_sessionId) params.session_id = _sessionId;
+    if (_termId)    params.term_id    = _termId;
+    const data = await API.montessori.list(params);
+    const record = (data.items || [])[0];
+    if (!record) { showEmpty('No report has been saved for this student/term yet.'); return; }
+    const studentInfo = await API.students.get(_studentId);
+    showReport();
+    populateFields(record, studentInfo);
+    setStatus('');
+  } catch (e) {
+    showEmpty(e.message || 'Could not load report.');
+  }
+}
+
+/* ── EDIT MODE (staff) ── */
+function enableEditing() {
+  document.querySelectorAll('.pn-rate-input[data-cat]').forEach(inp => inp.removeAttribute('readonly'));
+  ['f-teacher', 'f-general-comment', 'f-creative',
+   'f-teacher-report', 'f-conduct', 'f-proprietor'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.contentEditable = 'true';
+  });
+  // Name/Class/Date/Year/Resumption/Fee stay read-only — they come from the
+  // student record and the term's shared settings, not typed per report.
+}
+
+async function loadForEdit() {
+  setStatus('Loading…');
+  try {
+    const studentInfo = await API.students.get(_studentId);
+    if (window.isMontessoriClass && !isMontessoriClass(studentInfo.class_name)) {
+      setStatus(`${studentInfo.class_name || 'This class'} does not use the Montessori report.`, true);
+      document.getElementById('btn-save').style.display = 'none';
+      showEmpty(`${studentInfo.full_name || 'This student'} is not in a Montessori class.`);
+      return;
+    }
+    showReport();
+    document.getElementById('f-name').textContent  = studentInfo.full_name || '';
+    document.getElementById('f-class').textContent = studentInfo.class_name || '';
+
+    try {
+      const data = await API.montessori.list({ student_id: _studentId, term_id: _termId || undefined });
+      const record = (data.items || [])[0];
+      if (record) {
+        populateFields(record, studentInfo);
+        setStatus('Existing report loaded — editing.');
+      } else {
+        setStatus('New report card — fill in and Save.');
+        updatePublishButton();
+      }
+    } catch {
+      setStatus('New report card — fill in and Save.');
+      updatePublishButton();
+    }
+  } catch (e) {
+    setStatus(e.message || 'Could not load student.', true);
+  }
+}
+
+function showReport() {
+  document.getElementById('pn-root').style.display = '';
+  document.getElementById('empty-state').style.display = 'none';
+}
+function showEmpty(msg) {
+  document.getElementById('empty-msg').textContent = msg;
+  document.getElementById('empty-state').style.display = '';
+  document.getElementById('pn-root').style.display = 'none';
+}
+
+async function saveReport() {
+  const btn = document.getElementById('btn-save');
+  btn.disabled = true;
+  setStatus('Saving…');
+  try {
+    if (!_sessionId || !_termId) {
+      throw { message: 'session_id and term_id are required in the URL to save (e.g. ?student_id=12&session_id=1&term_id=3)' };
+    }
+
+    const ratings = {};
+    document.querySelectorAll('.pn-rate-input[data-cat]').forEach(inp => {
+      const v = inp.value.trim();
+      if (!v) return;
+      ratings[inp.dataset.cat] = ratings[inp.dataset.cat] || {};
+      ratings[inp.dataset.cat][inp.dataset.item] = parseInt(v, 10);
+    });
+
+    const body = {
+      student_id: parseInt(_studentId, 10),
+      session_id: parseInt(_sessionId, 10),
+      term_id: parseInt(_termId, 10),
+      ratings,
+      general_comment: document.getElementById('f-general-comment').textContent.trim(),
+      creative_expression_comment: document.getElementById('f-creative').textContent.trim(),
+      class_teacher_name: document.getElementById('f-teacher').textContent.trim(),
+      class_teacher_report: document.getElementById('f-teacher-report').textContent.trim(),
+      pupils_conduct: document.getElementById('f-conduct').textContent.trim(),
+      proprietors_report: document.getElementById('f-proprietor').textContent.trim(),
+    };
+
+    const saved = await API.montessori.save(body);
+    CURRENT_REPORT_ID = saved.id;
+    CURRENT_STATUS = saved.status;
+    // Re-populate from the server response so fee/resumption/date reflect what was actually stored.
+    const studentInfo = await API.students.get(_studentId);
+    populateFields(saved, studentInfo);
+    setStatus('✓ Saved.');
+  } catch (e) {
+    setStatus(e.message || 'Save failed.', true);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function publishReport() {
+  if (!CURRENT_REPORT_ID) return;
+  const btn = document.getElementById('btn-publish');
+  btn.disabled = true;
+  setStatus('Publishing…');
+  try {
+    await API.montessori.publish(CURRENT_REPORT_ID);
+    CURRENT_STATUS = 'published';
+    updatePublishButton();
+    setStatus('✓ Saved and published — visible to the student now.');
+  } catch (e) {
+    setStatus(e.message || 'Publish failed.', true);
+  } finally {
+    btn.disabled = false;
+  }
+}
+</script>
+</body>
+</html>
