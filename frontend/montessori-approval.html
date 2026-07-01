@@ -179,8 +179,8 @@ async function loadPending() {
     const total = data.total ?? _items.length;
     document.getElementById('list-sub').textContent = `${total} submission${total===1?'':'s'} awaiting review`;
     document.getElementById('stat-pending').textContent = total;
-    document.getElementById('stat-approved').textContent = Fmt.number(data.approved_count ?? '—');
-    document.getElementById('stat-corrections').textContent = Fmt.number(data.correction_count ?? '—');
+    document.getElementById('stat-approved').textContent = Fmt.number(data.approved_count ?? 0);
+    document.getElementById('stat-corrections').textContent = Fmt.number(data.correction_count ?? 0);
     renderList(_items);
     renderPagination(document.getElementById('pending-pagination'), {
       page: _page, total, perPage: _perPage,

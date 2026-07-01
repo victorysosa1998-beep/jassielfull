@@ -1031,6 +1031,16 @@ window.loadPendingBadge = async function() {
   } catch {}
 };
 
+/* ── Load Montessori pending badge count ── */
+window.loadMontessoriPendingBadge = async function() {
+  try {
+    const d = await API.montessori.pending({ per_page: 1 });
+    document.querySelectorAll('#montessori-pending-badge').forEach(b => {
+      const cnt = d.total || 0; b.textContent = cnt; b.style.display = cnt > 0 ? '' : 'none';
+    });
+  } catch {}
+};
+
 /* ── DOM ready ── */
 document.addEventListener('DOMContentLoaded', async () => {
   await window.__rmsBootstrapReady;
@@ -1043,7 +1053,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 /* ── Global exports ── */
-window.JaasielRMS = { CONFIG, Security, TokenManager, AuthState, API, Toast, Modal, Validator, Router, Sidebar, PageLoader, Fmt, ChartColors, ChartDefaults, initTabs, initUploadZone, validateScore, setLoading, showSkeleton, renderPagination, initTableSearch, togglePwd, exportCSV, loadNotifications };
+window.JaasielRMS = { CONFIG, Security, TokenManager, AuthState, API, Toast, Modal, Validator, Router, Sidebar, PageLoader, Fmt, ChartColors, ChartDefaults, initTabs, initUploadZone, validateScore, setLoading, showSkeleton, renderPagination, initTableSearch, togglePwd, exportCSV, loadNotifications, loadPendingBadge, loadMontessoriPendingBadge };
 window.Modal = Modal; window.Toast = Toast; window.Sidebar = Sidebar; window.Validator = Validator;
 window.AuthState = AuthState; window.Router = Router; window.Fmt = Fmt; window.TokenManager = TokenManager;
 window.PageLoader = PageLoader; window.setLoading = setLoading; window.togglePwd = togglePwd;

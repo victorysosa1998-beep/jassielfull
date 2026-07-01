@@ -16,7 +16,8 @@ window.buildAdminSidebar = function() {
     <div class="nav-section"><div class="nav-section-label">Main</div>
       <a href="admin-dashboard.html" class="nav-item"><i class="fas fa-house-chimney"></i><span>Dashboard</span></a>
       <a href="results-approval.html" class="nav-item"><i class="fas fa-clipboard-check"></i><span>Result Approvals</span><span class="nav-badge" id="pending-badge" style="display:none">0</span></a>
-      <a href="montessori-entry.html" class="nav-item"><i class="fas fa-child-reaching"></i><span>Montessori Report</span></a>
+      <a href="montessori-approval.html" class="nav-item"><i class="fas fa-child-reaching"></i><span>Montessori Approvals</span><span class="nav-badge" id="montessori-pending-badge" style="display:none">0</span></a>
+      <a href="montessori-entry.html" class="nav-item"><i class="fas fa-pen-to-square"></i><span>Montessori Report</span></a>
       <a href="analytics.html" class="nav-item"><i class="fas fa-chart-mixed"></i><span>Analytics</span></a>
     </div>
     <div class="nav-section"><div class="nav-section-label">Management</div>
@@ -64,6 +65,7 @@ window.buildSubAdminSidebar = function() {
       <a href="manual-entry.html" class="nav-item"><i class="fas fa-keyboard"></i><span>Manual Entry</span></a>
       <a href="montessori-entry.html" class="nav-item"><i class="fas fa-child-reaching"></i><span>Montessori Report</span></a>
       <a href="upload-history.html" class="nav-item"><i class="fas fa-clock-rotate-left"></i><span>My Uploads</span></a>
+      <a href="montessori-history.html" class="nav-item"><i class="fas fa-book-open-reader"></i><span>Montessori History</span></a>
     </div>
     <div class="nav-section"><div class="nav-section-label">Students</div>
       <a href="students.html" class="nav-item"><i class="fas fa-graduation-cap"></i><span>Students</span></a>
@@ -239,6 +241,10 @@ window.initPage = function(roles, sidebarType) {
   // Load pending badge for staff — deferred so it doesn't block page render
   if (sidebarType === 'admin' || sidebarType === 'subadmin') {
     setTimeout(loadPendingBadge, 300);
+  }
+  // Montessori pending badge — admin sidebar only (mirrors Result Approvals badge)
+  if (sidebarType === 'admin') {
+    setTimeout(loadMontessoriPendingBadge, 300);
   }
 
   // Notification count — load once per session tab, not on every page
