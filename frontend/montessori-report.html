@@ -585,6 +585,7 @@ function showEmpty(msg) {
   document.getElementById('empty-msg').textContent = msg;
   document.getElementById('empty-state').style.display = '';
   document.getElementById('pn-root').style.display = 'none';
+  setStatus('');
 }
 
 async function saveReport() {
