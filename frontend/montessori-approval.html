@@ -180,7 +180,15 @@ let _activeId = null;      // report open in the review modal
 document.addEventListener('DOMContentLoaded', async () => {
   await window.__rmsBootstrapReady;
   initPage(['super_admin','admin'], 'admin');
-  _classMap = await API.montessoriClassMap();
+  try {
+    const classesData = await API.classes.list();
+    const classItems  = classesData.items || classesData || [];
+    _classMap = Object.fromEntries(
+      classItems.map(c => [c.class_name || c.name, c.id]).filter(([name]) => name)
+    );
+  } catch (e) {
+    console.warn('Could not build class map', e);
+  }
   await loadSessions();
   loadClassList();
 });
