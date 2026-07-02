@@ -8,23 +8,30 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 <link rel="stylesheet" href="./css/style.css">
 <style>
-.filters-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
-.appr-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:14px 0;border-bottom:1px solid rgba(255,255,255,.04);flex-wrap:wrap}
-.appr-row:last-child{border-bottom:none}
-.appr-name{font-weight:600;font-size:.92rem}
-.appr-meta{font-size:.76rem;color:var(--text-muted);margin-top:2px}
-.appr-actions{display:flex;gap:6px;align-items:center;flex-shrink:0;flex-wrap:wrap}
-.badge-submitted{background:rgba(59,130,246,.12);color:#93C5FD}
-.empty-state{text-align:center;padding:40px 16px;color:var(--text-muted)}
+.class-card{background:var(--bg-card);border:1px solid var(--border-light);border-radius:var(--radius-lg);
+  padding:18px 20px;margin-bottom:12px;cursor:pointer;transition:var(--transition)}
+.class-card:hover{border-color:var(--brand-gold);transform:translateY(-1px)}
+.class-card.ready{border-color:rgba(34,197,94,.35);background:rgba(34,197,94,.03)}
+.class-card.published{border-color:rgba(201,151,58,.35);background:rgba(201,151,58,.03)}
+.subject-pill{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;
+  font-size:.72rem;font-weight:600;margin:2px}
+.sp-pending{background:rgba(234,179,8,.12);color:#ca8a04}
+.sp-submitted{background:rgba(59,130,246,.12);color:#2563eb}
+.sp-approved{background:rgba(34,197,94,.12);color:#16a34a}
+.sp-published{background:rgba(201,151,58,.12);color:var(--brand-gold)}
+.sp-rejected{background:rgba(239,68,68,.12);color:var(--danger)}
+.sp-locked{background:rgba(100,116,139,.15);color:#64748b}
+.sp-correction{background:rgba(168,85,247,.12);color:#9333ea}
+/* Class detail view */
+.subject-row{background:var(--bg-card);border:1px solid var(--border-light);border-radius:10px;
+  padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.subject-row:hover{border-color:var(--border)}
+.back-btn{display:inline-flex;align-items:center;gap:7px;color:var(--text-muted);
+  font-size:.85rem;cursor:pointer;margin-bottom:16px;padding:6px 0}
+.back-btn:hover{color:var(--brand-gold)}
 .rating-summary{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px;margin-top:6px}
 .rating-chip{font-size:.68rem;background:rgba(255,255,255,.04);border:1px solid var(--border-light);border-radius:6px;padding:4px 6px;display:flex;justify-content:space-between;gap:6px}
 .rating-chip b{color:var(--brand-gold)}
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:200;opacity:0;pointer-events:none;transition:opacity .2s}
-.modal-overlay.active{opacity:1;pointer-events:auto}
-.modal{background:var(--bg-card,#0F1C30);border:1px solid var(--border-light);border-radius:var(--radius,14px);max-width:640px;width:92%;max-height:86vh;overflow-y:auto;padding:22px}
-.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
-.modal-title{font-family:var(--font-display);font-weight:700;font-size:1.1rem}
-.modal-close{cursor:pointer;color:var(--text-muted);font-size:1.1rem;background:none;border:none}
 .cat-block{margin-bottom:14px}
 .cat-block-title{font-weight:700;font-size:.85rem;color:var(--brand-gold);margin-bottom:4px}
 </style>
@@ -42,7 +49,7 @@
       <button class="menu-toggle" id="menu-toggle"><i class="fas fa-bars"></i></button>
       <div>
         <div class="page-title">Montessori Approvals</div>
-        <div class="breadcrumb"><span class="text-gold">Admin</span><span class="sep">/</span><span>Montessori Approvals</span></div>
+        <div class="breadcrumb"><a href="admin-dashboard.html">Dashboard</a><span class="sep">/</span><span class="text-gold">Montessori Approvals</span></div>
       </div>
     </div>
     <div class="topbar-right" id="topbar-right">
@@ -51,68 +58,110 @@
   </header>
 
   <div class="page-body">
-    <div class="stats-grid mb-3" id="stats-grid">
-      <div class="stat-card"><div class="stat-icon red"><i class="fas fa-clock"></i></div><div class="stat-info"><div class="stat-label">Awaiting Review</div><div class="stat-value" id="stat-pending">—</div></div></div>
-      <div class="stat-card"><div class="stat-icon green"><i class="fas fa-check-circle"></i></div><div class="stat-info"><div class="stat-label">Approved (this term)</div><div class="stat-value" id="stat-approved">—</div></div></div>
-      <div class="stat-card"><div class="stat-icon blue"><i class="fas fa-rotate"></i></div><div class="stat-info"><div class="stat-label">Corrections Requested</div><div class="stat-value" id="stat-corrections">—</div></div></div>
+    <!-- Stats -->
+    <div class="stats-grid mb-3">
+      <div class="stat-card"><div class="stat-icon red"><i class="fas fa-clock"></i></div><div class="stat-info"><div class="stat-label">Awaiting Review</div><div class="stat-value" id="cnt-pending">—</div></div></div>
+      <div class="stat-card"><div class="stat-icon green"><i class="fas fa-check-circle"></i></div><div class="stat-info"><div class="stat-label">Approved</div><div class="stat-value" id="cnt-approved">—</div></div></div>
+      <div class="stat-card"><div class="stat-icon gold"><i class="fas fa-bullhorn"></i></div><div class="stat-info"><div class="stat-label">Published</div><div class="stat-value" id="cnt-published">—</div></div></div>
+      <div class="stat-card"><div class="stat-icon purple"><i class="fas fa-lock"></i></div><div class="stat-info"><div class="stat-label">Locked</div><div class="stat-value" id="cnt-locked">—</div></div></div>
     </div>
 
-    <div class="card mb-3">
-      <div class="filters-bar">
-        <div class="form-group mb-0">
-          <label class="form-label">Class</label>
-          <select class="form-control" id="f-class"><option value="">All Montessori Classes</option></select>
-        </div>
-        <div class="form-group mb-0">
-          <label class="form-label">Session</label>
-          <select class="form-control" id="f-session"><option value="">Select…</option></select>
-        </div>
-        <div class="form-group mb-0">
-          <label class="form-label">Term</label>
-          <select class="form-control" id="f-term"><option value="">Select…</option></select>
-        </div>
-        <div class="form-group mb-0">
-          <label class="form-label">Search Student</label>
-          <input class="form-control" id="f-search" placeholder="Type a name…">
-        </div>
+    <!-- Session/Term selector -->
+    <div class="card mb-3" style="padding:14px 18px">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <i class="fas fa-filter" style="color:var(--brand-gold)"></i>
+        <select class="filter-select" id="sel-session" onchange="onSessionChange()"><option value="">Loading…</option></select>
+        <select class="filter-select" id="sel-term"    onchange="loadClassList()"><option value="">Select Term</option></select>
+        <button class="btn btn-ghost btn-sm" onclick="loadClassList()"><i class="fas fa-rotate"></i> Refresh</button>
       </div>
     </div>
 
-    <div class="card">
-      <div class="section-header">
-        <div>
-          <div class="section-title">Submitted — Awaiting Approval</div>
-          <div class="section-sub" id="list-sub">Loading…</div>
+    <!-- CLASS LIST VIEW -->
+    <div id="view-class-list">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+        <div style="font-weight:700;font-size:.95rem"><i class="fas fa-layer-group" style="color:var(--brand-gold);margin-right:6px"></i>Montessori Classes</div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-success btn-sm" id="approve-all-btn" style="display:none" onclick="approveAllClasses()">
+            <i class="fas fa-check-double"></i> Approve All Submitted
+          </button>
+          <button class="btn btn-primary btn-sm" id="publish-all-btn" style="display:none" onclick="openPublishConfirm(null,'all')">
+            <i class="fas fa-bullhorn"></i> Publish All Ready
+          </button>
         </div>
-        <button class="btn btn-ghost btn-sm" onclick="loadPending()"><i class="fas fa-rotate"></i> Refresh</button>
       </div>
-      <div id="pending-list">
-        <div class="skeleton mb-2" style="height:74px;border-radius:12px"></div>
-        <div class="skeleton mb-2" style="height:74px;border-radius:12px"></div>
-        <div class="skeleton" style="height:74px;border-radius:12px"></div>
+      <div id="class-list-container"></div>
+    </div>
+
+    <!-- CLASS DETAIL VIEW (students of one class) -->
+    <div id="view-class-detail" style="display:none">
+      <div class="back-btn" onclick="backToList()">
+        <i class="fas fa-arrow-left"></i> Back to all classes
       </div>
-      <div id="pending-pagination" class="mt-2"></div>
+      <div id="class-detail-header" style="margin-bottom:16px"></div>
+      <div id="class-detail-container"></div>
     </div>
   </div>
 </div>
 </div>
 
-<!-- Review Modal -->
+<!-- ══ REVIEW / SCORE DETAIL MODAL ══ -->
 <div class="modal-overlay" id="modal-review">
   <div class="modal">
     <div class="modal-header">
       <div class="modal-title" id="rm-title">Review Report</div>
       <button class="modal-close" onclick="Modal.close('modal-review')"><i class="fas fa-xmark"></i></button>
     </div>
-    <div id="rm-body">Loading…</div>
-    <div class="form-group" style="margin-top:14px">
+    <div id="rm-body" style="max-height:55vh;overflow-y:auto;padding:6px 2px">Loading…</div>
+    <div id="rm-note-wrap" class="form-group" style="margin-top:14px">
       <label class="form-label">Note to Sub Admin (required for reject / correction)</label>
       <textarea class="form-control" id="rm-note" rows="3" placeholder="e.g. Please re-check the ratings for Social &amp; Emotional Development…"></textarea>
     </div>
-    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap">
-      <button class="btn btn-danger" id="rm-reject-btn" onclick="doReject()"><i class="fas fa-times"></i> Reject</button>
-      <button class="btn btn-warning" id="rm-correction-btn" onclick="doCorrection()"><i class="fas fa-rotate"></i> Request Correction</button>
-      <button class="btn btn-success" id="rm-approve-btn" onclick="doApprove()"><i class="fas fa-check"></i> Approve</button>
+    <div id="rm-actions" style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap"></div>
+  </div>
+</div>
+
+<!-- ══ REASON MODAL (used from class detail row buttons) ══ -->
+<div class="modal-overlay" id="modal-reason">
+  <div class="modal modal-sm">
+    <div class="modal-header"><div class="modal-title" id="reason-title">Enter Reason</div><button class="modal-close" onclick="Modal.close('modal-reason')"><i class="fas fa-times"></i></button></div>
+    <div class="modal-body" style="padding:20px">
+      <div class="form-group">
+        <label class="form-label">Reason / Comment <span class="required">*</span></label>
+        <textarea class="form-control" id="reason-text" rows="4" placeholder="Describe the issue…"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="Modal.close('modal-reason')">Cancel</button>
+      <button class="btn btn-primary" id="reason-confirm-btn" onclick="submitReason()">Submit</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PUBLISH MODAL ══ -->
+<div class="modal-overlay" id="modal-publish">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title"><i class="fas fa-bullhorn" style="color:var(--brand-gold);margin-right:8px"></i>Publish Montessori Reports</div><button class="modal-close" onclick="Modal.close('modal-publish')"><i class="fas fa-times"></i></button></div>
+    <div class="modal-body" style="padding:20px">
+      <p id="publish-confirm-text" style="color:var(--text-secondary);margin-bottom:16px"></p>
+      <div class="alert alert-warning mb-3"><i class="fas fa-triangle-exclamation"></i> Once published, parents/students can immediately view these reports.</div>
+      <div style="background:rgba(201,151,58,.06);border:1px solid rgba(201,151,58,.2);border-radius:10px;padding:14px;margin-bottom:16px">
+        <div style="font-weight:700;font-size:.85rem;color:var(--brand-gold);margin-bottom:10px"><i class="fas fa-calendar-arrow-up"></i> Next Term Info (appears on report cards)</div>
+        <div class="form-group" style="margin-bottom:10px">
+          <label class="form-label" style="font-size:.8rem">Next Term Resumption Date</label>
+          <input type="date" class="form-control" id="pub-resumption-date" style="font-size:.85rem">
+        </div>
+        <div class="form-group mb-0">
+          <label class="form-label" style="font-size:.8rem">Next Term School Fees (optional, per class)</label>
+          <div id="pub-fees-grid" style="display:grid;gap:6px;max-height:140px;overflow-y:auto"></div>
+        </div>
+        <div style="font-size:.72rem;color:var(--text-muted);margin-top:8px">
+          <i class="fas fa-circle-info"></i> This uses the same term-wide resumption date &amp; fee settings shown on regular report cards — set here or on the Result Approvals page, whichever is more convenient.
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="Modal.close('modal-publish')">Cancel</button>
+      <button class="btn btn-primary" id="publish-confirm-btn"><i class="fas fa-bullhorn"></i> Publish Now</button>
     </div>
   </div>
 </div>
@@ -120,103 +169,359 @@
 <script src="./js/core.js"></script>
 <script src="./js/ui.js"></script>
 <script>
-let _sessions = [], _page = 1, _perPage = 10, _items = [], _activeId = null;
+let currentSessionId = null, currentTermId = null;
+let currentClassId   = null, currentClassName = '';
+let reasonAction = null, reasonReportId = null;
+let publishPayload = null;
+let _overview = [];        // flat list of montessori reports for the selected term/session
+let _classMap = {};        // class name -> class_id
+let _activeId = null;      // report open in the review modal
 
 document.addEventListener('DOMContentLoaded', async () => {
   await window.__rmsBootstrapReady;
   initPage(['super_admin','admin'], 'admin');
-  await loadClasses();
+  _classMap = await API.montessoriClassMap();
   await loadSessions();
-  wireFilters();
-  await loadPending();
+  loadClassList();
 });
 
-async function loadClasses() {
-  document.getElementById('f-class').innerHTML = '<option value="">All Montessori Classes</option>' +
-    MONTESSORI_CLASSES.map(c => `<option value="${c}">${c}</option>`).join('');
-}
-
+/* ── Sessions / Terms ── */
 async function loadSessions() {
   try {
     const data = await API.sessions.list();
-    _sessions = data.items || data || [];
-    const sessSel = document.getElementById('f-session');
-    sessSel.innerHTML = '<option value="">All Sessions</option>' + _sessions.map(s =>
-      `<option value="${s.id}" ${s.is_current?'selected':''}>${s.session_name}</option>`).join('');
-    populateTerms(sessSel.value);
-  } catch(e) { console.warn(e); }
+    const items = data.items || [];
+    const sel = document.getElementById('sel-session');
+    sel.innerHTML = items.map(s => `<option value="${s.id}">${s.session_name}${s.is_current?' ★':''}</option>`).join('');
+    const cur = await API.sessions.current();
+    if (cur.session_id) sel.value = cur.session_id;
+    currentSessionId = parseInt(sel.value);
+    await loadTerms(currentSessionId, cur.term_id);
+  } catch(e) { document.getElementById('sel-session').innerHTML = '<option value="">Error</option>'; }
 }
 
-function populateTerms(sid) {
-  const termSel = document.getElementById('f-term');
-  const sess = _sessions.find(s => String(s.id) === String(sid));
-  termSel.innerHTML = '<option value="">All Terms</option>' + (sess?.terms||[]).map(t =>
-    `<option value="${t.id}" ${t.is_current?'selected':''}>${t.term_name}</option>`).join('');
+async function loadTerms(sessionId, defaultTermId) {
+  try {
+    const data = await API.sessions.terms(sessionId);
+    const terms = data.items || data || [];
+    const sel = document.getElementById('sel-term');
+    sel.innerHTML = terms.map(t => `<option value="${t.id}"${t.is_current?' selected':''}>${t.term_name}</option>`).join('');
+    if (defaultTermId) sel.value = defaultTermId;
+    currentTermId = parseInt(sel.value);
+  } catch {}
 }
 
-function wireFilters() {
-  document.getElementById('f-session').addEventListener('change', e => { populateTerms(e.target.value); _page = 1; loadPending(); });
-  ['f-class','f-term'].forEach(id => document.getElementById(id).addEventListener('change', () => { _page = 1; loadPending(); }));
-  let t;
-  document.getElementById('f-search').addEventListener('input', () => {
-    clearTimeout(t); t = setTimeout(() => { _page = 1; loadPending(); }, 350);
+function onSessionChange() {
+  currentSessionId = parseInt(document.getElementById('sel-session').value);
+  loadTerms(currentSessionId, null).then(() => {
+    currentTermId = parseInt(document.getElementById('sel-term').value);
+    loadClassList();
   });
 }
 
-async function loadPending() {
-  const listEl = document.getElementById('pending-list');
-  showSkeleton(listEl, 3, '74px');
-  const params = {
-    page: _page, per_page: _perPage,
-    class_name: document.getElementById('f-class').value || undefined,
-    session_id: document.getElementById('f-session').value || undefined,
-    term_id: document.getElementById('f-term').value || undefined,
-    search: document.getElementById('f-search').value || undefined,
-  };
+/* ══ Fetch every Montessori report for the current term/session once,
+   then derive per-class stats + stat cards client-side. No new backend
+   "publish-overview" route needed — reuses the existing /montessori list. ══ */
+async function loadOverview() {
+  const data = await API.montessori.list({ session_id: currentSessionId, term_id: currentTermId, per_page: 500 });
+  _overview = (data.items || data || []).filter(r => String(r.term_id) === String(currentTermId));
+  return _overview;
+}
+
+function statusCounts(reports) {
+  const c = { pending:0, submitted:0, approved:0, published:0, rejected:0, correction_requested:0, locked:0 };
+  reports.forEach(r => { if (c[r.status] != null) c[r.status]++; });
+  return c;
+}
+
+function updateStats(reports) {
+  const c = statusCounts(reports);
+  document.getElementById('cnt-pending').textContent   = c.submitted;
+  document.getElementById('cnt-approved').textContent  = c.approved;
+  document.getElementById('cnt-published').textContent = c.published;
+  document.getElementById('cnt-locked').textContent    = c.locked;
+}
+
+/* ══ CLASS LIST — one card per Montessori class ══ */
+async function loadClassList() {
+  currentTermId    = parseInt(document.getElementById('sel-term').value);
+  currentSessionId = parseInt(document.getElementById('sel-session').value);
+  if (!currentTermId || !currentSessionId) return;
+
+  document.getElementById('view-class-list').style.display   = '';
+  document.getElementById('view-class-detail').style.display = 'none';
+
+  const container = document.getElementById('class-list-container');
+  showSkeleton(container, 3, '90px', '14px');
+
   try {
-    const data = await API.montessori.pending(params);
-    _items = data.items || data || [];
-    const total = data.total ?? _items.length;
-    document.getElementById('list-sub').textContent = `${total} submission${total===1?'':'s'} awaiting review`;
-    document.getElementById('stat-pending').textContent = total;
-    document.getElementById('stat-approved').textContent = Fmt.number(data.approved_count ?? 0);
-    document.getElementById('stat-corrections').textContent = Fmt.number(data.correction_count ?? 0);
-    renderList(_items);
-    renderPagination(document.getElementById('pending-pagination'), {
-      page: _page, total, perPage: _perPage,
-      onChange: 'p => { _page = p; loadPending(); }'
+    const reports = await loadOverview();
+    updateStats(reports);
+
+    const classNames = Array.from(new Set([...(window.MONTESSORI_CLASSES||[]), ...reports.map(r => r.class_name || r.class?.name).filter(Boolean)]));
+
+    const classes = classNames.map(className => {
+      const list = reports.filter(r => String(r.class_name || r.class?.name || '').trim().toLowerCase() === className.trim().toLowerCase());
+      const c = statusCounts(list);
+      const total = list.length;
+      const done  = c.approved + c.published + c.locked;
+      const all_published    = total > 0 && list.every(r => ['published','locked'].includes(r.status));
+      const ready_to_publish = c.approved > 0 && c.submitted === 0 && c.pending === 0 && c.rejected === 0 && c.correction_requested === 0 && !all_published;
+      return { class_id: _classMap[className] || null, class_name: className, total, done, all_published, ready_to_publish, ...c };
     });
+
+    if (!classes.some(c => c.total > 0)) {
+      container.innerHTML = `<div class="card" style="text-align:center;padding:48px;color:var(--text-muted)">
+        <i class="fas fa-inbox" style="font-size:2.5rem;display:block;margin-bottom:12px;opacity:.4"></i>
+        No Montessori reports submitted for this term yet.
+      </div>`;
+      document.getElementById('approve-all-btn').style.display = 'none';
+      document.getElementById('publish-all-btn').style.display = 'none';
+      return;
+    }
+
+    const hasSubmitted = classes.some(c => c.submitted > 0);
+    const hasReady      = classes.some(c => c.ready_to_publish);
+    document.getElementById('approve-all-btn').style.display = hasSubmitted ? '' : 'none';
+    document.getElementById('publish-all-btn').style.display = hasReady ? '' : 'none';
+
+    container.innerHTML = classes.map(cls => {
+      const status = cls.all_published ? 'published' : cls.ready_to_publish ? 'ready' : '';
+      const pills = [
+        cls.pending    > 0 ? `<span class="subject-pill sp-pending"><i class="fas fa-clock"></i> ${cls.pending} Draft</span>` : '',
+        cls.submitted  > 0 ? `<span class="subject-pill sp-submitted"><i class="fas fa-paper-plane"></i> ${cls.submitted} Submitted</span>` : '',
+        cls.approved   > 0 ? `<span class="subject-pill sp-approved"><i class="fas fa-check"></i> ${cls.approved} Approved</span>` : '',
+        cls.published  > 0 ? `<span class="subject-pill sp-published"><i class="fas fa-bullhorn"></i> ${cls.published} Published</span>` : '',
+        cls.rejected   > 0 ? `<span class="subject-pill sp-rejected"><i class="fas fa-times"></i> ${cls.rejected} Rejected</span>` : '',
+        cls.correction_requested > 0 ? `<span class="subject-pill sp-correction"><i class="fas fa-rotate"></i> ${cls.correction_requested} Correction</span>` : '',
+        cls.locked     > 0 ? `<span class="subject-pill sp-locked"><i class="fas fa-lock"></i> ${cls.locked} Locked</span>` : '',
+      ].filter(Boolean).join('');
+
+      return `<div class="class-card ${status}" onclick="openClassDetail('${cls.class_name}')">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div class="stat-icon ${cls.all_published?'gold':cls.ready_to_publish?'green':'blue'}" style="width:40px;height:40px;flex-shrink:0">
+              <i class="fas ${cls.all_published?'fa-check-double':cls.ready_to_publish?'fa-check':'fa-child-reaching'}"></i>
+            </div>
+            <div>
+              <div style="font-weight:700;font-size:1rem">${Security.sanitize(cls.class_name)}</div>
+              <div style="font-size:.76rem;color:var(--text-muted);margin-top:2px">
+                ${cls.total} report(s) &nbsp;·&nbsp; ${cls.done}/${cls.total||0} done
+              </div>
+              <div style="margin-top:5px">${pills || '<span style="font-size:.75rem;color:var(--text-muted)">No reports yet</span>'}</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            ${cls.submitted > 0
+              ? `<button class="btn btn-success btn-sm" onclick="event.stopPropagation();approveClass('${cls.class_name}',this)">
+                   <i class="fas fa-check"></i> Approve All Submitted
+                 </button>` : ''}
+            ${cls.ready_to_publish
+              ? `<button class="btn btn-primary btn-sm" onclick="event.stopPropagation();openPublishConfirm('${cls.class_name}','single')">
+                   <i class="fas fa-bullhorn"></i> Publish
+                 </button>` : ''}
+            <span class="btn btn-ghost btn-sm" style="pointer-events:none">
+              <i class="fas fa-chevron-right"></i> View Students
+            </span>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
   } catch(err) {
-    listEl.innerHTML = `<div class="empty-state"><i class="fas fa-triangle-exclamation" style="font-size:1.4rem;display:block;margin-bottom:8px"></i>Could not load submissions.<br><span style="font-size:.78rem">${Security.sanitize(err.message||'')}</span></div>`;
-    document.getElementById('list-sub').textContent = '—';
-    document.getElementById('stat-pending').textContent = '0';
+    container.innerHTML = `<div class="alert alert-danger"><i class="fas fa-circle-exclamation"></i> ${Security.sanitize(err.message||'')}</div>`;
   }
 }
 
-function renderList(items) {
-  const el = document.getElementById('pending-list');
-  if (!items.length) {
-    el.innerHTML = `<div class="empty-state"><i class="fas fa-check-circle" style="font-size:1.6rem;display:block;margin-bottom:8px;color:var(--success)"></i>Nothing waiting on you — all caught up.</div>`;
+/* ══ CLASS DETAIL — show every student report for one class ══ */
+function openClassDetail(className) {
+  currentClassName = className;
+  currentClassId   = _classMap[className] || null;
+  document.getElementById('view-class-list').style.display   = 'none';
+  document.getElementById('view-class-detail').style.display = '';
+
+  const hdr = document.getElementById('class-detail-header');
+  hdr.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <div>
+        <div style="font-weight:800;font-size:1.15rem">${Security.sanitize(className)}</div>
+        <div style="font-size:.78rem;color:var(--text-muted);margin-top:2px">
+          ${document.getElementById('sel-session').selectedOptions[0]?.text||''} ·
+          ${document.getElementById('sel-term').selectedOptions[0]?.text||''}
+        </div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-success btn-sm" id="class-approve-all-btn"
+          onclick="approveClass('${Security.sanitize(className).replace(/'/g,"\\'")}',this)">
+          <i class="fas fa-check-double"></i> Approve All Submitted
+        </button>
+        <button class="btn btn-primary btn-sm" id="class-publish-btn"
+          onclick="openPublishConfirm('${Security.sanitize(className).replace(/'/g,"\\'")}','single')">
+          <i class="fas fa-bullhorn"></i> Publish Class
+        </button>
+      </div>
+    </div>`;
+  renderClassDetail();
+}
+
+function renderClassDetail() {
+  const container = document.getElementById('class-detail-container');
+  const list = _overview.filter(r => String(r.class_name || r.class?.name || '').trim().toLowerCase() === currentClassName.trim().toLowerCase());
+
+  if (!list.length) {
+    container.innerHTML = `<div class="card" style="text-align:center;padding:32px;color:var(--text-muted)">
+      <i class="fas fa-inbox" style="font-size:2rem;opacity:.4;display:block;margin-bottom:10px"></i>
+      No Montessori reports for this class yet.
+    </div>`;
+    document.getElementById('class-approve-all-btn').style.display = 'none';
+    document.getElementById('class-publish-btn').style.display = 'none';
     return;
   }
-  el.innerHTML = items.map(r => {
-    const ratedCount = Object.values(r.ratings || {}).reduce((n, cat) => n + Object.values(cat).filter(v => v).length, 0);
-    return `<div class="appr-row">
-      <div style="flex:1;min-width:220px">
-        <div class="appr-name">${Security.sanitize(r.student_name || r.student?.full_name || 'Student #' + r.student_id)}</div>
-        <div class="appr-meta">${Security.sanitize(r.class_name || r.class?.name || '—')} · ${Security.sanitize(r.session_name||'')} ${Security.sanitize(r.term_name||'')} · ${ratedCount} skill${ratedCount===1?'':'s'} rated · submitted ${Fmt.timeAgo(r.uploaded_at)}
-          ${r.entered_by_name ? ' by ' + Security.sanitize(r.entered_by_name) : ''}</div>
+
+  const statusMap   = {pending:'badge-draft',submitted:'badge-submitted',approved:'badge-approved',
+    rejected:'badge-rejected',correction_requested:'badge-correction',locked:'badge-locked',published:'badge-gold'};
+  const statusLabel = {pending:'Draft',submitted:'Submitted',approved:'Approved',
+    rejected:'Rejected',correction_requested:'Correction Needed',locked:'Locked',published:'Published'};
+
+  const hasSubmitted  = list.some(r => r.status === 'submitted');
+  const allApproved   = list.every(r => ['approved','locked','published'].includes(r.status));
+  const allPublished  = list.every(r => ['published','locked'].includes(r.status));
+  document.getElementById('class-approve-all-btn').style.display = hasSubmitted ? '' : 'none';
+  document.getElementById('class-publish-btn').style.display = (allApproved && !allPublished) ? '' : 'none';
+
+  container.innerHTML = list.map(r => {
+    const rated = Object.values(r.ratings || {}).reduce((n, cat) => n + Object.values(cat||{}).filter(v => v != null && v !== '').length, 0);
+    const actionBtns = r.status === 'submitted'
+      ? `<button class="btn btn-success btn-sm" onclick="approveReport(${r.id},this)"><i class="fas fa-check"></i> Approve</button>
+         <button class="btn btn-warning btn-sm" onclick="openReason(${r.id},'correction')"><i class="fas fa-rotate"></i> Correction</button>
+         <button class="btn btn-danger  btn-sm" onclick="openReason(${r.id},'reject')"><i class="fas fa-times"></i> Reject</button>`
+      : r.status === 'approved'
+        ? `<button class="btn btn-ghost btn-sm" onclick="lockReport(${r.id},this)"><i class="fas fa-lock"></i> Lock</button>`
+        : r.status === 'locked'
+          ? `<button class="btn btn-ghost btn-sm" onclick="unlockReport(${r.id},this)"><i class="fas fa-lock-open"></i> Unlock</button>`
+          : '';
+
+    return `<div class="subject-row">
+      <div style="flex:1;min-width:160px">
+        <div style="font-weight:700;font-size:.92rem">${Security.sanitize(r.student_name || r.student?.full_name || 'Student #' + r.student_id)}</div>
+        <div style="font-size:.75rem;color:var(--text-muted);margin-top:2px">
+          ${rated} skill(s) rated · ${Fmt.timeAgo(r.updated_at || r.uploaded_at)}
+        </div>
+        ${r.admin_note||r.correction_comment
+          ? `<div style="font-size:.75rem;color:var(--danger);margin-top:4px">
+               <i class="fas fa-comment"></i> ${Security.sanitize(r.admin_note||r.correction_comment)}
+             </div>` : ''}
       </div>
-      <div class="appr-actions">
-        <span class="badge badge-submitted"><i class="fas fa-paper-plane"></i> submitted</span>
-        <button class="btn btn-sm btn-primary" onclick="openReview(${r.id})"><i class="fas fa-eye"></i> Review</button>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span class="badge ${statusMap[r.status]||'badge-draft'}">${statusLabel[r.status]||r.status}</span>
+        <button class="btn btn-ghost btn-sm" onclick="openReview(${r.id})">
+          <i class="fas fa-eye"></i> Review
+        </button>
+        ${actionBtns}
       </div>
     </div>`;
   }).join('');
 }
 
+function backToList() {
+  document.getElementById('view-class-detail').style.display = 'none';
+  document.getElementById('view-class-list').style.display   = '';
+  currentClassId = null; currentClassName = '';
+  loadClassList();
+}
+
+/* ══ Approve whole class (all submitted reports) — no new backend route,
+   just loops the existing per-report approve endpoint. ══ */
+async function approveClass(className, btn) {
+  if (!confirm(`Approve all submitted Montessori reports for ${className}? This cannot be undone.`)) return;
+  if (btn) setLoading(btn, true, 'Approving…');
+  try {
+    const ids = _overview.filter(r =>
+      String(r.class_name || r.class?.name || '').trim().toLowerCase() === className.trim().toLowerCase()
+      && r.status === 'submitted'
+    ).map(r => r.id);
+    await Promise.all(ids.map(id => API.montessori.approve(id)));
+    Toast.success('Approved!', `${ids.length} report(s) for ${className} approved.`);
+    if (currentClassId || currentClassName) { await loadOverview(); updateStats(_overview); renderClassDetail(); }
+    else loadClassList();
+  } catch(err) {
+    Toast.error('Failed', err.message);
+    if (btn) setLoading(btn, false);
+  }
+}
+
+async function approveAllClasses() {
+  if (!confirm('Approve ALL submitted Montessori reports across all classes for this term?')) return;
+  const btn = document.getElementById('approve-all-btn');
+  setLoading(btn, true, 'Approving all…');
+  try {
+    const ids = _overview.filter(r => r.status === 'submitted').map(r => r.id);
+    await Promise.all(ids.map(id => API.montessori.approve(id)));
+    Toast.success('Done!', `Approved ${ids.length} report(s).`);
+    loadClassList();
+  } catch(err) { Toast.error('Failed', err.message); setLoading(btn, false); }
+}
+
+/* ── Individual report approve / reject / lock ── */
+async function approveReport(id, btn) {
+  if (btn) setLoading(btn, true, 'Approving…');
+  try {
+    await API.montessori.approve(id);
+    Toast.success('Approved!', 'Report approved.');
+    await loadOverview(); updateStats(_overview);
+    if (currentClassName) renderClassDetail();
+  } catch(err) { Toast.error('Failed', err.message); if (btn) setLoading(btn, false); }
+}
+
+function openReason(reportId, action) {
+  reasonReportId = reportId; reasonAction = action;
+  document.getElementById('reason-title').textContent =
+    action === 'reject' ? 'Reject Report' : 'Request Correction';
+  const confirmBtn = document.getElementById('reason-confirm-btn');
+  confirmBtn.className = action === 'reject' ? 'btn btn-danger' : 'btn btn-warning';
+  confirmBtn.innerHTML = action === 'reject'
+    ? '<i class="fas fa-times"></i> Reject'
+    : '<i class="fas fa-rotate"></i> Send for Correction';
+  document.getElementById('reason-text').value = '';
+  Modal.open('modal-reason');
+}
+
+async function submitReason() {
+  const reason = document.getElementById('reason-text').value.trim();
+  if (!reason) { Toast.warning('Required', 'Please enter a reason.'); return; }
+  const btn = document.getElementById('reason-confirm-btn');
+  setLoading(btn, true);
+  try {
+    if (reasonAction === 'reject') await API.montessori.reject(reasonReportId, { reason });
+    else await API.montessori.correction(reasonReportId, { reason });
+    Toast.success('Done', reasonAction === 'reject' ? 'Report rejected.' : 'Correction request sent.');
+    Modal.close('modal-reason');
+    await loadOverview(); updateStats(_overview);
+    if (currentClassName) renderClassDetail(); else loadClassList();
+  } catch(err) { Toast.error('Failed', err.message); setLoading(btn, false); }
+}
+
+async function lockReport(id, btn) {
+  setLoading(btn, true);
+  try {
+    await API.montessori.lock(id);
+    Toast.success('Locked', 'Report locked.');
+    await loadOverview();
+    if (currentClassName) renderClassDetail();
+  } catch(err) { Toast.error('Failed', err.message); setLoading(btn, false); }
+}
+
+async function unlockReport(id, btn) {
+  setLoading(btn, true);
+  try {
+    await API.montessori.unlock(id);
+    Toast.success('Unlocked', 'Report unlocked.');
+    await loadOverview();
+    if (currentClassName) renderClassDetail();
+  } catch(err) { Toast.error('Failed', err.message); setLoading(btn, false); }
+}
+
+/* ── Review modal (ratings + comments, with inline approve/reject/correction) ── */
 function openReview(id) {
-  const r = _items.find(x => x.id === id);
+  const r = _overview.find(x => x.id === id);
   if (!r) return;
   _activeId = id;
   document.getElementById('rm-title').textContent = `${r.student_name || r.student?.full_name || 'Student #' + r.student_id} — ${r.term_name || ''}`;
@@ -226,9 +531,9 @@ function openReview(id) {
     <div class="cat-block">
       <div class="cat-block-title">${Security.sanitize(cat)}</div>
       <div class="rating-summary">
-        ${Object.entries(items).map(([item, val]) => `<div class="rating-chip"><span>${Security.sanitize(item)}</span><b>${val ?? '—'}</b></div>`).join('')}
+        ${Object.entries(items||{}).map(([item, val]) => `<div class="rating-chip"><span>${Security.sanitize(item)}</span><b>${val ?? '—'}</b></div>`).join('')}
       </div>
-    </div>`).join('') || '<div class="empty-state" style="padding:16px">No ratings recorded.</div>';
+    </div>`).join('') || '<div class="empty-state" style="padding:16px;text-align:center;color:var(--text-muted)">No ratings recorded.</div>';
 
   document.getElementById('rm-body').innerHTML = `
     ${catsHtml}
@@ -241,50 +546,117 @@ function openReview(id) {
         <div style="margin-top:6px"><strong>Conduct:</strong> ${Security.sanitize(r.pupils_conduct || '—')} · <strong>Proprietor:</strong> ${Security.sanitize(r.proprietors_report || '—')}</div>
       </div>
     </div>`;
+
+  const noteWrap = document.getElementById('rm-note-wrap');
+  const actions  = document.getElementById('rm-actions');
+  if (r.status === 'submitted') {
+    noteWrap.style.display = '';
+    actions.innerHTML = `
+      <button class="btn btn-danger" onclick="doReject()"><i class="fas fa-times"></i> Reject</button>
+      <button class="btn btn-warning" onclick="doCorrection()"><i class="fas fa-rotate"></i> Request Correction</button>
+      <button class="btn btn-success" onclick="doApprove()"><i class="fas fa-check"></i> Approve</button>`;
+  } else {
+    noteWrap.style.display = 'none';
+    actions.innerHTML = `<button class="btn btn-ghost" onclick="Modal.close('modal-review')">Close</button>`;
+  }
   Modal.open('modal-review');
 }
 
 async function doApprove() {
   if (!_activeId) return;
-  const btn = document.getElementById('rm-approve-btn');
-  setLoading(btn, true);
   try {
     await API.montessori.approve(_activeId);
     Toast.success('Approved', 'Montessori report approved.');
     Modal.close('modal-review');
-    await loadPending();
+    await loadOverview(); updateStats(_overview);
+    if (currentClassName) renderClassDetail(); else loadClassList();
   } catch(err) { Toast.error('Failed', err.message); }
-  setLoading(btn, false);
 }
 
 async function doReject() {
   if (!_activeId) return;
   const note = document.getElementById('rm-note').value.trim();
   if (!note) { Toast.warning('Note required', 'Please explain why this report is being rejected.'); return; }
-  const btn = document.getElementById('rm-reject-btn');
-  setLoading(btn, true);
   try {
     await API.montessori.reject(_activeId, { reason: note });
     Toast.warning('Rejected', 'Sent back to the sub admin.');
     Modal.close('modal-review');
-    await loadPending();
+    await loadOverview(); updateStats(_overview);
+    if (currentClassName) renderClassDetail(); else loadClassList();
   } catch(err) { Toast.error('Failed', err.message); }
-  setLoading(btn, false);
 }
 
 async function doCorrection() {
   if (!_activeId) return;
   const note = document.getElementById('rm-note').value.trim();
   if (!note) { Toast.warning('Note required', 'Please describe what needs correcting.'); return; }
-  const btn = document.getElementById('rm-correction-btn');
-  setLoading(btn, true);
   try {
     await API.montessori.correction(_activeId, { reason: note });
     Toast.info('Correction requested', 'Sub admin has been notified.');
     Modal.close('modal-review');
-    await loadPending();
+    await loadOverview(); updateStats(_overview);
+    if (currentClassName) renderClassDetail(); else loadClassList();
   } catch(err) { Toast.error('Failed', err.message); }
-  setLoading(btn, false);
+}
+
+/* ── Publish (resumption date + fees reuse the shared /results term settings,
+   then the ready reports are published via the existing per-report endpoint) ── */
+function openPublishConfirm(className, mode) {
+  publishPayload = mode === 'all' ? { all: true } : { className };
+  const termName = document.getElementById('sel-term').selectedOptions[0]?.text || '';
+  const sesName  = document.getElementById('sel-session').selectedOptions[0]?.text || '';
+  document.getElementById('publish-confirm-text').innerHTML =
+    mode === 'all'
+      ? `Publish Montessori reports for <strong>ALL ready classes</strong> — ${sesName} · ${termName}?`
+      : `Publish Montessori reports for <strong>${className||currentClassName||'this class'}</strong> — ${sesName} · ${termName}?`;
+  document.getElementById('pub-resumption-date').value = '';
+  _populateFeeGrid();
+  document.getElementById('publish-confirm-btn').onclick = doPublish;
+  Modal.open('modal-publish');
+}
+
+function _populateFeeGrid() {
+  const grid = document.getElementById('pub-fees-grid');
+  if (!grid || !window.MONTESSORI_CLASSES) return;
+  grid.innerHTML = window.MONTESSORI_CLASSES.map(cls =>
+    `<div style="display:flex;align-items:center;gap:8px;padding:3px 0">
+      <label style="font-size:.78rem;color:var(--text-secondary);min-width:110px">${cls}</label>
+      <input type="number" class="form-control fee-input" data-class="${cls}" placeholder="₦ Amount"
+        style="font-size:.8rem;padding:5px 10px;height:auto;flex:1" min="0">
+    </div>`
+  ).join('');
+}
+
+async function doPublish() {
+  const btn = document.getElementById('publish-confirm-btn');
+  setLoading(btn, true, 'Publishing…');
+  try {
+    const resumptionDate = document.getElementById('pub-resumption-date')?.value;
+    const feeMap = {};
+    document.querySelectorAll('.fee-input').forEach(inp => {
+      const val = parseFloat(inp.value);
+      if (!isNaN(val) && val > 0) feeMap[inp.dataset.class] = val;
+    });
+    if (resumptionDate || Object.keys(feeMap).length > 0) {
+      const p = {};
+      if (resumptionDate) p.resumption_date = resumptionDate;
+      if (Object.keys(feeMap).length > 0) p.next_term_fee = feeMap;
+      await API.results.publishSettings(currentTermId, p);
+    }
+
+    const targetIds = (publishPayload.all
+      ? _overview.filter(r => r.status === 'approved')
+      : _overview.filter(r => String(r.class_name || r.class?.name || '').trim().toLowerCase() === (publishPayload.className||'').trim().toLowerCase() && r.status === 'approved')
+    ).map(r => r.id);
+
+    if (!targetIds.length) { Toast.warning('Nothing to publish', 'No approved reports are ready.'); setLoading(btn, false); return; }
+
+    await Promise.all(targetIds.map(id => API.montessori.publish(id)));
+    Toast.success('Published!', `${targetIds.length} report(s) published.`);
+    Modal.close('modal-publish');
+    if (currentClassName) { await loadOverview(); updateStats(_overview); renderClassDetail(); }
+    else loadClassList();
+  } catch(err) { Toast.error('Failed', err.message); setLoading(btn, false); }
 }
 </script>
 </body>

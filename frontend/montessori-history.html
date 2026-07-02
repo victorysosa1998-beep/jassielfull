@@ -8,17 +8,43 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 <link rel="stylesheet" href="./css/style.css">
 <style>
-.hx-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0;border-bottom:1px solid rgba(255,255,255,.04);flex-wrap:wrap}
-.hx-row:last-child{border-bottom:none}
-.hx-name{font-weight:600;font-size:.92rem}
-.hx-meta{font-size:.76rem;color:var(--text-muted);margin-top:2px}
-.hx-actions{display:flex;gap:6px;align-items:center;flex-shrink:0}
 .filters-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.check-dialog{background:var(--bg-card);border:1px solid rgba(201,151,58,.25);border-radius:14px;padding:20px;margin-bottom:16px}
+.check-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-light);gap:10px;flex-wrap:wrap}
+.check-row:last-child{border-bottom:none}
+.check-status-ok{color:var(--success);font-size:.8rem;font-weight:600}
+.check-status-empty{color:var(--warning);font-size:.8rem;font-weight:600}
+.check-status-missing{color:var(--danger);font-size:.8rem;font-weight:600}
+
+/* ── Status tabs ── */
+#status-tabs{display:flex;flex-wrap:wrap;gap:6px;padding:4px 0}
+#status-tabs .tab-btn{flex:1 1 auto;min-width:76px;text-align:center;padding:7px 10px;font-size:.78rem;white-space:nowrap}
+
+/* ── Subject card (mobile) ── */
+.subject-card{background:var(--bg-input);border:1px solid var(--border-light);border-radius:10px;padding:12px 14px;margin-bottom:8px}
+.subject-card-header{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px}
+.subject-card-actions{display:flex;gap:6px}
+
+/* ── Responsive: desktop shows table, mobile shows cards ── */
+.subject-cards{display:none}
+@media(max-width:680px){
+  .table-wrapper{display:none}
+  .subject-cards{display:block}
+  #status-tabs{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;scrollbar-width:none}
+  #status-tabs::-webkit-scrollbar{display:none}
+  #status-tabs .tab-btn{flex:0 0 auto;min-width:68px;font-size:.74rem;padding:6px 8px}
+  .group-header-row{flex-direction:column;align-items:flex-start!important}
+}
 .badge-draft{background:rgba(255,255,255,.06);color:var(--text-secondary)}
-.badge-submitted{background:rgba(59,130,246,.12);color:#93C5FD}
+.badge-submitted,.badge-pending{background:rgba(59,130,246,.12);color:#93C5FD}
 .badge-correction{background:rgba(239,68,68,.1);color:#FCA5A5}
 .badge-locked{background:rgba(100,116,139,.15);color:#CBD5E1}
 .empty-state{text-align:center;padding:40px 16px;color:var(--text-muted)}
+.rating-summary{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px;margin-top:6px}
+.rating-chip{font-size:.68rem;background:rgba(255,255,255,.04);border:1px solid var(--border-light);border-radius:6px;padding:4px 6px;display:flex;justify-content:space-between;gap:6px}
+.rating-chip b{color:var(--brand-gold)}
+.cat-block{margin-bottom:14px}
+.cat-block-title{font-weight:700;font-size:.85rem;color:var(--brand-gold);margin-bottom:4px}
 </style>
 </head>
 <body>
@@ -43,6 +69,17 @@
   </header>
 
   <div class="page-body">
+    <div class="tabs mb-3" id="status-tabs">
+      <div class="tab-btn active" onclick="filterStatus('',this)">All</div>
+      <div class="tab-btn" onclick="filterStatus('pending',this)">Draft</div>
+      <div class="tab-btn" onclick="filterStatus('submitted',this)">Submitted</div>
+      <div class="tab-btn" onclick="filterStatus('approved',this)">Approved</div>
+      <div class="tab-btn" onclick="filterStatus('published',this)">Published</div>
+      <div class="tab-btn" onclick="filterStatus('correction_requested',this)">Corrections</div>
+      <div class="tab-btn" onclick="filterStatus('rejected',this)">Rejected</div>
+      <div class="tab-btn" onclick="filterStatus('locked',this)">Locked</div>
+    </div>
+
     <div class="card mb-3">
       <div class="filters-bar">
         <div class="form-group mb-0">
@@ -58,47 +95,47 @@
           <select class="form-control" id="f-term"><option value="">All Terms</option></select>
         </div>
         <div class="form-group mb-0">
-          <label class="form-label">Status</label>
-          <select class="form-control" id="f-status">
-            <option value="">All Statuses</option>
-            <option value="pending">Draft</option>
-            <option value="submitted">Submitted</option>
-            <option value="approved">Approved</option>
-            <option value="published">Published</option>
-            <option value="rejected">Rejected</option>
-            <option value="correction_requested">Correction Requested</option>
-            <option value="locked">Locked</option>
-          </select>
-        </div>
-        <div class="form-group mb-0">
           <label class="form-label">Search Student</label>
           <input class="form-control" id="f-search" placeholder="Type a name…">
         </div>
       </div>
     </div>
 
-    <div class="card">
-      <div class="section-header">
-        <div>
-          <div class="section-title" id="list-title">Montessori Reports</div>
-          <div class="section-sub" id="list-sub">Loading…</div>
-        </div>
-        <button class="btn btn-ghost btn-sm" onclick="loadHistory()"><i class="fas fa-rotate"></i> Refresh</button>
-      </div>
-      <div id="history-list">
-        <div class="skeleton mb-2" style="height:64px;border-radius:12px"></div>
-        <div class="skeleton mb-2" style="height:64px;border-radius:12px"></div>
-        <div class="skeleton" style="height:64px;border-radius:12px"></div>
-      </div>
-      <div id="history-pagination" class="mt-2"></div>
-    </div>
+    <div id="history-list"></div>
+    <div id="history-pagination" class="pagination"></div>
   </div>
 </div>
 </div>
+
+<!-- ══ View Report Modal ══ -->
+<div class="modal-overlay" id="modal-view">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="vm-title">Report</div>
+      <button class="modal-close" onclick="Modal.close('modal-view')"><i class="fas fa-xmark"></i></button>
+    </div>
+    <div class="modal-body" id="vm-body" style="max-height:65vh;overflow-y:auto;padding:6px 2px">Loading…</div>
+    <div class="modal-footer" id="vm-footer"></div>
+  </div>
+</div>
+
+<!-- ══ Submit Completeness Check Modal ══ -->
+<div class="modal-overlay" id="modal-check">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title"><i class="fas fa-clipboard-check" style="color:var(--brand-gold);margin-right:8px"></i>Before You Submit</div>
+      <button class="modal-close" onclick="Modal.close('modal-check')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body" id="modal-check-body" style="padding:20px">Loading…</div>
+    <div class="modal-footer" id="modal-check-footer"></div>
+  </div>
+</div>
+
 <script src="./js/core.js"></script>
 <script src="./js/ui.js"></script>
 <script>
-let _sessions = [], _page = 1, _perPage = 15, _isAdmin = false;
+let _sessions = [], _page = 1, _perPage = 20, _isAdmin = false, currentStatus = '';
+let _classMap = {};
 
 document.addEventListener('DOMContentLoaded', async () => {
   await window.__rmsBootstrapReady;
@@ -107,6 +144,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadClasses();
   await loadSessions();
   wireFilters();
+  _classMap = await API.montessoriClassMap();
   await loadHistory();
 });
 
@@ -132,45 +170,24 @@ function populateTerms(sid) {
   const sess = _sessions.find(s => String(s.id) === String(sid));
   termSel.innerHTML = '<option value="">All Terms</option>' + (sess?.terms||[]).map(t =>
     `<option value="${t.id}" ${t.is_current?'selected':''}>${t.term_name}</option>`).join('');
+  if (sess) { const cur = (sess.terms||[]).find(t=>t.is_current); if (cur) termSel.value = cur.id; }
+}
+
+function filterStatus(status, btn) {
+  currentStatus = status; _page = 1;
+  document.querySelectorAll('#status-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  loadHistory();
 }
 
 function wireFilters() {
   document.getElementById('f-session').addEventListener('change', e => { populateTerms(e.target.value); _page = 1; loadHistory(); });
-  ['f-class','f-term','f-status'].forEach(id =>
+  ['f-class','f-term'].forEach(id =>
     document.getElementById(id).addEventListener('change', () => { _page = 1; loadHistory(); }));
   let t;
   document.getElementById('f-search').addEventListener('input', () => {
     clearTimeout(t); t = setTimeout(() => { _page = 1; loadHistory(); }, 350);
   });
-}
-
-async function loadHistory() {
-  const listEl = document.getElementById('history-list');
-  showSkeleton(listEl, 4, '64px');
-  const params = {
-    page: _page, per_page: _perPage,
-    class_name: document.getElementById('f-class').value || undefined,
-    session_id: document.getElementById('f-session').value || undefined,
-    term_id: document.getElementById('f-term').value || undefined,
-    status: document.getElementById('f-status').value || undefined,
-    search: document.getElementById('f-search').value || undefined,
-  };
-  try {
-    const data = _isAdmin
-      ? await API.montessori.list(params)
-      : await API.montessori.myUploads(params);
-    const items = data.items || data || [];
-    const total = data.total ?? items.length;
-    document.getElementById('list-sub').textContent = `${total} report${total===1?'':'s'} found`;
-    renderList(items);
-    renderPagination(document.getElementById('history-pagination'), {
-      page: _page, total, perPage: _perPage,
-      onChange: 'p => { _page = p; loadHistory(); }'
-    });
-  } catch(err) {
-    listEl.innerHTML = `<div class="empty-state"><i class="fas fa-triangle-exclamation" style="font-size:1.4rem;display:block;margin-bottom:8px"></i>Could not load history.<br><span style="font-size:.78rem">${Security.sanitize(err.message||'')}</span></div>`;
-    document.getElementById('list-sub').textContent = '—';
-  }
 }
 
 const STATUS_CFG = {
@@ -183,29 +200,326 @@ const STATUS_CFG = {
   correction_requested:  { label: 'Correction Requested',    cls: 'badge-correction',icon: 'fa-rotate' },
 };
 
-function renderList(items) {
-  const el = document.getElementById('history-list');
-  if (!items.length) {
-    el.innerHTML = `<div class="empty-state"><i class="fas fa-inbox" style="font-size:1.6rem;display:block;margin-bottom:8px;opacity:.5"></i>No Montessori reports match these filters.</div>`;
-    return;
+async function loadHistory() {
+  const listEl = document.getElementById('history-list');
+  showSkeleton(listEl, 3, '110px', '14px');
+
+  const selectedClass = document.getElementById('f-class').value || '';
+  const params = {
+    page: _page, per_page: _perPage,
+    class_name: selectedClass || undefined,
+    session_id: document.getElementById('f-session').value || undefined,
+    term_id: document.getElementById('f-term').value || undefined,
+    status: currentStatus || undefined,
+    search: document.getElementById('f-search').value || undefined,
+  };
+  try {
+    const data = _isAdmin
+      ? await API.montessori.list(params)
+      : await API.montessori.myUploads(params);
+    let items = data.items || data || [];
+
+    // Defensive client-side re-filter — guarantees the Class / Status filters
+    // actually narrow the list even if a backend filter param is ignored.
+    if (selectedClass) {
+      items = items.filter(r => String(r.class_name || r.class?.name || '').trim().toLowerCase() === selectedClass.trim().toLowerCase());
+    }
+    if (currentStatus) items = items.filter(r => r.status === currentStatus);
+
+    if (!items.length) {
+      listEl.innerHTML = `<div class="card" style="text-align:center;padding:48px;color:var(--text-muted)">
+        <i class="fas fa-inbox" style="font-size:2.5rem;display:block;margin-bottom:12px;opacity:.4"></i>
+        No ${currentStatus ? (STATUS_CFG[currentStatus]?.label.toLowerCase()+' ') : ''}Montessori reports match these filters.
+        <br><a href="montessori-entry.html" style="color:var(--brand-gold);margin-top:8px;display:inline-block"><i class="fas fa-plus"></i> New report</a>
+      </div>`;
+      document.getElementById('history-pagination').innerHTML = '';
+      return;
+    }
+
+    // Group by class + term (mirrors upload-history's grouping by class + subject)
+    const groups = {};
+    for (const r of items) {
+      const className = r.class_name || r.class?.name || '—';
+      const key = `${className}_${r.term_id}`;
+      if (!groups[key]) groups[key] = {
+        class_name: className, class_id: r.class_id || _classMap[className] || null,
+        term_name: r.term_name, term_id: r.term_id,
+        session_name: r.session_name, session_id: r.session_id,
+        reports: []
+      };
+      groups[key].reports.push(r);
+    }
+
+    listEl.innerHTML = Object.values(groups).map(group => renderGroup(group)).join('');
+
+    renderPagination(document.getElementById('history-pagination'), {
+      page: _page, total: data.total ?? items.length, perPage: _perPage,
+      onChange: 'p => { _page = p; loadHistory(); }'
+    });
+  } catch(err) {
+    listEl.innerHTML = `<div class="alert alert-danger"><i class="fas fa-circle-exclamation"></i> ${Security.sanitize(err.message||'Failed')}</div>`;
+    document.getElementById('history-pagination').innerHTML = '';
   }
-  el.innerHTML = items.map(r => {
-    const cfg = STATUS_CFG[r.status] || { label: r.status, cls: 'badge-draft', icon: 'fa-circle-info' };
-    const editable = ['pending','submitted','rejected','correction_requested'].includes(r.status);
-    const params = `class=${encodeURIComponent(r.class_name || r.class?.name || '')}&student_id=${r.student_id}&session_id=${r.session_id}&term_id=${r.term_id}`;
-    return `<div class="hx-row">
+}
+
+function renderGroup(group) {
+  const anyLocked    = group.reports.some(r => ['locked','published'].includes(r.status));
+  const anyApproved  = group.reports.some(r => r.status === 'approved');
+  const anySubmitted = group.reports.some(r => r.status === 'submitted');
+  const anyPending    = group.reports.some(r => r.status === 'pending');
+  const canSubmit    = !_isAdmin && anyPending && !anyLocked;
+
+  return `<div class="card mb-3">
+    <div class="group-header-row" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px">
       <div>
-        <div class="hx-name">${Security.sanitize(r.student_name || r.student?.full_name || 'Student #' + r.student_id)}</div>
-        <div class="hx-meta">${Security.sanitize(r.class_name || r.class?.name || '—')} · ${Security.sanitize(r.session_name || '')} ${Security.sanitize(r.term_name || '')} · ${Fmt.timeAgo(r.updated_at || r.uploaded_at)}
-          ${r.entered_by_name ? ' · by ' + Security.sanitize(r.entered_by_name) : ''}</div>
+        <div style="font-weight:700;font-size:1rem">${Security.sanitize(group.class_name)}</div>
+        <div style="font-size:.78rem;color:var(--text-muted)">${Security.sanitize(group.session_name||'')} · ${Security.sanitize(group.term_name||'')} · ${group.reports.length} student(s)</div>
       </div>
-      <div class="hx-actions">
-        <span class="badge ${cfg.cls}"><i class="fas ${cfg.icon}"></i> ${cfg.label.toLowerCase()}</span>
-        <a href="montessori-report.html?student_id=${r.student_id}&term_id=${r.term_id}" class="btn btn-sm btn-ghost" title="View report"><i class="fas fa-eye"></i></a>
-        ${editable ? `<a href="montessori-entry.html?${params}" class="btn btn-sm btn-secondary" title="Edit"><i class="fas fa-pen"></i></a>` : ''}
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        ${anyLocked
+          ? '<span class="badge badge-locked"><i class="fas fa-lock"></i> Locked / Published</span>'
+          : anyApproved
+            ? '<span class="badge badge-approved"><i class="fas fa-check"></i> Approved</span>'
+            : anySubmitted
+              ? '<span class="badge badge-submitted"><i class="fas fa-paper-plane"></i> Awaiting Review</span>'
+              : ''}
+        ${canSubmit
+          ? `<button class="btn btn-primary btn-sm" onclick="checkBeforeSubmit('${Security.sanitize(group.class_name)}',${group.class_id||'null'},${group.term_id},${group.session_id},this)">
+               <i class="fas fa-paper-plane"></i> Submit to Admin
+             </button>`
+          : ''}
       </div>
-    </div>`;
-  }).join('');
+    </div>
+    <div class="table-wrapper">
+      <table class="table" style="font-size:.85rem">
+        <thead><tr>
+          <th>Student</th><th>Status</th><th style="text-align:center">Skills Rated</th>
+          <th>Updated</th><th>Note</th><th>Action</th>
+        </tr></thead>
+        <tbody>
+          ${group.reports.map(r => renderRowCells(r)).join('')}
+        </tbody>
+      </table>
+    </div>
+    <div class="subject-cards">
+      ${group.reports.map(r => renderCard(r)).join('')}
+    </div>
+  </div>`;
+}
+
+function ratedCount(r) {
+  return Object.values(r.ratings || {}).reduce((n, cat) => n + Object.values(cat||{}).filter(v => v != null && v !== '').length, 0);
+}
+
+function renderRowCells(r) {
+  const cfg = STATUS_CFG[r.status] || { label: r.status, cls: 'badge-draft', icon: 'fa-circle-info' };
+  const editable = ['pending','submitted','rejected','correction_requested'].includes(r.status);
+  const note = r.correction_comment || r.admin_note || '';
+  const params = `class=${encodeURIComponent(r.class_name || r.class?.name || '')}&student_id=${r.student_id}&session_id=${r.session_id}&term_id=${r.term_id}`;
+  return `<tr>
+    <td><strong>${Security.sanitize(r.student_name || r.student?.full_name || 'Student #' + r.student_id)}</strong></td>
+    <td><span class="badge ${cfg.cls}"><i class="fas ${cfg.icon}"></i> ${cfg.label}</span></td>
+    <td style="text-align:center;font-family:var(--font-mono)">${ratedCount(r)}</td>
+    <td style="color:var(--text-muted);font-size:.78rem">${Fmt.timeAgo(r.updated_at || r.uploaded_at)}</td>
+    <td style="color:${r.status==='correction_requested'?'var(--danger)':'var(--text-muted)'};font-size:.78rem;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${Security.sanitize(note||'—')}</td>
+    <td style="display:flex;gap:6px;flex-wrap:wrap">
+      <button class="btn btn-ghost btn-sm" onclick="viewReport(${r.id})"><i class="fas fa-eye"></i> View</button>
+      ${editable ? `<a href="montessori-entry.html?${params}" class="btn btn-secondary btn-sm"><i class="fas fa-pen"></i> Edit</a>` : ''}
+    </td>
+  </tr>`;
+}
+
+function renderCard(r) {
+  const cfg = STATUS_CFG[r.status] || { label: r.status, cls: 'badge-draft', icon: 'fa-circle-info' };
+  const editable = ['pending','submitted','rejected','correction_requested'].includes(r.status);
+  const note = r.correction_comment || r.admin_note || '';
+  const params = `class=${encodeURIComponent(r.class_name || r.class?.name || '')}&student_id=${r.student_id}&session_id=${r.session_id}&term_id=${r.term_id}`;
+  return `<div class="subject-card">
+    <div class="subject-card-header">
+      <div>
+        <div style="font-weight:700;font-size:.88rem">${Security.sanitize(r.student_name || r.student?.full_name || 'Student #' + r.student_id)}</div>
+        <div style="font-size:.73rem;color:var(--text-muted);margin-top:2px">${ratedCount(r)} skill(s) rated · ${Fmt.timeAgo(r.updated_at || r.uploaded_at)}</div>
+      </div>
+      <span class="badge ${cfg.cls}" style="flex-shrink:0">${cfg.label}</span>
+    </div>
+    ${note?`<div style="font-size:.73rem;color:${r.status==='correction_requested'?'var(--danger)':'var(--text-muted)'};margin-bottom:8px;padding:5px 8px;background:rgba(255,255,255,.04);border-radius:6px"><i class="fas fa-comment-dots" style="margin-right:4px"></i>${Security.sanitize(note)}</div>`:''}
+    <div class="subject-card-actions">
+      <button class="btn btn-ghost btn-sm" onclick="viewReport(${r.id})" style="flex:1"><i class="fas fa-eye"></i> View</button>
+      ${editable?`<a href="montessori-entry.html?${params}" class="btn btn-secondary btn-sm" style="flex:1"><i class="fas fa-pen"></i> Edit</a>`:''}
+    </div>
+  </div>`;
+}
+
+/* ══ View report modal (read-only ratings + comments) ══ */
+async function viewReport(id) {
+  Modal.open('modal-view');
+  document.getElementById('vm-title').textContent = 'Loading…';
+  document.getElementById('vm-body').innerHTML = '<div class="skeleton" style="height:220px;border-radius:12px"></div>';
+  document.getElementById('vm-footer').innerHTML = '';
+  try {
+    const r = await API.montessori.get(id);
+    document.getElementById('vm-title').textContent = `${r.student_name || r.student?.full_name || 'Student'} — ${r.term_name || ''}`;
+    const catsHtml = Object.entries(r.ratings || {}).map(([cat, items]) => `
+      <div class="cat-block">
+        <div class="cat-block-title">${Security.sanitize(cat)}</div>
+        <div class="rating-summary">
+          ${Object.entries(items||{}).map(([item, val]) => `<div class="rating-chip"><span>${Security.sanitize(item)}</span><b>${val ?? '—'}</b></div>`).join('')}
+        </div>
+      </div>`).join('') || '<div class="empty-state" style="padding:16px">No ratings recorded.</div>';
+    document.getElementById('vm-body').innerHTML = `
+      ${catsHtml}
+      <div class="cat-block">
+        <div class="cat-block-title">Comments</div>
+        <div style="font-size:.85rem;color:var(--text-secondary);line-height:1.5">
+          <div><strong>Creative Expression:</strong> ${Security.sanitize(r.creative_expression_comment || '—')}</div>
+          <div style="margin-top:6px"><strong>General Comment:</strong> ${Security.sanitize(r.general_comment || '—')}</div>
+          <div style="margin-top:6px"><strong>Teacher:</strong> ${Security.sanitize(r.class_teacher_name || '—')} · <strong>Report:</strong> ${Security.sanitize(r.class_teacher_report || '—')}</div>
+          <div style="margin-top:6px"><strong>Conduct:</strong> ${Security.sanitize(r.pupils_conduct || '—')} · <strong>Proprietor:</strong> ${Security.sanitize(r.proprietors_report || '—')}</div>
+        </div>
+      </div>`;
+    document.getElementById('vm-footer').innerHTML = `
+      <button class="btn btn-ghost" onclick="Modal.close('modal-view')">Close</button>
+      <a href="montessori-report.html?student_id=${r.student_id}&term_id=${r.term_id}" class="btn btn-secondary"><i class="fas fa-file-lines"></i> Full Report</a>`;
+  } catch(err) {
+    document.getElementById('vm-body').innerHTML = `<div class="alert alert-danger">${Security.sanitize(err.message||'Failed to load')}</div>`;
+  }
+}
+
+/* ══ Completeness check before submit (mirrors upload-history's subject check,
+   adapted to per-student Montessori reports) ══ */
+async function checkBeforeSubmit(className, classId, termId, sessionId, btn) {
+  setLoading(btn, true, 'Checking…');
+  try {
+    if (!classId) {
+      _classMap = await API.montessoriClassMap();
+      classId = _classMap[className] || null;
+    }
+    if (!classId) throw new Error('Could not resolve class — please refresh and try again.');
+
+    const [rosterData, reportsData] = await Promise.all([
+      API.classes.students(classId),
+      (_isAdmin ? API.montessori.list : API.montessori.myUploads)({ class_name: className, term_id: termId, session_id: sessionId, per_page: 200 })
+    ]);
+
+    const roster  = rosterData.items || rosterData || [];
+    const reports = (reportsData.items || reportsData || []).filter(r => String(r.term_id) === String(termId));
+    const byStudent = new Map(reports.map(r => [String(r.student_id), r]));
+
+    const rows = roster.map(s => {
+      const sid = s.id || s.student_id;
+      const r = byStudent.get(String(sid));
+      let statusHtml, action = '';
+      if (!r) {
+        statusHtml = `<span class="check-status-missing"><i class="fas fa-circle-xmark"></i> No report yet</span>`;
+        action = `<a href="montessori-entry.html?class=${encodeURIComponent(className)}&student_id=${sid}&session_id=${sessionId}&term_id=${termId}" class="btn btn-ghost btn-sm"><i class="fas fa-pen"></i> Create</a>`;
+      } else if (r.status === 'pending') {
+        statusHtml = `<span class="check-status-empty"><i class="fas fa-clock"></i> Draft — not submitted</span>`;
+        action = `<a href="montessori-entry.html?class=${encodeURIComponent(className)}&student_id=${sid}&session_id=${sessionId}&term_id=${termId}" class="btn btn-ghost btn-sm"><i class="fas fa-pencil"></i> Edit</a>`;
+      } else if (r.status === 'submitted') {
+        statusHtml = `<span class="check-status-ok"><i class="fas fa-paper-plane"></i> Submitted</span>`;
+      } else if (['approved','locked','published'].includes(r.status)) {
+        statusHtml = `<span class="check-status-ok"><i class="fas fa-check-circle"></i> ${r.status}</span>`;
+      } else {
+        statusHtml = `<span class="badge badge-draft">${r.status}</span>`;
+      }
+      return { s, r, statusHtml, action, missing: !r, isDraft: r?.status === 'pending' };
+    });
+
+    const missingCount = rows.filter(r => r.missing).length;
+    const draftCount   = rows.filter(r => r.isDraft).length;
+    const allGood      = missingCount === 0 && draftCount === 0;
+
+    document.getElementById('modal-check-body').innerHTML = `
+      ${missingCount > 0 || draftCount > 0
+        ? `<div class="alert alert-warning mb-3">
+             <i class="fas fa-triangle-exclamation"></i>
+             <strong>${missingCount > 0 ? `${missingCount} student(s) with no report yet.` : ''}
+             ${draftCount > 0 ? ` ${draftCount} student(s) still in draft.` : ''}</strong>
+             You can still submit what's ready, mark missing students as blank, or go back and fill them in.
+           </div>`
+        : `<div class="alert alert-success mb-3">
+             <i class="fas fa-check-circle"></i>
+             <strong>All ${rows.length} student(s) are ready!</strong> Safe to submit to admin.
+           </div>`}
+      <div class="check-dialog">
+        ${rows.map(r => `
+          <div class="check-row">
+            <div style="font-weight:600;font-size:.88rem;flex:1">${Security.sanitize(r.s.full_name || r.s.student_name || 'Student')}</div>
+            <div>${r.statusHtml}</div>
+            <div>${r.action}</div>
+          </div>`).join('')}
+      </div>`;
+
+    document.getElementById('modal-check-footer').innerHTML = `
+      <button class="btn btn-ghost" onclick="Modal.close('modal-check')">
+        <i class="fas fa-arrow-left"></i> Go Back &amp; Edit
+      </button>
+      ${missingCount > 0
+        ? `<button class="btn btn-secondary" onclick="markMissingBlank('${Security.sanitize(className).replace(/'/g,"\\'")}',${classId},${termId},${sessionId})" id="mark-blank-btn">
+             <i class="fas fa-minus-circle"></i> Mark Missing as Blank
+           </button>` : ''}
+      <button class="btn btn-primary" id="confirm-submit-btn"
+        onclick="doSubmitToAdmin(${classId},${termId},${sessionId})">
+        <i class="fas fa-paper-plane"></i>
+        ${allGood ? 'Submit to Admin' : "Submit What's Ready"}
+      </button>`;
+
+    setLoading(btn, false);
+    Modal.open('modal-check');
+  } catch(err) {
+    setLoading(btn, false);
+    Toast.error('Check failed', err.message);
+  }
+}
+
+/* Mark every roster student who has no Montessori report yet as a blank draft,
+   same idea as "Mark Missing as Blank" for subject uploads — blank entries
+   show on the report card but carry no ratings. */
+async function markMissingBlank(className, classId, termId, sessionId) {
+  if (!confirm('Mark all students with no report as blank? They will appear on the class list but with no skill ratings recorded — you can fill them in later.')) return;
+  const btn = document.getElementById('mark-blank-btn');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="btn-spinner"></span> Marking…'; }
+  try {
+    const [rosterData, reportsData] = await Promise.all([
+      API.classes.students(classId),
+      (_isAdmin ? API.montessori.list : API.montessori.myUploads)({ class_name: className, term_id: termId, session_id: sessionId, per_page: 200 })
+    ]);
+    const roster  = rosterData.items || rosterData || [];
+    const reports = (reportsData.items || reportsData || []).filter(r => String(r.term_id) === String(termId));
+    const existingIds = new Set(reports.map(r => String(r.student_id)));
+    const missing = roster.filter(s => !existingIds.has(String(s.id || s.student_id)));
+    if (!missing.length) { Toast.info('Nothing to do', 'Every student already has a report.'); Modal.close('modal-check'); return; }
+
+    for (const s of missing) {
+      await API.montessori.save({
+        student_id: s.id || s.student_id,
+        class_name: className,
+        session_id: sessionId,
+        term_id: termId,
+        ratings: {},
+      });
+    }
+    Toast.success('Done!', `${missing.length} student(s) marked blank. You can now submit.`);
+    Modal.close('modal-check');
+    loadHistory();
+  } catch(err) {
+    Toast.error('Failed', err.message || 'Could not mark students as blank.');
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-minus-circle"></i> Mark Missing as Blank'; }
+  }
+}
+
+async function doSubmitToAdmin(classId, termId, sessionId) {
+  const btn = document.getElementById('confirm-submit-btn');
+  setLoading(btn, true, 'Submitting…');
+  try {
+    const data = await API.montessori.submitClass({ class_id: classId, term_id: termId, session_id: sessionId });
+    Toast.success('Submitted!', data?.message || 'Montessori reports sent to admin for review.');
+    Modal.close('modal-check');
+    loadHistory();
+  } catch(err) {
+    Toast.error('Submit failed', err.message);
+    setLoading(btn, false);
+  }
 }
 </script>
 </body>
