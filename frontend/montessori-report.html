@@ -226,6 +226,7 @@ body {
 @media print {
   body { background: #fff !important; padding: 0 !important; }
   .toolbar { display: none !important; }
+  #pn-hold-overlay, #pn-hold-progress, #pn-download-toast { display: none !important; }
   .pn-page { box-shadow: none; border: 3px double #002060; width: 100%; min-width: unset; border-radius: 0; margin: 0 0 0; }
 }
 </style>
@@ -234,6 +235,8 @@ body {
 
 <div class="toolbar">
   <span id="rc-status" style="align-self:center;font-size:12px;color:#556;margin-right:auto;padding-left:4px"></span>
+  <select id="session-sel" style="display:none;font-family:'DM Sans',sans-serif;font-size:12px;padding:8px 10px;border-radius:6px;border:1px solid #ccd4e4;color:#002060;background:#fff"></select>
+  <select id="term-sel" style="display:none;font-family:'DM Sans',sans-serif;font-size:12px;padding:8px 10px;border-radius:6px;border:1px solid #ccd4e4;color:#002060;background:#fff"></select>
   <button id="btn-save" onclick="saveReport()" style="display:none"><i class="fas fa-save"></i> Save</button>
   <button id="btn-publish" class="secondary" onclick="publishReport()" style="display:none"><i class="fas fa-check"></i> Publish</button>
   <button onclick="window.print()"><i class="fas fa-print"></i> Print / Save PDF</button>
@@ -243,6 +246,16 @@ body {
   <i class="fas fa-inbox" style="font-size:2rem;display:block;margin-bottom:12px"></i>
   <span id="empty-msg">No report has been published for this term yet.</span>
 </div>
+
+<div id="pn-hold-wrapper" style="position:relative;display:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none">
+  <div id="pn-hold-progress" style="position:absolute;bottom:0;left:0;right:0;height:4px;background:rgba(0,32,96,0);border-radius:0 0 4px 4px;overflow:hidden;pointer-events:none;max-width:780px;margin:0 auto"><div id="pn-hold-progress-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#ffd700,#f0b800);transition:width linear;border-radius:0 0 4px 4px"></div></div>
+  <div id="pn-hold-overlay" style="display:none;position:absolute;inset:0;background:rgba(0,32,96,.55);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);z-index:100;align-items:center;justify-content:center;flex-direction:column;gap:12px">
+    <div style="color:rgba(255,255,255,.8);font-family:'DM Sans',sans-serif;font-size:13px;text-align:center">Report card ready to save</div>
+    <button id="pn-download-btn" onclick="downloadMontessoriReport()" style="background:linear-gradient(135deg,#ffd700,#f0b800);color:#002060;border:none;border-radius:50px;padding:14px 32px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:10px;box-shadow:0 4px 20px rgba(0,0,0,.3)">
+      <i class="fas fa-download"></i> Download Image
+    </button>
+    <div style="color:rgba(255,255,255,.5);font-family:'DM Sans',sans-serif;font-size:11px;margin-top:2px">Tap anywhere else to dismiss</div>
+  </div>
 
 <div id="pn-root" style="display:none">
 <div class="pn-page">
@@ -265,11 +278,14 @@ body {
     </div>
     <div class="pn-row">
       <div class="pn-cell"><span class="pn-lbl">Class:</span><span class="pn-val" id="f-class" data-ph="—"></span></div>
+      <div class="pn-cell"><span class="pn-lbl">Term:</span><span class="pn-val" id="f-term" data-ph="—"></span></div>
+    </div>
+    <div class="pn-row">
       <div class="pn-cell"><span class="pn-lbl">Class Teacher:</span><span class="pn-val" id="f-teacher" data-ph="—"></span></div>
+      <div class="pn-cell"><span class="pn-lbl">Academic Year:</span><span class="pn-val" id="f-year" data-ph="—"></span></div>
     </div>
     <div class="pn-row">
       <div class="pn-cell"><span class="pn-lbl">Date:</span><span class="pn-val" id="f-date" data-ph="—"></span></div>
-      <div class="pn-cell"><span class="pn-lbl">Academic Year:</span><span class="pn-val" id="f-year" data-ph="—"></span></div>
     </div>
   </div>
 
@@ -280,12 +296,8 @@ body {
   <div class="pn-comments-wrap">
     <div class="pn-comments-head">General Comments</div>
     <div class="pn-comments-box" id="f-general-comment" data-ph="No general comment added yet."></div>
-    <div class="pn-sig-row">
-      <div class="pn-sig-block">
-        <span class="pn-sig-val" id="f-sig1" data-ph="—"></span>
-        <span class="pn-sig-lbl">Class Teacher</span>
-      </div>
-      <div class="pn-stamp-wrap">
+    <div class="pn-sig-row" style="justify-content:center;gap:32px">
+      <div class="pn-stamp-wrap" style="width:110px;height:110px">
         <img src="./images/schoolstamp.png" class="pn-stamp-img" alt="Official Stamp" onerror="this.style.display='none'">
       </div>
       <div class="pn-sig-block">
@@ -309,7 +321,7 @@ body {
   <div class="pn-head-top"></div>
   <div class="pn-title-bar" style="border-top:none">School Management Report</div>
 
-  <div class="pn-mgmt-grid">
+  <div class="pn-mgmt-grid" style="grid-template-columns:1fr 1fr 1fr">
     <div class="pn-mgmt-cell">
       <span class="pn-mgmt-lbl">Class Teacher's Report</span>
       <span class="pn-mgmt-val" id="f-teacher-report" data-ph="—"></span>
@@ -317,15 +329,6 @@ body {
     <div class="pn-mgmt-cell">
       <span class="pn-mgmt-lbl">Pupil's Conduct</span>
       <span class="pn-mgmt-val" id="f-conduct" data-ph="—"></span>
-    </div>
-    <div class="pn-mgmt-cell">
-      <span class="pn-mgmt-lbl">Class Teacher's Signature</span>
-      <div style="display:flex;align-items:flex-end;gap:8px">
-        <span class="pn-mgmt-val" id="f-sig2" data-ph="—" style="flex:1"></span>
-        <div class="pn-stamp-wrap" style="width:48px;height:48px">
-          <img src="./images/schoolstamp.png" class="pn-stamp-img" alt="Official Stamp" onerror="this.style.display='none'">
-        </div>
-      </div>
     </div>
     <div class="pn-mgmt-cell">
       <span class="pn-mgmt-lbl">Proprietor's Report</span>
@@ -348,7 +351,10 @@ body {
   <div class="pn-fine-print">Jaasiel Education Centre &middot; Pre-Nursery Report Card &middot; Idokpa, Benin City, Edo State</div>
 </div>
 </div>
+</div>
+<div id="pn-download-toast" style="position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);background:#002060;color:#ffd700;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;padding:12px 24px;border-radius:50px;box-shadow:0 4px 20px rgba(0,0,0,.25);z-index:9999;opacity:0;transition:opacity .3s,transform .3s;pointer-events:none;white-space:nowrap">✓ Report card saved to your device</div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="./js/core.js"></script>
 <script>
 /* ─────────────────────────────────────────────────────────────
@@ -363,8 +369,8 @@ body {
    ───────────────────────────────────────────────────────────── */
 const _params    = new URLSearchParams(window.location.search);
 const _studentId = _params.get('student_id');
-const _termId    = _params.get('term_id');
-const _sessionId = _params.get('session_id');
+let   _termId    = _params.get('term_id');
+let   _sessionId = _params.get('session_id');
 const _forceView = _params.get('view') === '1';
 
 let CATEGORIES = {};
@@ -372,6 +378,32 @@ let GRADING_KEY = {};
 let EDIT_MODE = false;
 let CURRENT_REPORT_ID = null;
 let CURRENT_STATUS = null;
+
+/* ── Compute an average rating (1-3) across all rated skill items ── */
+function computeRatingAvg(ratings) {
+  let total = 0, sum = 0;
+  Object.values(ratings || {}).forEach(cat => {
+    Object.values(cat || {}).forEach(v => {
+      if (v !== null && v !== undefined && v !== '') { total++; sum += Number(v); }
+    });
+  });
+  return total ? sum / total : 0;
+}
+
+/* ── Auto-generated Class Teacher's Report / Proprietor's Report,
+   based on the pupil's actual rating average this term (no manual typing). ── */
+function autoClassTeacherReport(avg) {
+  if (!avg) return 'Not yet assessed for this term.';
+  if (avg >= 2.6) return 'Excellent developmental progress this term. Keep up the good work.';
+  if (avg >= 2.0) return 'Good, steady progress. Continue practicing these skills at home.';
+  return 'Needs more support and practice with these skills next term.';
+}
+function autoProprietorsReport(avg) {
+  if (!avg) return 'Not yet assessed for this term.';
+  if (avg >= 2.6) return 'Commendable performance. Well done.';
+  if (avg >= 2.0) return 'Satisfactory progress. Keep encouraging your ward.';
+  return 'Requires more attention and encouragement at home.';
+}
 
 const statusEl = document.getElementById('rc-status');
 function setStatus(msg, isError) {
@@ -412,11 +444,61 @@ document.addEventListener('DOMContentLoaded', async () => {
   } else if (staffRole && _studentId) {
     await loadForStaffView();
   } else if (role === 'student') {
+    await loadSessionSelectors();
     await loadForStudentView();
   } else {
     setStatus('Open this page with a student_id (staff) to edit, or as a logged-in student to view your own report.', true);
   }
 });
+
+/* ── Session / Term selectors (student view only) — lets the pupil pick
+   which term/session's report to view, instead of only ever seeing one. ── */
+async function loadSessionSelectors() {
+  const sessSel = document.getElementById('session-sel');
+  const termSel = document.getElementById('term-sel');
+  try {
+    const data = await API.students.mySessions();
+    const sessions = data.items || [];
+    if (!sessions.length) return;
+
+    sessSel.innerHTML = '<option value="">Current Session</option>';
+    sessions.forEach(s => {
+      const o = document.createElement('option');
+      o.value = s.id; o.textContent = s.session_name;
+      if (s.is_current) o.selected = true;
+      sessSel.appendChild(o);
+    });
+
+    const populateTerms = sid => {
+      termSel.innerHTML = '<option value="">Current Term</option>';
+      const sess = sessions.find(s => String(s.id) === String(sid));
+      if (sess && sess.terms) sess.terms.forEach(t => {
+        const o = document.createElement('option');
+        o.value = t.id; o.textContent = t.term_name;
+        if (t.is_current) o.selected = true;
+        termSel.appendChild(o);
+      });
+    };
+
+    if (_sessionId) sessSel.value = _sessionId;
+    populateTerms(sessSel.value);
+    if (_termId) termSel.value = _termId;
+
+    sessSel.style.display = '';
+    termSel.style.display = '';
+
+    sessSel.addEventListener('change', () => {
+      _sessionId = sessSel.value || null;
+      populateTerms(sessSel.value);
+      _termId = termSel.value || null;
+      loadForStudentView();
+    });
+    termSel.addEventListener('change', () => {
+      _termId = termSel.value || null;
+      loadForStudentView();
+    });
+  } catch (e) { console.warn('loadSessionSelectors failed', e); }
+}
 
 /* ── Build grading key strip from live /montessori/categories ── */
 function renderGradingKey() {
@@ -444,19 +526,28 @@ function buildCategoryTables() {
 
 /* ── Populate all fields + rating inputs from a report record ── */
 function populateFields(record, studentInfo) {
+  // The date actually published to the student — falls back to the
+  // save/upload date while a report is still in draft/edit mode.
+  const displayDate = record.published_at || record.uploaded_at;
+
   document.getElementById('f-name').textContent    = studentInfo.full_name || '';
   document.getElementById('f-class').textContent   = studentInfo.class_name || record.class_name || '';
   document.getElementById('f-teacher').textContent = record.class_teacher_name || '';
-  document.getElementById('f-date').textContent    = fmtDate(record.uploaded_at) || '';
+  document.getElementById('f-term').textContent    = record.term_name || '';
+  document.getElementById('f-date').textContent    = fmtDate(displayDate) || '';
   document.getElementById('f-year').textContent    = record.session_name || '';
   document.getElementById('f-general-comment').textContent = record.general_comment || '';
   document.getElementById('f-creative').textContent = record.creative_expression_comment || '';
-  document.getElementById('f-sig1').textContent    = record.class_teacher_name || '';
-  document.getElementById('f-sigdate1').textContent = fmtDate(record.uploaded_at) || '';
-  document.getElementById('f-teacher-report').textContent = record.class_teacher_report || '';
+  document.getElementById('f-sigdate1').textContent = fmtDate(displayDate) || '';
+  // Class Teacher's Report and Proprietor's Report are always auto-generated
+  // server-side from the pupil's ratings — never typed in manually. The
+  // backend is the single source of truth; we only fall back to computing
+  // it here if an older record somehow has neither value stored.
+  document.getElementById('f-teacher-report').textContent =
+    record.class_teacher_report || autoClassTeacherReport(computeRatingAvg(record.ratings));
   document.getElementById('f-conduct').textContent  = record.pupils_conduct || '';
-  document.getElementById('f-sig2').textContent     = record.class_teacher_name || '';
-  document.getElementById('f-proprietor').textContent = record.proprietors_report || '';
+  document.getElementById('f-proprietor').textContent =
+    record.proprietors_report || autoProprietorsReport(computeRatingAvg(record.ratings));
 
   // Next term fee / resumption date — live from Term, never typed here.
   const bar = document.getElementById('pn-next-bar');
@@ -535,13 +626,14 @@ async function loadForStaffView() {
 /* ── EDIT MODE (staff) ── */
 function enableEditing() {
   document.querySelectorAll('.pn-rate-input[data-cat]').forEach(inp => inp.removeAttribute('readonly'));
-  ['f-teacher', 'f-general-comment', 'f-creative',
-   'f-teacher-report', 'f-conduct', 'f-proprietor'].forEach(id => {
+  ['f-teacher', 'f-general-comment', 'f-creative', 'f-conduct'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.contentEditable = 'true';
   });
-  // Name/Class/Date/Year/Resumption/Fee stay read-only — they come from the
-  // student record and the term's shared settings, not typed per report.
+  // Class Teacher's Report and Proprietor's Report are always auto-generated
+  // from the pupil's ratings — never manually editable.
+  // Name/Class/Term/Date/Year/Resumption/Fee stay read-only — they come from
+  // the student record and the term's shared settings, not typed per report.
 }
 
 async function loadForEdit() {
@@ -578,12 +670,14 @@ async function loadForEdit() {
 }
 
 function showReport() {
+  document.getElementById('pn-hold-wrapper').style.display = '';
   document.getElementById('pn-root').style.display = '';
   document.getElementById('empty-state').style.display = 'none';
 }
 function showEmpty(msg) {
   document.getElementById('empty-msg').textContent = msg;
   document.getElementById('empty-state').style.display = '';
+  document.getElementById('pn-hold-wrapper').style.display = 'none';
   document.getElementById('pn-root').style.display = 'none';
   setStatus('');
 }
@@ -605,6 +699,9 @@ async function saveReport() {
       ratings[inp.dataset.cat][inp.dataset.item] = parseInt(v, 10);
     });
 
+    // Class Teacher's Report / Proprietor's Report are computed and stored
+    // server-side from these ratings — the backend is the single source of
+    // truth, so we don't send (or duplicate that computation) here.
     const body = {
       student_id: parseInt(_studentId, 10),
       session_id: parseInt(_sessionId, 10),
@@ -613,9 +710,7 @@ async function saveReport() {
       general_comment: document.getElementById('f-general-comment').textContent.trim(),
       creative_expression_comment: document.getElementById('f-creative').textContent.trim(),
       class_teacher_name: document.getElementById('f-teacher').textContent.trim(),
-      class_teacher_report: document.getElementById('f-teacher-report').textContent.trim(),
       pupils_conduct: document.getElementById('f-conduct').textContent.trim(),
-      proprietors_report: document.getElementById('f-proprietor').textContent.trim(),
     };
 
     const saved = await API.montessori.save(body);
@@ -645,6 +740,140 @@ async function publishReport() {
   } catch (e) {
     setStatus(e.message || 'Publish failed.', true);
   } finally {
+    btn.disabled = false;
+  }
+}
+</script>
+
+<script>
+/* ── Long-press to reveal download overlay (same UX as report-card.html) ── */
+(function () {
+  const HOLD_MS      = 600;
+  const wrapper       = document.getElementById('pn-hold-wrapper');
+  const overlay       = document.getElementById('pn-hold-overlay');
+  const progressBar   = document.getElementById('pn-hold-progress-bar');
+  let holdTimer = null;
+
+  function showOverlay() { overlay.style.display = 'flex'; }
+  function hideOverlay()  { overlay.style.display = 'none'; }
+
+  function startHold() {
+    progressBar.style.transition = 'none';
+    progressBar.style.width = '0%';
+    requestAnimationFrame(() => {
+      progressBar.style.transition = `width ${HOLD_MS}ms linear`;
+      progressBar.style.width = '100%';
+    });
+    holdTimer = setTimeout(showOverlay, HOLD_MS);
+  }
+  function cancelHold() {
+    clearTimeout(holdTimer);
+    holdTimer = null;
+    progressBar.style.transition = 'width 0.2s ease';
+    progressBar.style.width = '0%';
+  }
+
+  wrapper.addEventListener('touchstart', (e) => {
+    if (e.target.closest('#pn-hold-overlay')) return;
+    startHold();
+  }, { passive: true });
+  wrapper.addEventListener('touchend',    cancelHold, { passive: true });
+  wrapper.addEventListener('touchcancel', cancelHold, { passive: true });
+  wrapper.addEventListener('touchmove',   cancelHold, { passive: true });
+
+  wrapper.addEventListener('mousedown', (e) => {
+    if (e.target.closest('#pn-hold-overlay')) return;
+    startHold();
+  });
+  window.addEventListener('mouseup', cancelHold);
+
+  overlay.addEventListener('click', (e) => {
+    if (!e.target.closest('#pn-download-btn')) hideOverlay();
+  });
+})();
+
+/* ── Download report card (both pages) as one image — mirrors
+   report-card.html's downloadReportCard(), targeting #pn-root instead
+   of a single .rc-page since the Montessori report has two pages. ── */
+async function downloadMontessoriReport() {
+  const btn = document.getElementById('pn-download-btn');
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating\u2026';
+  btn.disabled = true;
+
+  try {
+    const card = document.getElementById('pn-root');
+    if (!card) throw new Error('Card not found');
+
+    await document.fonts.ready;
+    await new Promise(r => setTimeout(r, 400));
+
+    let fontFaceCSS = '';
+    try {
+      for (const sheet of document.styleSheets) {
+        try {
+          for (const rule of sheet.cssRules || []) {
+            if (rule.type === CSSRule.FONT_FACE_RULE) fontFaceCSS += rule.cssText + '\n';
+          }
+        } catch (e) { /* cross-origin sheet — skip */ }
+      }
+    } catch (e) { /* ignore */ }
+
+    const CARD_WIDTH = 780;
+
+    const canvas = await html2canvas(card, {
+      scale: 3,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#eef1f8',
+      logging: false,
+      windowWidth: CARD_WIDTH,
+      width: CARD_WIDTH,
+      onclone: (doc) => {
+        if (fontFaceCSS) {
+          const style = doc.createElement('style');
+          style.textContent = fontFaceCSS;
+          doc.head.appendChild(style);
+        }
+        const clonedCard = doc.getElementById('pn-root');
+        if (clonedCard) {
+          clonedCard.style.display = 'block';
+          clonedCard.style.width = CARD_WIDTH + 'px';
+          clonedCard.style.minWidth = CARD_WIDTH + 'px';
+          clonedCard.style.overflow = 'visible';
+        }
+        doc.querySelectorAll('#pn-root .pn-page').forEach(p => {
+          p.style.boxShadow = 'none';
+          p.style.borderRadius = '0';
+          p.style.width = CARD_WIDTH + 'px';
+          p.style.minWidth = CARD_WIDTH + 'px';
+        });
+      }
+    });
+
+    const nameEl = card.querySelector('#f-name');
+    const studentName = nameEl ? nameEl.textContent.trim().replace(/\s+/g, '_') : 'student';
+    const filename = `Montessori_Report_${studentName}_${Date.now()}.png`;
+
+    const link = document.createElement('a');
+    link.download = filename;
+    link.href = canvas.toDataURL('image/png', 1.0);
+    link.click();
+
+    const toast = document.getElementById('pn-download-toast');
+    toast.style.opacity = '1';
+    toast.style.transform = 'translateX(-50%) translateY(0)';
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateX(-50%) translateY(20px)';
+    }, 3000);
+
+    document.getElementById('pn-hold-overlay').style.display = 'none';
+
+  } catch (err) {
+    console.error('Download failed:', err);
+    alert('Could not generate image. Please try the Print button instead.');
+  } finally {
+    btn.innerHTML = '<i class="fas fa-download"></i> Download Image';
     btn.disabled = false;
   }
 }

@@ -132,17 +132,25 @@
 <script src="./js/ui.js"></script>
 <script>
 let _sessions = [];
+let IS_MONTESSORI = false;
 
 document.addEventListener('DOMContentLoaded', async () => {
   await window.__rmsBootstrapReady;
   initPage('student', 'student');
 
   // Creche/Daycare/Pre-Nursery/KG pupils use the skills-based Montessori
-  // report instead of subject scores — send them straight there.
+  // report instead of subject scores — show them a term/session picker
+  // (same pattern as the subject-based flow below) instead of jumping
+  // straight to a single report card.
   try {
     const profile = await API.students.myProfile();
-    if (profile.is_montessori) { window.location.replace('montessori-report.html'); return; }
+    IS_MONTESSORI = !!profile.is_montessori;
   } catch (e) { console.warn('Could not check profile type', e); }
+
+  if (IS_MONTESSORI) {
+    const rcBtn = document.querySelector('#topbar-right a.btn-primary');
+    if (rcBtn) rcBtn.href = 'montessori-report.html';
+  }
 
   await loadSessions();
   loadAll();
@@ -192,6 +200,8 @@ function onSessionChange() {
 
 /* ── MAIN LOADER ── */
 async function loadAll() {
+  if (IS_MONTESSORI) return loadMontessoriAll();
+
   const container = document.getElementById('results-by-term');
   const modeEl    = document.getElementById('mode-indicator');
   showSkeleton(container, 3, '120px', '14px');
@@ -287,6 +297,68 @@ async function loadAll() {
     container.innerHTML = `<div class="card" style="text-align:center;padding:48px;color:var(--text-muted)">
       <i class="fas fa-exclamation-circle" style="font-size:2rem;display:block;margin-bottom:12px"></i>
       Could not load results. Please try again.</div>`;
+  }
+}
+
+/* ── MONTESSORI: term/session picker + report list (mirrors the
+   subject-based flow above so pupils choose a term before opening
+   their report card, instead of it opening automatically). ── */
+async function loadMontessoriAll() {
+  const container = document.getElementById('results-by-term');
+  const modeEl    = document.getElementById('mode-indicator');
+  showSkeleton(container, 3, '120px', '14px');
+
+  const sid = document.getElementById('session-filter').value;
+  const tid = document.getElementById('term-filter').value;
+  const showAll = !sid && !tid;
+
+  modeEl.innerHTML = showAll
+    ? `<span class="mode-badge all"><i class="fas fa-layer-group"></i> Showing all reports</span>`
+    : `<span class="mode-badge current"><i class="fas fa-filter"></i> Filtered view</span>`;
+
+  try {
+    const params = {};
+    if (sid) params.session_id = sid;
+    if (tid) params.term_id    = tid;
+
+    const data  = await API.montessori.myReports(params);
+    const items = data.items || [];
+
+    if (!items.length) {
+      container.innerHTML = `<div class="card" style="text-align:center;padding:48px;color:var(--text-muted)">
+        <i class="fas fa-inbox" style="font-size:2rem;display:block;margin-bottom:12px"></i>
+        No reports found for this period. Reports appear here once published by your school.</div>`;
+      return;
+    }
+
+    container.innerHTML = items.map(r => {
+      let total = 0, sum = 0;
+      Object.values(r.ratings || {}).forEach(cat => {
+        Object.values(cat || {}).forEach(v => { if (v != null) { total++; sum += Number(v); } });
+      });
+      const avg   = total ? (sum / total) : 0;
+      const rcUrl = `montessori-report.html?session_id=${encodeURIComponent(r.session_id)}&term_id=${encodeURIComponent(r.term_id)}`;
+
+      return `<div class="card mb-3">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:12px" class="term-card-header">
+          <div>
+            <div style="font-family:var(--font-display);font-weight:700;font-size:1rem">${r.term_name || 'Term'}</div>
+            <div style="font-size:.78rem;color:var(--text-muted)">${r.session_name || ''}</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap" class="term-card-controls">
+            <span style="font-size:.8rem;color:var(--text-muted)">${total} skills assessed &middot; avg ${avg.toFixed(1)}/3</span>
+            <a href="${rcUrl}" class="view-rc-btn">
+              <i class="fas fa-file-alt"></i> View Report Card
+            </a>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+
+  } catch(e) {
+    container.innerHTML = `<div class="card" style="text-align:center;padding:48px;color:var(--text-muted)">
+      <i class="fas fa-exclamation-circle" style="font-size:2rem;display:block;margin-bottom:12px"></i>
+      Could not load reports. Please try again.</div>`;
   }
 }
 

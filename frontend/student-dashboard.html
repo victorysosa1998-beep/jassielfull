@@ -289,10 +289,12 @@
 <script src="./js/core.js"></script>
 <script src="./js/ui.js"></script>
 <script>
+let IS_MONTESSORI = false;
+
 document.addEventListener('DOMContentLoaded', async () => {
   await window.__rmsBootstrapReady;
   initPage('student', 'student');
-  loadProfile();
+  await loadProfile();
   await loadTermDropdown();
   loadResults();
 });
@@ -301,6 +303,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function loadProfile() {
   try {
     const s = await API.students.myProfile();
+    IS_MONTESSORI = !!s.is_montessori;
     document.querySelectorAll('.user-name-display').forEach(el => el.textContent = s.full_name || '—');
     document.querySelectorAll('.user-class-display').forEach(el => el.textContent = s.class_name || '—');
     const initials = Fmt.initials(s.full_name || '?');
@@ -359,13 +362,15 @@ async function loadResults() {
   const container = document.getElementById('results-container');
   showSkeleton(container, 5, '46px', '8px');
 
-  try {
-    const params = {};
-    const sessSel = document.getElementById('session-filter-dash');
-    const termSel = document.getElementById('term-filter');
-    if (sessSel && sessSel.value) params.session_id = sessSel.value;
-    if (termSel && termSel.value) params.term_id = termSel.value;
+  const params = {};
+  const sessSel = document.getElementById('session-filter-dash');
+  const termSel = document.getElementById('term-filter');
+  if (sessSel && sessSel.value) params.session_id = sessSel.value;
+  if (termSel && termSel.value) params.term_id = termSel.value;
 
+  if (IS_MONTESSORI) { await loadMontessoriSummary(params); return; }
+
+  try {
     const data = await API.students.myResults(params);
     const results = data.results || data.items || [];
 
@@ -447,6 +452,65 @@ async function loadResults() {
           <i class="fas fa-rotate-right"></i> Retry
         </button>
       </div>`;
+  }
+}
+
+/* ── Montessori (Creche/Daycare/Pre-Nursery/KG) summary ──
+   These pupils are rated on developmental skills, not subject scores,
+   so they use the Montessori report endpoint instead of myResults(). ── */
+async function loadMontessoriSummary(params) {
+  const container = document.getElementById('results-container');
+  try {
+    const data   = await API.montessori.myReports(params);
+    const record = (data.items || [])[0];
+
+    if (!record) {
+      container.innerHTML = `
+        <div style="text-align:center;padding:52px 20px">
+          <div style="font-size:2.8rem;margin-bottom:14px;opacity:.25">📋</div>
+          <div style="font-weight:700;font-size:.95rem;color:var(--text-primary);margin-bottom:6px">No report published yet</div>
+          <div style="font-size:.82rem;color:var(--text-muted)">Your Montessori report will appear here once your school publishes it.</div>
+        </div>`;
+      initSubjectChart([]);
+      return;
+    }
+
+    document.getElementById('results-period').textContent =
+      [record.session_name, record.term_name].filter(Boolean).join(' · ');
+
+    let total = 0, sum = 0;
+    Object.values(record.ratings || {}).forEach(cat => {
+      Object.values(cat || {}).forEach(v => { if (v != null) { total++; sum += Number(v); } });
+    });
+    const avgRating = total ? (sum / total) : 0;
+
+    const qs = new URLSearchParams();
+    if (record.session_id) qs.set('session_id', record.session_id);
+    if (record.term_id)    qs.set('term_id', record.term_id);
+
+    container.innerHTML = `
+      <div style="text-align:center;padding:28px 20px">
+        <div style="font-size:2.2rem;margin-bottom:10px">📘</div>
+        <div style="font-weight:700;font-size:1rem;color:var(--text-primary);margin-bottom:6px">Montessori Report Published</div>
+        <div style="font-size:.82rem;color:var(--text-muted);margin-bottom:18px">${total} skills assessed &middot; average rating ${avgRating.toFixed(1)} / 3</div>
+        <a href="montessori-report.html?${qs.toString()}" class="btn btn-primary btn-sm">
+          <i class="fas fa-file-alt"></i> View Full Report Card
+        </a>
+      </div>`;
+    initSubjectChart([]);
+
+  } catch(err) {
+    console.error('loadMontessoriSummary error', err);
+    container.innerHTML = `
+      <div style="text-align:center;padding:48px 20px">
+        <i class="fas fa-circle-exclamation" style="font-size:2rem;color:var(--danger);opacity:.6;display:block;margin-bottom:12px"></i>
+        <div style="font-weight:600;margin-bottom:6px">Could not load report</div>
+        <div style="font-size:.8rem;color:var(--text-muted);margin-bottom:16px">${err.message || 'Check your connection and try again.'}</div>
+        <button onclick="loadResults()" class="btn btn-ghost btn-sm">
+          <i class="fas fa-rotate-right"></i> Retry
+        </button>
+      </div>`;
+    initSubjectChart([]);
   }
 }
 
