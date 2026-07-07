@@ -275,7 +275,7 @@
       </div>
 
       <!-- ── Chart ── -->
-      <div class="card" style="padding:20px 20px 16px">
+      <div class="card" id="subject-chart-card" style="padding:20px 20px 16px">
         <div class="section-title mb-3">Performance by Subject</div>
         <div class="chart-wrap">
           <canvas id="subject-chart" height="130"></canvas>
@@ -518,9 +518,14 @@ async function loadMontessoriSummary(params) {
 function initSubjectChart(scored) {
   ChartDefaults.apply();
   const ctx = document.getElementById('subject-chart');
+  const card = document.getElementById('subject-chart-card');
   if (!ctx) return;
   if (ctx._chart) { ctx._chart.destroy(); ctx._chart = null; }
-  if (!scored.length) { ctx.closest('.chart-wrap').style.display = 'none'; return; }
+  if (!scored.length) {
+    if (card) card.style.display = 'none';
+    return;
+  }
+  if (card) card.style.display = '';
   ctx.closest('.chart-wrap').style.display = '';
   const colors = scored.map(r => Fmt.gradeColor(Fmt.grade(r.total_score || 0).g));
   ctx._chart = new Chart(ctx, {
