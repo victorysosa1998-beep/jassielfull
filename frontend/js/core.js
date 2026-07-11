@@ -107,10 +107,17 @@ const API = {
     const controller = new AbortController();
     const tid = setTimeout(() => controller.abort(), CONFIG.REQUEST_TIMEOUT);
     cfg.signal = controller.signal;
+    // Login/refresh calls have no session yet — a 401 from them means
+    // "wrong credentials", not "your token expired". They must NOT go
+    // through the refresh-and-redirect flow below, which silently
+    // resolves to undefined (no token to refresh) and used to crash
+    // login.html with "Cannot read properties of undefined (reading
+    // 'user')" instead of showing "Invalid credentials".
+    const isAuthEndpoint = /\/auth\/(login|refresh)$/.test(url);
     try {
       const resp = await fetch(url, cfg);
       clearTimeout(tid);
-      if (resp.status === 401) {
+      if (resp.status === 401 && !isAuthEndpoint) {
         const ok = await this._doRefresh();
         if (ok) {
           // Retry with fresh token
@@ -119,7 +126,9 @@ const API = {
           delete cfg.signal;
           return this._doRequest(url, cfg);
         }
-        AuthState.clear(); window.location.replace('login.html'); return;
+        AuthState.clear();
+        window.location.replace('login.html');
+        throw { status: 401, message: 'Your session has expired. Please sign in again.' };
       }
       const json = await resp.json().catch(() => ({}));
       if (!resp.ok) throw { status: resp.status, message: json.detail || json.message || `Error ${resp.status}` };

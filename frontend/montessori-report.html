@@ -251,8 +251,8 @@ body {
   <div id="pn-hold-progress" style="position:absolute;bottom:0;left:0;right:0;height:4px;background:rgba(0,32,96,0);border-radius:0 0 4px 4px;overflow:hidden;pointer-events:none;max-width:780px;margin:0 auto"><div id="pn-hold-progress-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#ffd700,#f0b800);transition:width linear;border-radius:0 0 4px 4px"></div></div>
   <div id="pn-hold-overlay" style="display:none;position:absolute;inset:0;background:rgba(0,32,96,.55);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);z-index:100;align-items:center;justify-content:center;flex-direction:column;gap:12px">
     <div style="color:rgba(255,255,255,.8);font-family:'DM Sans',sans-serif;font-size:13px;text-align:center">Report card ready to save</div>
-    <button id="pn-download-btn" onclick="downloadMontessoriReport()" style="background:linear-gradient(135deg,#ffd700,#f0b800);color:#002060;border:none;border-radius:50px;padding:14px 32px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:10px;box-shadow:0 4px 20px rgba(0,0,0,.3)">
-      <i class="fas fa-download"></i> Download Image
+    <button id="pn-download-btn" onclick="downloadMontessoriPDF()" style="background:linear-gradient(135deg,#ffd700,#f0b800);color:#002060;border:none;border-radius:50px;padding:14px 32px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:10px;box-shadow:0 4px 20px rgba(0,0,0,.3)">
+      <i class="fas fa-download"></i> Download PDF
     </button>
     <div style="color:rgba(255,255,255,.5);font-family:'DM Sans',sans-serif;font-size:11px;margin-top:2px">Tap anywhere else to dismiss</div>
   </div>
@@ -355,6 +355,7 @@ body {
 <div id="pn-download-toast" style="position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);background:#002060;color:#ffd700;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;padding:12px 24px;border-radius:50px;box-shadow:0 4px 20px rgba(0,0,0,.25);z-index:9999;opacity:0;transition:opacity .3s,transform .3s;pointer-events:none;white-space:nowrap">✓ Report card saved to your device</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="./js/core.js"></script>
 <script>
 /* ─────────────────────────────────────────────────────────────
@@ -792,17 +793,19 @@ async function publishReport() {
   });
 })();
 
-/* ── Download report card (both pages) as one image — mirrors
-   report-card.html's downloadReportCard(), targeting #pn-root instead
-   of a single .rc-page since the Montessori report has two pages. ── */
-async function downloadMontessoriReport() {
+/* ── Download report card as a real 2-page PDF (one PDF page per
+   .pn-page), sized to each page's own aspect ratio so it fills the
+   screen edge-to-edge with no letterboxing — much easier to read on
+   a phone than one very tall image or a browser print dialog. ── */
+async function downloadMontessoriPDF() {
   const btn = document.getElementById('pn-download-btn');
+  const originalHTML = btn.innerHTML;
   btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating\u2026';
   btn.disabled = true;
 
   try {
-    const card = document.getElementById('pn-root');
-    if (!card) throw new Error('Card not found');
+    const pages = document.querySelectorAll('#pn-root .pn-page');
+    if (!pages.length) throw new Error('No report pages found');
 
     await document.fonts.ready;
     await new Promise(r => setTimeout(r, 400));
@@ -818,48 +821,54 @@ async function downloadMontessoriReport() {
       }
     } catch (e) { /* ignore */ }
 
-    const CARD_WIDTH = 780;
+    const PAGE_WIDTH = 780;
+    const SCALE = 3;
+    const jsPDFCtor = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+    if (!jsPDFCtor) throw new Error('PDF library did not load');
 
-    const canvas = await html2canvas(card, {
-      scale: 3,
-      useCORS: true,
-      allowTaint: true,
-      backgroundColor: '#eef1f8',
-      logging: false,
-      windowWidth: CARD_WIDTH,
-      width: CARD_WIDTH,
-      onclone: (doc) => {
-        if (fontFaceCSS) {
-          const style = doc.createElement('style');
-          style.textContent = fontFaceCSS;
-          doc.head.appendChild(style);
+    let pdf = null;
+
+    for (const pageEl of pages) {
+      const canvas = await html2canvas(pageEl, {
+        scale: SCALE,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        windowWidth: PAGE_WIDTH,
+        width: PAGE_WIDTH,
+        onclone: (doc) => {
+          if (fontFaceCSS) {
+            const style = doc.createElement('style');
+            style.textContent = fontFaceCSS;
+            doc.head.appendChild(style);
+          }
         }
-        const clonedCard = doc.getElementById('pn-root');
-        if (clonedCard) {
-          clonedCard.style.display = 'block';
-          clonedCard.style.width = CARD_WIDTH + 'px';
-          clonedCard.style.minWidth = CARD_WIDTH + 'px';
-          clonedCard.style.overflow = 'visible';
-        }
-        doc.querySelectorAll('#pn-root .pn-page').forEach(p => {
-          p.style.boxShadow = 'none';
-          p.style.borderRadius = '0';
-          p.style.width = CARD_WIDTH + 'px';
-          p.style.minWidth = CARD_WIDTH + 'px';
-        });
+      });
+
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      // Convert rendered pixel size back to mm (undo the html2canvas
+      // scale factor) so the PDF page exactly matches the report
+      // page's own proportions — no wasted white margin either side.
+      const pxToMm = px => (px / SCALE) * 25.4 / 96;
+      const pdfWidth  = pxToMm(canvas.width);
+      const pdfHeight = pxToMm(canvas.height);
+      const orientation = pdfWidth > pdfHeight ? 'landscape' : 'portrait';
+
+      if (!pdf) {
+        pdf = new jsPDFCtor({ orientation, unit: 'mm', format: [pdfWidth, pdfHeight] });
+      } else {
+        pdf.addPage([pdfWidth, pdfHeight], orientation);
       }
-    });
+      pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+    }
 
-    const nameEl = card.querySelector('#f-name');
+    const nameEl = document.getElementById('f-name');
     const studentName = nameEl ? nameEl.textContent.trim().replace(/\s+/g, '_') : 'student';
-    const filename = `Montessori_Report_${studentName}_${Date.now()}.png`;
-
-    const link = document.createElement('a');
-    link.download = filename;
-    link.href = canvas.toDataURL('image/png', 1.0);
-    link.click();
+    pdf.save(`Montessori_Report_${studentName}_${Date.now()}.pdf`);
 
     const toast = document.getElementById('pn-download-toast');
+    toast.textContent = '✓ 2-page PDF saved to your device';
     toast.style.opacity = '1';
     toast.style.transform = 'translateX(-50%) translateY(0)';
     setTimeout(() => {
@@ -870,10 +879,10 @@ async function downloadMontessoriReport() {
     document.getElementById('pn-hold-overlay').style.display = 'none';
 
   } catch (err) {
-    console.error('Download failed:', err);
-    alert('Could not generate image. Please try the Print button instead.');
+    console.error('PDF generation failed:', err);
+    alert('Could not generate PDF. Please try the Print button instead.');
   } finally {
-    btn.innerHTML = '<i class="fas fa-download"></i> Download Image';
+    btn.innerHTML = '<i class="fas fa-download"></i> Download PDF';
     btn.disabled = false;
   }
 }
