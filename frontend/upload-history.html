@@ -123,7 +123,9 @@ async function loadUploads(status, page) {
   const container = document.getElementById('uploads-list');
   showSkeleton(container, 4, '110px', '14px');
   try {
-    const params = { per_page: 20, page: currentPage };
+    // Fetch a large batch so a class's subjects are never split across pages —
+    // we paginate the grouped view below, not this raw fetch.
+    const params = { per_page: 500 };
     if (status) params.status = status;
     const data = await API.results.myUploads(params);
     const items = data.items || [];
@@ -154,7 +156,15 @@ async function loadUploads(status, page) {
       groups[key].batches.push(b);
     }
 
-    container.innerHTML = Object.values(groups).map(group => {
+    // Paginate the GROUPS, not the raw batch rows — keeps a class's
+    // subjects together on one card no matter when each was uploaded.
+    const allGroups     = Object.values(groups);
+    const perPageGroups = 10;
+    const totalGroups   = allGroups.length;
+    const startIdx      = (currentPage - 1) * perPageGroups;
+    const pageGroups    = allGroups.slice(startIdx, startIdx + perPageGroups);
+
+    container.innerHTML = pageGroups.map(group => {
       const allPending   = group.batches.every(b => b.status === 'pending');
       const anyLocked    = group.batches.some(b => ['locked','published'].includes(b.status));
       const anySubmitted = group.batches.some(b => b.status === 'submitted');
@@ -248,7 +258,7 @@ async function loadUploads(status, page) {
     }).join('');
 
     renderPagination(document.getElementById('uploads-pagination'), {
-      page: currentPage, total: data.total || items.length, perPage: 20,
+      page: currentPage, total: totalGroups, perPage: perPageGroups,
       onChange: `(p)=>loadUploads('${status}',p)`
     });
   } catch(err) {
@@ -405,7 +415,7 @@ async function saveBatchEdits(batchId) {
     }).filter(s => s.student_id);
 
     await API.results.upload({
-      class_name:  data.class_name,
+      class_id:    data.class_id,
       subject_id:  data.subject_id,
       session_id:  data.session_id,
       term_id:     data.term_id,
