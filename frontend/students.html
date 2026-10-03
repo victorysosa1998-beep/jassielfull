@@ -412,6 +412,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const role = AuthState.getRole();
   initPage(['super_admin','admin','sub_admin'], role==='sub_admin'?'subadmin':'admin');
   populateClassSelect(document.getElementById('class-filter'));
+  { const _cf = document.getElementById('class-filter'); const _o = document.createElement('option'); _o.value = 'Graduated'; _o.textContent = 'Graduated'; _cf.appendChild(_o); }
   populateClassSelect(document.getElementById('add-class'), 'Select class…', false);
   populateClassSelect(document.getElementById('edit-class'), 'No change', true);
   await Promise.all([loadStudents(1), loadStats()]);

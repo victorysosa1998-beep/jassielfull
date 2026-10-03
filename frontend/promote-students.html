@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Promote Students — Jaasiel RMS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+<div class="page-bg"></div>
+<div class="page-loader" id="page-loader"><div class="loader-logo"><i class="fas fa-graduation-cap"></i> Jaasiel RMS</div><div class="loader-ring"></div></div>
+<div class="toast-container" id="toast-container"></div>
+<div class="app-layout">
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<aside class="sidebar" id="sidebar"></aside>
+<div class="main-content">
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" id="menu-toggle"><i class="fas fa-bars"></i></button>
+      <div>
+        <div class="page-title">Promote Students</div>
+        <div class="breadcrumb"><a href="admin-dashboard.html">Dashboard</a><span class="sep">/</span><a href="sessions.html">Sessions</a><span class="sep">/</span><span class="text-gold">Promote</span></div>
+      </div>
+    </div>
+    <div class="topbar-right" id="topbar-right"></div>
+  </header>
+  <div class="page-body">
+    <div class="alert alert-info mb-3">
+      <i class="fas fa-circle-info" style="flex-shrink:0"></i>
+      <div>
+        <strong>End-of-session promotion.</strong> Every active student moves up one class; <strong>SS 3 students become Graduated</strong>.
+        Nothing is deleted &mdash; old results, report cards and terms keep the class they were recorded in.
+        This can be done <strong>once per session</strong> and should be done <strong>before</strong> any new-term results are uploaded.
+        Untick a student to keep them in their current class (repeating).
+      </div>
+    </div>
+
+    <div class="card card-gold mb-3">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px">
+        <div>
+          <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-bottom:4px">Current Session</div>
+          <div style="font-family:var(--font-display);font-size:1.4rem;font-weight:900" id="sess-name">—</div>
+          <div style="font-size:.85rem;color:var(--text-secondary);margin-top:4px" id="sess-summary">Click “Load Preview” to see who will move where. Nothing changes yet.</div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-secondary" id="preview-btn" onclick="loadPreview()"><i class="fas fa-eye"></i> Load Preview</button>
+          <button class="btn btn-primary" id="apply-btn" onclick="applyPromotion()" disabled><i class="fas fa-arrow-up"></i> Apply Promotion</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="warnings"></div>
+    <div id="plan"></div>
+  </div>
+</div>
+</div>
+
+<script src="./js/core.js"></script>
+<script src="./js/ui.js"></script>
+<script>
+let PREVIEW = null;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await window.__rmsBootstrapReady;
+  initPage(['super_admin','admin'], 'admin');
+});
+
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function uncheckedIds() {
+  return Array.from(document.querySelectorAll('.stu-cb'))
+    .filter(cb => !cb.checked).map(cb => parseInt(cb.value, 10));
+}
+
+async function loadPreview() {
+  const btn = document.getElementById('preview-btn');
+  btn.disabled = true;
+  try {
+    const d = await API.post('/students/promote/preview', { exclude_student_ids: [] });
+    PREVIEW = d;
+    render(d);
+  } catch (err) {
+    Toast.error('Preview failed', err.message || 'Could not load the preview.');
+  } finally { btn.disabled = false; }
+}
+
+function render(d) {
+  document.getElementById('sess-name').textContent = d.session_name || '—';
+  const warn = [];
+  let canApply = true;
+  if (d.already_promoted) {
+    canApply = false;
+    warn.push('<div class="alert alert-warning mb-3"><i class="fas fa-triangle-exclamation" style="flex-shrink:0"></i><div><strong>Already done.</strong> Students were already promoted for ' + esc(d.session_name) + '. Promotion can only run once per session.</div></div>');
+  }
+  if (d.uploads_in_session > 0) {
+    canApply = false;
+    warn.push('<div class="alert alert-warning mb-3"><i class="fas fa-triangle-exclamation" style="flex-shrink:0"></i><div><strong>Results already uploaded for ' + esc(d.session_name) + '</strong> (' + d.uploads_in_session + ' upload(s)). Promotion is blocked so new-term results stay with the right class.</div></div>');
+  }
+  if (d.skipped && d.skipped.length) {
+    warn.push('<div class="alert alert-warning mb-3"><i class="fas fa-triangle-exclamation" style="flex-shrink:0"></i><div><strong>These classes will NOT be moved:</strong><ul style="margin:6px 0 0 18px">' +
+      d.skipped.map(s => '<li>' + esc(s.from_class) + ' (' + s.students.length + ' student(s)) &mdash; ' + esc(s.reason) + '</li>').join('') + '</ul></div></div>');
+  }
+  document.getElementById('warnings').innerHTML = warn.join('');
+
+  const total = d.plan.reduce((n, e) => n + e.students.length, 0);
+  document.getElementById('sess-summary').textContent = total + ' student(s) will move. Untick anyone who should stay in their current class.';
+  document.getElementById('apply-btn').disabled = !canApply || !d.plan.length;
+
+  document.getElementById('plan').innerHTML = d.plan.map((e, i) => {
+    const grad = e.to_id === null;
+    return '<div class="card mb-3">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;cursor:pointer" onclick="document.getElementById(\'grp-' + i + '\').classList.toggle(\'hidden-grp\')">' +
+        '<div style="font-weight:700">' + esc(e.from_class) + ' <i class="fas fa-arrow-right" style="margin:0 8px;color:var(--brand-gold)"></i> ' +
+          (grad ? '<span style="color:var(--brand-gold)">Graduated</span>' : esc(e.to_class)) + '</div>' +
+        '<div style="font-size:.85rem;color:var(--text-muted)">' + e.students.length + ' student(s) &middot; click to show names</div>' +
+      '</div>' +
+      '<div id="grp-' + i + '" class="hidden-grp" style="margin-top:12px;columns:2 240px">' +
+        e.students.map(s => '<label style="display:block;padding:3px 0;font-size:.88rem"><input type="checkbox" class="stu-cb" value="' + s.id + '" checked> ' + esc(s.name) + '</label>').join('') +
+      '</div></div>';
+  }).join('') || '<div class="card" style="text-align:center;padding:40px;color:var(--text-muted)">No students to promote.</div>';
+}
+
+async function applyPromotion() {
+  if (!PREVIEW) return;
+  const exclude = uncheckedIds();
+  const total = document.querySelectorAll('.stu-cb').length - exclude.length;
+  const msg = 'Promote ' + total + ' student(s) for session ' + PREVIEW.session_name + '?\n\n' +
+    (exclude.length ? exclude.length + ' student(s) will stay in their current class.\n' : '') +
+    'SS 3 students will become Graduated.\nThis can only be done once for this session.';
+  if (!confirm(msg)) return;
+  const btn = document.getElementById('apply-btn');
+  btn.disabled = true;
+  try {
+    const r = await API.post('/students/promote', { confirm_session_id: PREVIEW.session_id, exclude_student_ids: exclude });
+    Toast.success('Done', r.message || 'Promotion complete');
+    document.getElementById('plan').innerHTML = '<div class="card" style="text-align:center;padding:40px"><i class="fas fa-circle-check" style="font-size:2rem;color:var(--brand-gold);display:block;margin-bottom:12px"></i><strong>' + esc(r.message) + '</strong></div>';
+    document.getElementById('warnings').innerHTML = '';
+    document.getElementById('sess-summary').textContent = 'Promotion complete.';
+    PREVIEW = null;
+  } catch (err) {
+    Toast.error('Not promoted', err.message || 'Promotion failed — nothing was changed.');
+    btn.disabled = false;
+  }
+}
+</script>
+<style>.hidden-grp{display:none}</style>
+</body>
+</html>
